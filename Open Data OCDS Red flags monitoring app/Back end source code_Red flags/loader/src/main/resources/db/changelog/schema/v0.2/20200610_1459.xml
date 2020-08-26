@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="1" author="andrey_pylypchuk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="tender_tenderer"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="tender_tenderer">
+            <column name="tender_id" type="integer"/>
+            <column name="party_id" type="integer"/>
+        </createTable>
+
+        <addPrimaryKey tableName="tender_tenderer" columnNames="tender_id, party_id"
+                       constraintName="pk_tender_tenderer"/>
+
+        <addForeignKeyConstraint baseTableName="tender_tenderer"
+                                 baseColumnNames="tender_id"
+                                 constraintName="fk_tender_tenderer_to_tender"
+                                 referencedTableName="tender"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="tender_tenderer"
+                                 baseColumnNames="party_id"
+                                 constraintName="fk_tender_tenderer_to_party"
+                                 referencedTableName="party"
+                                 referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet id="2" author="eddy">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="tender_risk_level_range"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="tender_risk_level_range">
+            <column name="id" type="serial"/>
+            <column name="procurement_method" type="text"/>
+            <column name="left_bound" type="integer"/>
+            <column name="level" type="integer"/>
+            <column name="description" type="text"/>
+            <column name="right_bound" type="integer"/>
+        </createTable>
+
+        <addPrimaryKey tableName="tender_risk_level_range" columnNames="id"
+                       constraintName="pk_tender_risk_level_range"/>
+
+    </changeSet>
+
+</databaseChangeLog>

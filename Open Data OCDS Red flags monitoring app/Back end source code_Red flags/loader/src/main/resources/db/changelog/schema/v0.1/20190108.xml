@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="1" author="eddy">
+        <preConditions>
+            <not>
+                <tableExists tableName="qualification_requirement"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="qualification_requirement">
+            <column name="id" type="integer"/>
+            <column name="type" type="text"/>
+            <column name="tender_id" type="integer"/>
+        </createTable>
+
+        <addPrimaryKey tableName="qualification_requirement" columnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="qualification_requirement" baseColumnNames="tender_id"
+                                 constraintName="fk_qualification_requirement_to_tender"
+                                 referencedTableName="tender"
+                                 referencedColumnNames="id"/>
+    </changeSet>
+
+</databaseChangeLog>

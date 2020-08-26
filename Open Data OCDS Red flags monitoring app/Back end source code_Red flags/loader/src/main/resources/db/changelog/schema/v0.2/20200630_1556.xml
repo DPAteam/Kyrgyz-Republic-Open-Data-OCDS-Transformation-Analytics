@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="1" author="andrey_pylypchuk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="document"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="document">
+            <column name="id" type="integer"/>
+            <column name="tender_id" type="integer"/>
+            <column name="lot_id" type="integer"/>
+            <column name="item_id" type="integer"/>
+        </createTable>
+
+        <addPrimaryKey tableName="document" columnNames="id"
+                       constraintName="pk_document"/>
+
+        <addForeignKeyConstraint baseTableName="document"
+                                 baseColumnNames="tender_id"
+                                 constraintName="document_to_tender"
+                                 referencedTableName="tender"
+                                 referencedColumnNames="id"/>
+    </changeSet>
+</databaseChangeLog>

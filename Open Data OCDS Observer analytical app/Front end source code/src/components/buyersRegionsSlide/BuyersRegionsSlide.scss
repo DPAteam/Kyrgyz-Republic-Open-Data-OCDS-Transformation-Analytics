@@ -1,0 +1,120 @@
+.region-background {
+  background: linear-gradient(180deg, #599EC0 0%, #3672A1 100%);
+  box-shadow: 0 8.38554px 27.9518px rgba(147, 147, 147, 0.5);
+  border-radius: 3.72691px;
+  position: relative;
+  min-height: 400px;
+}
+
+.BuyersRegionsSlide {
+  height: 50px;
+  .three-points {
+    color: #63D4B1;
+    font-weight: bold;
+    margin-left: 5px !important;
+  }
+
+.hidder-elem {
+  &:hover {
+    color: #2dc28c !important;
+  }
+}
+
+  span {
+    margin-top: 50px;
+    margin-left: 38px;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 20px;
+    line-height: 30px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+  }
+
+  p {
+    margin-top: 100px;
+    margin-left: 38px;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 16px;
+    line-height: 24px;
+    letter-spacing: 0.05em;
+    color: #FFFFFF;
+  }
+
+  h4 {
+    margin-top: 20px;
+    margin-left: 38px;
+    margin-right: 5px;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 20px;
+    line-height: 135.7%;
+    letter-spacing: 0.05em;
+    color: #63D4B1;
+  }
+
+  .switch-rectangle-f {
+    position: absolute;
+    width: 164.36px;
+    height: 67.88px !important;
+    left: -33px;
+    top: -7px;
+    background: rgba(250, 250, 250, 0.08);
+    border-radius: 12.7654px;
+  }
+
+  .switch-rectangle-s {
+    position: absolute;
+    width: 106.68px;
+    height: 109.6px !important;
+    left: -28px;
+    top: 38px;
+    background: rgba(250, 250, 250, 0.04);
+    border-radius: 12.7654px;
+  }
+
+  .switch-rectangle-t {
+    position: absolute;
+    right: -26px;
+    bottom: 18px;
+    width: 62.23px;
+    height: 183.86px !important;
+    background: rgba(250, 250, 250, 0.08);
+    border-radius: 13px;
+  }
+
+  .switch-rectangle-fo {
+    position: absolute;
+    width: 99.73px;
+    height: 94.24px !important;
+    right: -20px;
+    bottom: -20px;
+    background: rgba(250, 250, 250, 0.08);
+    border-radius: 12.7654px;
+  }
+}
+
+@media (min-width: 1400px) and (max-width: 1600px){
+  .region-background {
+    min-height: 360px;
+  }
+
+  .BuyersRegionsSlide {
+    p {
+      margin-top: 60px;
+    }
+
+    h4 {
+      font-size: 18px;
+    }
+
+    .three-points {
+      color: #63D4B1;
+      font-weight: bold;
+      font-size: 18px;
+      margin-left: 5px !important;
+    }
+  }
+}

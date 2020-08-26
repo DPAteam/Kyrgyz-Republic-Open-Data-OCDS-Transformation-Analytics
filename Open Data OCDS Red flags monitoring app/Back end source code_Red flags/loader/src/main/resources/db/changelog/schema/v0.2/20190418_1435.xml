@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="1" author="eddy">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="permission"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="permission">
+            <column name="id" type="serial"/>
+            <column name="name" type="text"/>
+            <column name="description" type="text"/>
+        </createTable>
+
+        <addPrimaryKey tableName="permission" columnNames="id" constraintName="pk_permission"/>
+
+    </changeSet>
+
+    <changeSet id="2" author="eddy">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="user_permission"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="user_permission">
+            <column name="user_id" type="integer"/>
+            <column name="permission_id" type="integer"/>
+        </createTable>
+
+        <addPrimaryKey tableName="user_permission" columnNames="user_id, permission_id"/>
+
+        <addForeignKeyConstraint baseTableName="user_permission" baseColumnNames="user_id"
+                                 constraintName="fk_user_permission_to_user"
+                                 referencedTableName="users"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="user_permission" baseColumnNames="permission_id"
+                                 constraintName="fk_user_permission_to_permission"
+                                 referencedTableName="permission"
+                                 referencedColumnNames="id"/>
+
+    </changeSet>
+
+</databaseChangeLog>

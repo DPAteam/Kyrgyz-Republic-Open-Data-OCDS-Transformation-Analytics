@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<!DOCTYPE svg  PUBLIC '-//W3C//DTD SVG 1.1//EN'  'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>
+<svg fill="#63d4b1" width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+ <g>
+  <title>background</title>
+  <rect fill="none" id="canvas_background" height="402" width="582" y="-1" x="-1"/>
+ </g>
+ <g>
+  <title>Layer 1</title>
+  <g stroke="null" id="svg_1">
+   <path stroke="null" id="svg_2" d="m224,394.691145l0,-274.458601c0,-5.11224 -5.4,-9.232552 -12.2,-9.232552l-71.6,0c-6.8,0 -12.2,4.120313 -12.2,9.232552l0,274.458601c0,5.11224 5.4,9.308854 12.2,9.308854l71.6,0c6.8,0 12.2,-4.120313 12.2,-9.308854z"/>
+   <path stroke="null" id="svg_3" d="m371.8,110.999992l-71.6,0c-6.7,0 -12.2,4.120313 -12.2,9.232552l0,274.458601c0,5.11224 5.4,9.308854 12.2,9.308854l71.6,0c6.7,0 12.2,-4.120313 12.2,-9.308854l0,-274.458601c0,-5.11224 -5.4,-9.232552 -12.2,-9.232552z"/>
+  </g>
+ </g>
+</svg>

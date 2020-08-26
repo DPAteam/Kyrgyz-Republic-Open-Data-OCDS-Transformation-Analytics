@@ -1,0 +1,223 @@
+.apiAndExport {
+  //margin-right: 250px !important;
+  //margin-left: 250px !important;
+
+  .export-button {
+    width: 120px;
+    height: 35px;
+    display: inline-flex;
+    align-items: center;
+    background: #63D4B1;
+    border-radius: 4px;
+    justify-content: center;
+
+    &:hover {
+      cursor: pointer;
+      background-color: #0fb17d;
+    }
+
+    .export-button-text {
+      font-style: normal;
+      font-weight: normal;
+      font-size: 14px;
+      line-height: 21px;
+      letter-spacing: 0.05em;
+      color: #FFFFFF;
+      margin-left: 15px;
+    }
+
+    .export-button-icon {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  .checked-circle-active {
+    width: 15px;
+    height: 15px;
+    background: #2A527F;
+    border: 2px solid #AFAFAF;
+    box-sizing: border-box;
+    border-radius: 10px;
+    margin-left: 10px;
+    margin-top: 2px;
+  }
+
+  .checked-circle {
+    width: 15px;
+    height: 15px;
+    border: 2px solid #AFAFAF;
+    box-sizing: border-box;
+    border-radius: 10px;
+    margin-left: 10px;
+    margin-top: 2px;
+  }
+
+  .checkbox-wrapper {
+    width: 350px;
+    display: inline-flex;
+    justify-content: flex-end;
+  }
+
+  .checkbox-content {
+    display: flex;
+    align-items: center;
+    margin-left: 35px;
+
+    span {
+      font-style: normal;
+      font-weight: normal;
+      font-size: 16px;
+      line-height: 24px;
+      letter-spacing: 0.05em;
+      text-transform: capitalize;
+      color: #2A527F;
+    }
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
+
+  .export-main-title {
+    font-style: normal;
+    font-weight: normal;
+    font-size: 80px;
+    line-height: 119px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #2A577F;
+  }
+
+  .react-daterange-picker__wrapper {
+    background: #FFFFFF;
+    border: none !important;
+    border-radius: 4px;
+    width: 350px;
+
+    .react-daterange-picker__inputGroup {
+      margin-left: 35px;
+    }
+
+    .react-daterange-picker__inputGroup__input,
+    .react-daterange-picker__inputGroup__leadingZero,
+    .react-date-picker__inputGroup__divider,
+    .react-daterange-picker__range-divider {
+      font-family: Oswald, serif !important;
+      font-style: normal;
+      font-weight: normal;
+      font-size: 16px;
+      line-height: 24px;
+      text-align: center;
+      //letter-spacing: 0.05em;
+      color: #C4C4C4;
+    }
+
+    .react-daterange-picker__inputGroup__input {
+      &:focus {
+        border: none !important;
+        outline: none !important;
+      }
+    }
+  }
+
+  .react-daterange-picker__calendar-button {
+    background-color: #2A577F;
+    border-radius: 4px;
+  }
+}
+
+@media only screen and (min-width: 1600px) {
+  .apiAndExport {
+    //margin-right: 100px !important;
+    //margin-left: 100px !important;
+    .container {
+      max-width: 1240px;
+      //padding-top: 110px;
+      margin: 0 auto !important;
+    }
+
+    .mobile-top-margin {
+      margin-top: 15px;
+    }
+
+    .export-card-wrapper {
+      .export-card-subtitle {
+        margin-right: 30px !important;
+      }
+
+      .export-card-icon {
+        min-width: 200px;
+      }
+    }
+  }
+}
+
+//
+//@media (min-width: 1600px) {
+//  .apiAndExport {
+//
+//
+//    //margin-right: 100px !important;
+//    //margin-left: 100px !important;
+//  }
+//}
+
+@media (min-width: 1px) and (max-width: 576px) {
+  .apiAndExport {
+    margin-right: 15px !important;
+    margin-left: 15px !important;
+  }
+}
+
+@media (min-width: 576px) {
+  .apiAndExport {
+    margin-right: 35px !important;
+    margin-left: 35px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .apiAndExport {
+    margin-right: 55px !important;
+    margin-left: 55px !important;
+  }
+}
+
+@media (min-width: 992px) {
+  .apiAndExport {
+    margin-right: 75px !important;
+    margin-left: 75px !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .apiAndExport {
+    margin-right: 95px !important;
+    margin-left: 95px !important;
+  }
+}
+
+
+@media only screen and (min-width: 1440px) {
+  .apiAndExport {
+    margin-right: 150px !important;
+    margin-left: 150px !important;
+
+    .container {
+      max-width: 1240px;
+      padding-top: 110px;
+      margin: 0 auto !important;
+
+      .mobile-top-margin {
+        margin-top: 15px;
+      }
+    }
+
+    .export-card-wrapper {
+      .export-card-subtitle {
+        margin-right: 30px !important;
+      }
+    }
+  }
+}

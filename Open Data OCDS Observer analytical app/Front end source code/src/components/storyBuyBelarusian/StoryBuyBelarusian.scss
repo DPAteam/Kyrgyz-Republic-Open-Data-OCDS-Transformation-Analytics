@@ -1,0 +1,33 @@
+.StoryBuyBelarusian {
+  padding-top: 120px;
+  padding-bottom: 30px;
+  height: fit-content;
+  //background: linear-gradient(113.28deg, #172C3B 0%, #364270 100%);
+  .info-value {
+    display: flex;
+    align-items: center;
+
+    .story-info-value-percent {
+      font-style: normal;
+      font-weight: 600;
+      font-size: 48px;
+      line-height: 71px;
+      letter-spacing: 0.05em;
+      color: #5992C0;
+      min-width: 140px;
+    }
+
+    .story-info-value-text span {
+      font-style: normal;
+      font-weight: 600;
+      font-size: 28px;
+      line-height: 115.7%;
+      letter-spacing: 0.05em;
+      color: #2A577F;
+    }
+  }
+
+  .story-info-value {
+    color: #e57373 !important;
+  }
+}

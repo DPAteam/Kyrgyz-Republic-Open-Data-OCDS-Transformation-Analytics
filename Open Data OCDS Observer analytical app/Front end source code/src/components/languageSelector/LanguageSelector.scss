@@ -1,0 +1,25 @@
+.languages-container {
+  display: flex;
+  align-items: center;
+  color: #3672A1;
+
+  .lang-option {
+    font-weight: 500;
+    font-style: normal;
+    font-size: 20px;
+    cursor: pointer;
+    color: #3672A1;
+    padding-right: 3px;
+    padding-left: 3px;
+
+    &:hover {
+      color: #e4fff5;
+      text-decoration: none;
+    }
+
+    &.active {
+      color: white;
+    }
+  }
+
+}

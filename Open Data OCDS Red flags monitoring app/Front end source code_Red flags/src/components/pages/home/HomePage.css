@@ -1,0 +1,99 @@
+/*.HomePage .ant-tabs-nav-container {*/
+/*height: 70px !important;*/
+/*}*/
+
+/*.HomePage .ant-tabs-nav-wrap {*/
+/*background-color: antiquewhite;*/
+/*}*/
+
+/*.HomePage .ant-tabs-nav {*/
+/*width: 100%;*/
+/*}*/
+
+/*.HomePage .ant-tabs-nav > div {*/
+/*width: 100%;*/
+/*display: table;*/
+/*}*/
+
+/*.HomePage .ant-tabs-tab {*/
+/*height: 70px !important;*/
+/*display: table-cell !important;*/
+/*vertical-align: middle;*/
+/*width: 50%;*/
+/*text-align: center;*/
+/*font-size: 18px;*/
+/*margin: 0 !important;*/
+/*border-top: 0 !important;*/
+/*border-left: 0 !important;*/
+/*border-right: 0 !important;*/
+/*border-bottom: 0 !important;*/
+/*}*/
+
+/*.HomePage .ant-tabs-tab-active {*/
+/*background-color: rgba(65, 91, 165, 0.8) !important;*/
+/*color: #f8f8ff !important;*/
+/*}*/
+
+/*.HomePage .ant-tabs-bar {*/
+/*margin-bottom: 0 !important;*/
+/*}*/
+
+/*.HomePage .ant-tabs-content {*/
+/*width: 99.3% !important;*/
+/*!*padding-top: 16px !important;*!*/
+/*border: 1px solid #d3d3d3;*/
+/*margin: 8px 3px 3px 3px;*/
+/*box-shadow: 0 0 2px 3px #6c757d3d;*/
+/*}*/
+
+/*.HomePage .margin-top-first-block {*/
+    /*margin-top: 27px;*/
+/*}*/
+
+/*.HomePage .margin-top-second-block {*/
+    /*margin-top: 27px;*/
+/*}*/
+
+/*.HomePage .margin-top-third-block {*/
+    /*margin-top: 27px;*/
+/*}*/
+
+/*.HomePage .margin-top-fourth-block {*/
+    /*margin-top: 27px;*/
+/*}*/
+
+/*@media screen and (min-width: 1366px) and (max-width: 1650px) {*/
+    /*.HomePage .margin-top-first-block {*/
+        /*margin-top: 27px;*/
+    /*}*/
+
+    /*.HomePage .margin-top-second-block {*/
+        /*margin-top: 0;*/
+    /*}*/
+
+    /*.HomePage .margin-top-third-block {*/
+        /*margin-top: 27px;*/
+    /*}*/
+
+    /*.HomePage .margin-top-fourth-block {*/
+        /*margin-top: 27px;*/
+    /*}*/
+/*}*/
+
+/*@media screen and (max-width: 1365px) {*/
+    /*.HomePage .margin-top-first-block {*/
+        /*margin-top: 27px;*/
+    /*}*/
+
+    /*.HomePage .margin-top-second-block {*/
+        /*margin-top: 0;*/
+    /*}*/
+
+    /*.HomePage .margin-top-third-block {*/
+        /*margin-top: 0;*/
+    /*}*/
+
+    /*.HomePage .margin-top-fourth-block {*/
+        /*margin-top: 27px;*/
+    /*}*/
+/*}*/

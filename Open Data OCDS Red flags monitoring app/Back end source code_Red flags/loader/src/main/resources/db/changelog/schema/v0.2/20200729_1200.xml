@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="1" author="andrey_pylypchuk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="bucket"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="bucket">
+            <column name="tender_id" type="text"/>
+            <column name="date" type="timestamp"/>
+            <column name="author" type="integer"/>
+        </createTable>
+
+        <addPrimaryKey tableName="bucket" columnNames="tender_id, date" constraintName="pk_bucket"/>
+    </changeSet>
+
+    <changeSet id="2" author="andrey_pylypchuk">
+        <renameColumn newColumnName="user_id"
+                      oldColumnName="author"
+                      tableName="bucket"/>
+    </changeSet>
+
+    <changeSet id="3" author="andrey_pylypchuk">
+        <dropPrimaryKey tableName="bucket" constraintName="pk_bucket"/>
+    </changeSet>
+
+    <changeSet id="4" author="andrey_pylypchuk">
+        <addPrimaryKey columnNames="tender_id, user_id" tableName="bucket" constraintName="pk_bucket"/>
+    </changeSet>
+
+    <changeSet id="5" author="andrey_pylypchuk">
+        <renameColumn newColumnName="added_date"
+                      oldColumnName="date"
+                      tableName="bucket"/>
+    </changeSet>
+
+    <changeSet id="6" author="andrey_pylypchuk">
+        <modifyDataType columnName="added_date"
+                        newDataType="date"
+                        tableName="bucket"/>
+    </changeSet>
+
+</databaseChangeLog>

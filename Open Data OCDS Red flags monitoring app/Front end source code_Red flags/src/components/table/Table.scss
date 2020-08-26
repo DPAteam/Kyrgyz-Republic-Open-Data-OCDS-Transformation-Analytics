@@ -1,0 +1,21 @@
+.ant-table-pagination.ant-pagination {
+  margin-right: 15px !important;
+}
+
+.ant-table-body {
+  .ant-table-thead {
+    tr {
+      th {
+        padding: 10px !important;
+        color: #525d63;
+        font-weight: bold;
+        background: transparent;
+      }
+    }
+  }
+  .ant-table-tbody {
+    td {
+      padding: 10px !important;
+    }
+  }
+}

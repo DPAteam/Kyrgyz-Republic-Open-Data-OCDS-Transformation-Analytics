@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="1" author="andrey_pylypchuk">
+        <createIndex indexName="bid_lot_bid_id_idx"
+                      tableName="bid_lot">
+            <column name="bid_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="2" author="andrey_pylypchuk">
+        <createIndex indexName="bid_lot_lot_id_idx"
+                     tableName="bid_lot">
+            <column name="lot_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

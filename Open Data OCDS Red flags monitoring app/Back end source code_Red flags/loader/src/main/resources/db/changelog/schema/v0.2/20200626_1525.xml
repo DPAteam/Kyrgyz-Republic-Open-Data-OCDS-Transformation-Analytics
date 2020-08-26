@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="1" author="andrey_pylypchuk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="cpv_cancelled"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="cpv_cancelled">
+            <column name="party_id" type="integer"/>
+            <column name="cpv" type="text"/>
+            <column name="date" type="timestamp"/>
+        </createTable>
+
+        <addPrimaryKey tableName="cpv_cancelled" columnNames="party_id, cpv"
+                       constraintName="pk_cpv_cancelled"/>
+
+        <addForeignKeyConstraint baseTableName="cpv_cancelled"
+                                 baseColumnNames="party_id"
+                                 constraintName="cpv_cancelled_to_party"
+                                 referencedTableName="party"
+                                 referencedColumnNames="id"/>
+
+    </changeSet>
+
+    <changeSet id="2" author="andrey_pylypchuk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="additional_procurements"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="additional_procurements">
+            <column name="party_id" type="integer"/>
+            <column name="cpv" type="text"/>
+        </createTable>
+
+        <addPrimaryKey tableName="additional_procurements" columnNames="party_id, cpv"
+                       constraintName="pk_additional_procurements"/>
+
+        <addForeignKeyConstraint baseTableName="additional_procurements"
+                                 baseColumnNames="party_id"
+                                 constraintName="additional_procurements_to_party"
+                                 referencedTableName="party"
+                                 referencedColumnNames="id"/>
+
+    </changeSet>
+</databaseChangeLog>

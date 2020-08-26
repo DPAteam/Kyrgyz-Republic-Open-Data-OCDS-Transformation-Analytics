@@ -1,0 +1,150 @@
+.page-chart {
+  min-height: 700px;
+  padding-top: 90px;
+  padding-bottom: 30px;
+  height: fit-content;
+  background: linear-gradient(113.28deg, #172C3B 0%, #364270 100%);
+
+  .page-chart__wrapper {
+    height: 500px;
+
+    .highcharts-series-hover path {
+      stroke: rgba(255, 138, 101, 1);
+      stroke-width: 2px;
+    }
+  }
+}
+
+.page-chart-new {
+
+  .highcharts-legend {
+    .highcharts-legend-item {
+      span {
+        margin-left: 9px !important;
+      }
+    }
+  }
+
+  .analytics-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    p > span {
+      //width: 600px;
+      //margin: 0 auto;
+      font-weight: 600;
+      font-size: 28px;
+      line-height: 41px;
+      text-align: center;
+      letter-spacing: 0.05em;
+      color: #2A577F;
+    }
+
+    .switch-rectangle-icon-info-title {
+      margin-left: 15px;
+      width: 40px;
+      height: 40px;
+      background: #63D4B1;
+      border-radius: 30px;
+      cursor: pointer;
+
+      .info-icon {
+        padding-top: 8%;
+        text-align: center;
+        font-size: 20px;
+        color: #2A577F;
+      }
+    }
+  }
+
+  .container {
+    display: flex;
+  }
+
+  .pie-center-circle {
+    position: absolute;
+    width: 32%;
+    height: 27%;
+    background: #EBF1F4;
+    border-radius: 100%;
+    border: 3px solid #599EC0;
+    top: 40%;
+    left: 36.5%;
+    z-index: 1;
+  }
+}
+
+@media only screen and (max-width: 400px) {
+  .page-chart-new {
+    .highcharts-legend {
+      top: 320px !important;
+    }
+
+    .analytics-title{
+      font-size: 24px;
+    }
+
+    .highcharts-title{
+      font-size: 22px;
+    }
+
+    .view-chart-by-date {
+      .days-container {
+        margin: 0 15px;
+      }
+
+      .custom-position-first-element {
+        left: -20px !important;
+      }
+
+      .day-div-left {
+        top: 35px;
+        left: -30px;
+        font-size: 14px;
+        transform: rotate(-90deg);
+      }
+
+      .day-div-right {
+        top: 35px;
+        font-size: 14px;
+        transform: rotate(-90deg);
+      }
+    }
+  }
+}
+
+@media only screen and (min-width: 401px) and (max-width: 1024px) {
+  .page-chart-new {
+    .highcharts-legend {
+      top: 516px !important;
+    }
+
+    .view-chart-by-date {
+      .custom-position-first-element {
+        left: -20px !important;
+      }
+
+      .day-div-left {
+        top: 38px;
+        left: -33px;
+        transform: rotate(-90deg);
+      }
+
+      .day-div-right {
+        top: 38px;
+        right: -33px;
+        transform: rotate(-90deg);
+      }
+    }
+  }
+}
+
+@media only screen and (min-width: 1025px) {
+  .page-chart-new {
+    .highcharts-legend {
+      top: 516px !important;
+    }
+  }
+}
+

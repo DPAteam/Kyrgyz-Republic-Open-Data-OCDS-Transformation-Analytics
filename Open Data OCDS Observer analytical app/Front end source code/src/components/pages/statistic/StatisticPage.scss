@@ -1,0 +1,228 @@
+.Statistic {
+  padding-top: 120px;
+  margin: 0 55px;
+
+  .highcharts-tooltip {
+    span:first-child {
+      background: #e6e6e6;
+      border-radius: 4px;
+    }
+
+    .f32 {
+      display: flex;
+      align-items: center;
+
+      span {
+        margin-left: 8px;
+      }
+    }
+  }
+
+  .custom-background-color {
+    background-color: #EBF1F4;
+  }
+
+  .no-padding-tb {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .no-box-shadow {
+    box-shadow: none !important;
+  }
+
+  .rt-tr-group, .-header {
+    border-bottom: 1px solid #A7D3E6 !important;
+  }
+
+  .-header {
+    border-top: 1px solid #A7D3E6 !important;
+  }
+
+  .rt-th div {
+    font-style: normal;
+    font-weight: normal;
+    font-size: 16px;
+    line-height: 24px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #2A577F;
+  }
+
+  h4.table-title span{
+    font-style: normal;
+    font-weight: 600;
+    font-size: 28px;
+    line-height: 41px;
+    letter-spacing: 0.05em;
+    color: #2A577F;
+    margin-left: 30px;
+    margin-bottom: unset;
+  }
+
+  .flex-container-column {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-start;
+    flex-direction: column;
+
+    span {
+      margin: 10px 0 10px 15px !important
+    };
+  }
+
+  .range-selector {
+    display: flex;
+    flex-grow: 3;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .slider-mini-kpis-wrapper {
+    .slick-current,
+    .slick-slide {
+      height: auto;
+
+      div {
+        height: 100%;
+      }
+    }
+
+    .slick-track {
+      display: flex;
+      align-items: stretch;
+    }
+  }
+
+  .mini-kpi-row {
+    height: calc(50% - 15px);
+  }
+
+  .slider-chart {
+    height: 100%;
+    padding-left: 45px;
+    padding-right: 45px;
+  }
+
+  .mini-kpi-value {
+    align-self: center;
+    height: 60px;
+    width: 60px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 40px;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    flex-shrink: 0;
+
+    &.color-perano {
+      background-color: #64B5F680;
+      color: #3C4B56;
+    }
+
+    &.color-madang {
+      background-color: #81C78480;
+      color: #3C563F;
+    }
+  }
+
+  h4.table-title {
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    font-size: 1.25rem;
+    color: #212121;
+    margin-left: 30px;
+    margin-bottom: unset;
+    padding-top: 30px;
+  }
+
+  .slider-wrapper {
+    &.slider-kpis-wrapper,
+    &.slider-chart-wrapper {
+      &:hover {
+        button.slick-next {
+          right: 15px;
+        }
+
+        button.slick-prev {
+          left: 15px;
+        }
+      }
+    }
+
+    button.slick-prev,
+    button.slick-next {
+      z-index: 5 !important;
+      display: none !important;
+    }
+
+    &:hover {
+      button.slick-prev,
+      button.slick-next {
+        display: block !important;
+        height: calc(100%);
+        width: 40px;
+        background-color: #72838620;
+        z-index: 100000;
+      }
+
+      button.slick-next {
+        right: -30px;
+
+        &::before {
+          content: url("../../../common/img/rightArrow.svg");
+        }
+
+        &:hover {
+          background-color: #72838630;
+        }
+      }
+
+      button.slick-prev {
+        left: -30px;
+
+        &::before {
+          content: url("../../../common/img/leftArrow.svg");
+        }
+
+        &:hover {
+          background-color: #72838630;
+        }
+      }
+    }
+  }
+
+  .table-header {
+    div {
+      font-size: 14px;
+    }
+  }
+}
+
+.grad-card-chart-wrapper {
+  box-shadow: 0 3.42857px 27.9526px rgba(72, 72, 72, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+@media only screen and (max-width: 1200px) {
+  .Statistic {
+      margin: 0;
+
+    .flex-container-column {
+      flex-direction: row !important;
+      align-items: center;
+    }
+  }
+}
+
+
+@media only screen and (max-width: 1700px) {
+  .container {
+    //margin-left: 130px !important;
+    margin-right: 130px !important;
+  }
+}
