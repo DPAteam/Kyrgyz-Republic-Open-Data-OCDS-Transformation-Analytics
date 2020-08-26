@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="1" author="andrey_pylypchuk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="condition_of_contract"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="condition_of_contract">
+            <column name="id" type="text"/>
+            <column name="late_guarantee_rate" type="text"/>
+            <column name="late_delivery_rate" type="text"/>
+            <column name="late_payment_rate" type="text"/>
+            <column name="guarantee_percent" type="text"/>
+            <column name="max_deductible_amount_delivery" type="text"/>
+            <column name="max_deductible_amount_payment" type="text"/>
+            <column name="max_deductible_amount_guarantee" type="text"/>
+            <column name="acceptance_payment_percent" type="text"/>
+            <column name="has_guarantee" type="boolean"/>
+            <column name="has_insurance" type="boolean"/>
+            <column name="has_related_services" type="boolean"/>
+            <column name="has_spares" type="boolean"/>
+            <column name="has_technical_control" type="boolean"/>
+            <column name="has_acceptance_payment" type="boolean"/>
+            <column name="has_arbitral_tribunal" type="boolean"/>
+            <column name="tender_id" type="integer"/>
+        </createTable>
+
+        <addPrimaryKey tableName="condition_of_contract" columnNames="id" constraintName="pk_condition_of_contract"/>
+
+        <addForeignKeyConstraint  baseColumnNames="tender_id"
+                                  baseTableName="condition_of_contract"
+                                  constraintName="fk_condition_of_contract_to_tender"
+                                  referencedColumnNames="id"
+                                  referencedTableName="tender"/>
+    </changeSet>
+
+</databaseChangeLog>

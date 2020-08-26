@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+
+    <changeSet id="1" author="eddy">
+        <preConditions>
+            <not>
+                <columnExists tableName="indicator" columnName="risk_level"/>
+            </not>
+        </preConditions>
+
+        <addColumn tableName="indicator">
+            <column name="risk_level" type="integer"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2" author="eddy">
+        <preConditions>
+            <not>
+                <columnExists tableName="indicator" columnName="risks"/>
+                <columnExists tableName="indicator" columnName="law_violation"/>
+                <columnExists tableName="indicator" columnName="risk_level_text"/>
+            </not>
+        </preConditions>
+
+        <addColumn tableName="indicator">
+            <column name="risks" type="text"/>
+            <column name="law_violation" type="text"/>
+            <column name="risk_level_text" type="text"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="3" author="eddy">
+        <preConditions>
+            <not>
+                <columnExists tableName="tender" columnName="currency"/>
+            </not>
+        </preConditions>
+
+        <addColumn tableName="tender">
+            <column name="currency" type="text"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

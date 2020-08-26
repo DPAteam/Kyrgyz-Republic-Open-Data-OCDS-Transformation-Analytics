@@ -1,0 +1,1 @@
+select ec.id from extra_contract as ec where status <> 0 and type = 0

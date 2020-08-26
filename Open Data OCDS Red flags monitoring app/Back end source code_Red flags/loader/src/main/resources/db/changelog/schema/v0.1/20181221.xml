@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="1" author="eddy">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="tender_cpv_list"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="tender_cpv_list">
+            <column name="tender_id" type="integer"/>
+            <column name="cpv" type="text"/>
+        </createTable>
+
+        <addPrimaryKey tableName="tender_cpv_list" columnNames="tender_id, cpv"
+                       constraintName="pk_tender_cpv_list"/>
+
+        <addForeignKeyConstraint baseTableName="tender_cpv_list" baseColumnNames="tender_id"
+                                 constraintName="fk_tender_cpv_list_to_tender"
+                                 referencedTableName="tender"
+                                 referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet id="2" author="eddy">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="indicator"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="indicator">
+            <column name="id" type="smallint"/>
+            <column name="name" type="text"/>
+            <column name="impact" type="real"/>
+        </createTable>
+
+        <addPrimaryKey tableName="indicator" columnNames="id"/>
+
+        <addUniqueConstraint tableName="indicator" columnNames="name" constraintName="unique_indicator_name"/>
+    </changeSet>
+
+    <changeSet id="3" author="eddy">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="tender_indicator"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="tender_indicator">
+            <column name="tender_id" type="integer"/>
+            <column name="indicator_id" type="smallint"/>
+            <column name="indicator_value" type="smallint"/>
+        </createTable>
+
+        <addPrimaryKey tableName="tender_indicator" columnNames="tender_id,indicator_id" constraintName="pk_tender_indicator"/>
+
+        <addForeignKeyConstraint baseTableName="tender_indicator" baseColumnNames="tender_id"
+                                 constraintName="fk_tender_indicator_to_tender"
+                                 referencedTableName="tender"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="tender_indicator" baseColumnNames="indicator_id"
+                                 constraintName="fk_tender_indicator_to_indicator"
+                                 referencedTableName="indicator"
+                                 referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet id="4" author="eddy">
+        <sql>
+            INSERT INTO indicator VALUES(1,'MKRAI1') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(2,'MKRAI2') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(3,'MKRAI3') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(4,'MKRAI4') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(5,'MKRAI5') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(6,'MKRAI6') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(7,'MKRAI7') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(8,'MKRAI8') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(9,'MKRAI9') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(10,'MKRAI10') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(12,'MKRAI12') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(13,'MKRAI13') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(14,'MKRAI14') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(15,'MKRAI15') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(16,'MKRAI16') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(17,'MKRAI17') ON CONFLICT DO NOTHING;
+            INSERT INTO indicator VALUES(18,'MKRAI18') ON CONFLICT DO NOTHING;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

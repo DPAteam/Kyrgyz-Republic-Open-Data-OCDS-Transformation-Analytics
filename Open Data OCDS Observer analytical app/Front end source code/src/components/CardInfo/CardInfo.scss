@@ -1,0 +1,39 @@
+.card-info {
+  font-size: 0.95rem;
+  .info {
+    color: #ffffff;
+    .title {
+      color: #039BE5;
+    }
+    a {
+      color: #3d5056;
+      &:hover {
+        color: #039BE5;
+      }
+    }
+  }
+
+  .switch-card-info-wrapper {
+    .switch-card-info-row {
+      .switch-card-info-bold-text {
+        font-weight: 600;
+        font-size: 18px;
+        line-height: 27px;
+        text-align: center;
+        letter-spacing: 0.05em;
+      }
+
+      .switch-card-info-simple-text {
+        font-weight: 300;
+        font-size: 18px;
+        line-height: 27px;
+        text-align: center;
+        letter-spacing: 0.05em;
+      }
+
+      &:not(:last-child) {
+        padding-bottom: 10px;
+      }
+    }
+  }
+}

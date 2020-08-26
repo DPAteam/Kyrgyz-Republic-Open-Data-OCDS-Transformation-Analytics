@@ -1,0 +1,219 @@
+.collapse-btn {
+  text-align: right;
+  margin-right: 15px;
+  margin-top: 15px;
+  font-size: 1.25rem;
+
+  &.collapse-btn-active {
+    text-align: center;
+    margin-right: 0;
+  }
+
+  &:hover {
+    cursor: pointer;
+    color: #40a9ff;
+  }
+}
+
+.logout-menu-item {
+  position: absolute;
+  bottom: 48px;
+  z-index: 1;
+  height: 48px;
+  color: #fff;
+  line-height: 48px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #ffffff;
+  }
+
+  &.logout-menu-item-collapsed {
+    padding: 0 32px !important;
+    text-overflow: unset !important;
+
+    span {
+      display: none;
+    }
+  }
+
+  padding-left: 24px;
+  border-right: 0;
+  color: rgba(255, 255, 255, 0.65);
+  //width: 100%;
+  //height: 40px;
+  //line-height: 40px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  //cursor: pointer;
+  .anticon-logout {
+    position: relative;
+    white-space: nowrap;
+    //transition: color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), border-color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), padding 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
+    display: inline-block;
+    color: inherit;
+    font-style: normal;
+    line-height: 0;
+    text-align: center;
+    text-transform: none;
+    vertical-align: -0.125em;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    min-width: 14px;
+    margin-right: 10px;
+    font-size: 14px;
+    transition: font-size 0.15s cubic-bezier(0.215, 0.61, 0.355, 1),
+    margin 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  }
+}
+
+.nav-wrapper {
+  display: flex;
+  flex-direction: column;
+  //flex-flow: row wrap;
+  justify-content: flex-start;
+  //justify-content: space-between;
+  li {
+    display: flex;
+    flex-flow: column nowrap;
+  }
+
+  margin: 1.25em 0 45px 0;
+
+  .page_title {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+
+    .page_title__text--primary {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      font-size: 2.5rem;
+      color: #ffffff;
+      line-height: 2.6rem;
+
+      &:first-letter {
+        font-weight: 700;
+        color: #40a9ff;
+      }
+    }
+
+    .page_title__text--sub {
+      font-size: 1.2rem;
+      color: #98a1a8;
+      line-height: normal;
+      margin-bottom: 2.5rem;
+    }
+  }
+
+  .user-info__wrapper {
+    //display: flex;
+    //flex-direction: column;
+    line-height: normal;
+
+    .logout-btn {
+      &:hover {
+        color: #1890ff;
+      }
+
+      .logout-icon {
+        font-size: 1.25rem;
+        margin-right: 0.5rem;
+        cursor: pointer;
+      }
+    }
+
+    .user-info__name {
+      font-size: 1.25rem;
+      color: #ccd9dc;
+      font-weight: bold;
+    }
+  }
+
+  .user-info__region--wrapper {
+    color: #98a1a8;
+  }
+
+  .user-info__email {
+    word-wrap: break-word;
+    width: 100%;
+    color: #98a1a8;
+    margin-right: 2em;
+    line-height: normal;
+  }
+}
+
+.menu-item-btn {
+}
+
+.ant-menu-item {
+  height: 60px !important;
+  padding-left: 50px !important;
+  display: flex !important;
+  align-items: center;
+
+  .anticon {
+    font-size: 18px !important;
+    color: #599EC0;
+  }
+
+  span {
+    font-style: normal;
+    font-weight: normal;
+    font-size: 20px;
+    line-height: 30px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #599EC0;
+  }
+}
+
+.ant-menu-item-selected {
+  background-color: #63D4B1 !important;
+
+  .anticon {
+    font-size: 18px !important;
+    color: #FFFFFF;
+  }
+
+  span {
+    font-style: normal;
+    font-weight: normal;
+    font-size: 20px;
+    line-height: 30px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+  }
+}
+
+.logout-menu-item {
+  height: 60px !important;
+  padding-left: 50px !important;
+  display: flex !important;
+  align-items: center;
+
+  .anticon {
+    transform: rotate(180deg);
+    font-size: 19px !important;
+    color: #599EC0;
+  }
+
+  span {
+    margin-left: 15px;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 20px;
+    line-height: 30px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #599EC0;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+}

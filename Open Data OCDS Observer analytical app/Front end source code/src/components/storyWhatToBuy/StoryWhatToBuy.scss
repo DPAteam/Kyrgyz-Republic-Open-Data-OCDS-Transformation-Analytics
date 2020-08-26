@@ -1,0 +1,65 @@
+.StoryWhatToBuy {
+  //padding-top: 120px;
+  padding-top: 30px;
+  padding-bottom: 30px;
+  height: fit-content;
+  //background: linear-gradient(113.28deg, #172C3B 0%, #364270 100%);
+  .story-what-to-by-header {
+    display: flex;
+    //flex-direction: column;
+    text-align: center;
+    color: #FFFFFF;
+    padding-bottom: 12px;
+
+    .info-title {
+      font-style: normal;
+      font-weight: 600;
+      font-size: 28px;
+      line-height: 41px;
+      text-align: center;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #72BBDB;
+    }
+    .info-value {
+      .story-info-value-competitive {
+        font-style: normal;
+        font-weight: 600;
+        font-size: 30px;
+        line-height: 71px;
+        letter-spacing: 0.05em;
+        color: #72BBDB;
+      }
+
+      & span:nth-child(2n) {
+        font-style: normal;
+        font-weight: 600;
+        font-size: 20px;
+        line-height: 115.7%;
+        letter-spacing: 0.05em;
+        color: #2A577F;
+      }
+
+      .story-info-value-uncompetitive {
+        color: #e57373;
+      }
+    }
+
+  }
+
+  .story-desc {
+    margin-top: 30px;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 16px;
+    line-height: 24px;
+    letter-spacing: 0.05em;
+    color: #2A527F;
+
+    p {
+      &:not(:first-child) {
+        margin-top: 10px;
+      }
+    }
+  }
+}

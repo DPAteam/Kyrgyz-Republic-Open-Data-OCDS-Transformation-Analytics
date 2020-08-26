@@ -1,0 +1,135 @@
+.view-chart-by-date {
+  .days-container {
+    //margin: 0 150px;
+  }
+
+  .day-div-right {
+    position: absolute;
+    top: 20px;
+    right: -28px;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 16px;
+    color: #2A577F;
+  }
+
+  .custom-position-first-element {
+    left: -25px !important;
+  }
+
+  .day-div-left {
+    position: absolute;
+    top: 20px;
+    left: -40px;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 16px;
+    color: #2A577F;
+  }
+
+  .flex-container {
+    display: inline-flex;
+    width: 100%;
+  }
+
+  .flex-item {
+    position: relative;
+    height: 0px;
+    color: #fff;
+    border-top: 1px solid #599EC0;
+    width: 16.6%;
+    text-align: center;
+  }
+
+  .flex-item-child {
+    height: 8px;
+    width: 0px;
+    border: 1px solid #599EC0;
+    background-color: #599EC0;
+    float: left;
+  }
+
+  .flex-item-child-end {
+    height: 8px;
+    width: 0px;
+    border: 1px solid #599EC0;
+    background-color: #599EC0;
+    float: right;
+  }
+
+  .active {
+    display: block !important;
+  }
+
+  .selected-date-right {
+    display: none;
+    position: absolute;
+    top: -50px;
+    right: -24px;
+    height: 50px;
+    width: 50px;
+    content: url("../../../common/img/content-arrow-blue.svg");
+  }
+
+  .selected-date-left {
+    display: none;
+    position: absolute;
+    top: -50px;
+    left: -24px;
+    height: 50px;
+    width: 50px;
+    content: url("../../../common/img/content-arrow-blue.svg");
+  }
+
+  .view-chart-by-date-wrapper {
+    height: 80px;
+    padding-top: 20px;
+    padding-bottom: 30px;
+    margin: 0 auto;
+    display: table;
+
+    .play-icon {
+      content: url("../../../common/img/play-icon.svg");
+    }
+
+    .pause-icon {
+      content: url("../../../common/img/pause-icon.svg");
+    }
+
+
+
+    .play-pause-circle {
+      height: 60.71px;
+      border: 1.83985px solid #2A577F;
+      box-sizing: border-box;
+      border-radius: 30px;
+      display: table-cell;
+    }
+
+    span {
+      display: table-cell;
+      vertical-align: middle;
+      font-style: normal;
+      font-weight: normal;
+      font-size: 16.5586px;
+      line-height: 21px;
+      letter-spacing: 0.05em;
+      color: #2A577F;
+      padding-left: 20px;
+    }
+
+
+
+    //&::before {
+    //  content: url("../../../common/img/play-icon.svg");
+    //
+    //  svg > path {
+    //    fill: #e4fff5;
+    //  }
+    //}
+
+    .play-pause-icon {
+
+    }
+  }
+}
