@@ -1,0 +1,798 @@
+﻿//Main
+//TT  https://docs.google.com/spreadsheets/d/1Acs9z7wyoM333Go6ZpSQqtlb5Ik6EF9Gki34w3soU0E/edit#gid=2012078435
+SET ThousandSep=' ';
+SET DecimalSep=',';
+SET MoneyThousandSep=' ';
+SET MoneyDecimalSep=',';
+SET MoneyFormat='# ##0,00 ⊆;-# ##0,00 ⊆';
+SET TimeFormat='hh:mm:ss';
+SET DateFormat='DD.MM.YYYY';
+SET TimestampFormat='DD.MM.YYYY hh:mm:ss[.fff]';
+SET FirstWeekDay=0;
+SET BrokenWeeks=1;
+SET ReferenceDay=0;
+SET FirstMonthOfYear=1;
+SET CollationLocale='en-GB';
+SET CreateSearchIndexOnReload=1; 
+SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
+Set DayNames='Mon;Tue;Wed;Thu;Fri;Sat;Sun';
+SET LongMonthNames='January;February;March;April;May;June;July;August;September;October;November;December';
+SET LongDayNames='Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday';
+SET NumericalAbbreviation='3:k;6:M;9:G;12:T;15:P;18:E;21:Z;24:Y;-3:m;-6:μ;-9:n;-12:p;-15:f;-18:a;-21:z;-24:y';
+
+SET HidePrefix = '_';  
+SET DISABLE_INSIGHTS = 1;
+
+SET OtherSymbol = ^;
+
+LET vCurrentDate = Today(1);
+
+SET DIC_QVD_PATH = 'lib://OCDSKGData/02_QVD_DB/01_Dictionary_Plan/';
+SET TRN_QVD_PATH = 'lib://OCDSKGData/02_QVD_DB/02_Transaction_Plan/';
+SET FILES_PATH = 'lib://OCDSKGData/01_DataFiles/';
+SET LOCAL_FILES_PATH = 'lib://OCDSKGData/03_LocalFiles/';
+
+
+SET vPrefix = '_';
+SET Lan1Name = 'Ru';
+SET Lan2Name = 'En';
+SET Lan3Name = 'Kg';
+
+SET notSpecVal = 'not specified';
+
+// For Report Builder
+SET vMaxDimensions = 4;
+SET vMaxMeasures = 4;
+
+SET vPlanURL = 'http://zakupki.gov.kg/popp/view/procurement-plan/detail.xhtml?id=';
+
+SET vYESText = 'YES (ДА)';
+SET vNOText = 'NO (НЕТ)';
+
+//1. Procedures
+SUB FullCPVHierarchyLower(init_table, init_id_field, cpv_class_id_field, cpv_dic_table, cpv_dic_id_field, cpv_dic_name_field, scheme_field)
+//						 'PlanItems', 'PlanItemId',  'ItemCPVokgzCode',  'CPVClass',    'IDClassCPVOrig', 'CPVClassName',     'PlanItemScheme'
+  Left Join($(init_table))
+  Load 
+       [$(init_id_field)],
+       Left([$(cpv_class_id_field)], 2)&'000000' as CPVItem2,
+       if(mid([$(cpv_class_id_field)], 3, 1) like '0', '$(notSpecVal)', left([$(cpv_class_id_field)], 3)&'00000') as CPVItem3,
+       if(mid([$(cpv_class_id_field)], 4, 1) like '0', '$(notSpecVal)', left([$(cpv_class_id_field)], 4)&'0000') as CPVItem4,
+       if(mid([$(cpv_class_id_field)], 5, 1) like '0', '$(notSpecVal)', left([$(cpv_class_id_field)], 5)&'000') as CPVItem5,
+       if(mid([$(cpv_class_id_field)], 6, 1) like '0', '$(notSpecVal)', left([$(cpv_class_id_field)], 6)&'00') as CPVItem6,
+       if(mid([$(cpv_class_id_field)], 7, 1) like '0', '$(notSpecVal)', left([$(cpv_class_id_field)], 7)&'0') as CPVItem7,
+       if(mid([$(cpv_class_id_field)], 8, 1) like '0', '$(notSpecVal)', left([$(cpv_class_id_field)], 8)) as CPVItem8
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'okgz';
+
+  Left Join($(init_table))
+  Load 
+       [$(init_id_field)],
+       Autonumber(CPVItem2&
+       '_'&CPVItem3&
+       '_'&CPVItem4&
+       '_'&CPVItem5&
+       '_'&CPVItem6&
+       '_'&CPVItem7&
+       '_'&CPVItem8, 'CPVFullHierarchyCode')*100000 as [$(init_table)_CPVFullHierarchyCode]
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'okgz';
+
+  [$(init_table)FullCPVHierarchy]:
+  Load Distinct
+       CPVItem2,
+       CPVItem3,
+       CPVItem4,
+       CPVItem5,
+       CPVItem6,
+       CPVItem7,
+       CPVItem8,
+       [$(init_table)_CPVFullHierarchyCode]
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'okgz';
+
+  [$(init_table)_$(cpv_dic_table)]:
+  Load
+       left([$(cpv_dic_id_field)], 8) as $(init_table)_IDCPV,
+       [$(cpv_dic_id_field)] as FullCPVCode,
+       [$(cpv_dic_name_field)Ru] as CPVNameRu,
+       [$(cpv_dic_name_field)En] as CPVNameEn,
+       [$(cpv_dic_name_field)Kg] as CPVNameKg
+  Resident $(cpv_dic_table)
+  Where Len([$(cpv_dic_id_field)]) = 10; 
+  // Ограничил 10 символами, т.к. в справочнике есть и 11 символов коды (9 уровень) и описание для контрольного разряда. 
+  // Для позиций уже определен мин уровень 8. 
+  // Иначе задвоение записей
+
+  FOR Each vCodeLevel in 2, 3, 4, 5, 6, 7, 8
+      left join ($(init_table)FullCPVHierarchy)
+      load 
+           $(init_table)_IDCPV as CPVItem$(vCodeLevel),
+           FirstValue(FullCPVCode) as CPVItem$(vCodeLevel)FullCPVCode,
+           FirstValue(CPVNameRu) as CPVItem$(vCodeLevel)CPVNameRu,
+           FirstValue(CPVNameEn) as CPVItem$(vCodeLevel)CPVNameEn,
+           FirstValue(CPVNameKg) as CPVItem$(vCodeLevel)CPVNameKg
+      Resident [$(init_table)_$(cpv_dic_table)]
+      Group By $(init_table)_IDCPV
+      Order By FullCPVCode;
+  NEXT vCodeLevel
+
+  Drop Table [$(init_table)_$(cpv_dic_table)];
+
+  Left Join ($(init_table)FullCPVHierarchy)
+  Load [$(init_table)_CPVFullHierarchyCode],
+       if(IsNull(CPVItem2FullCPVCode), CPVItem2, CPVItem2CPVNameRu&' - '&CPVItem2FullCPVCode) as [Division_CPV_$(init_table)Ru],
+       if(IsNull(CPVItem3FullCPVCode), CPVItem3, CPVItem3CPVNameRu&' - '&CPVItem3FullCPVCode) as [Group_CPV_$(init_table)Ru],
+       if(IsNull(CPVItem4FullCPVCode), CPVItem4, CPVItem4CPVNameRu&' - '&CPVItem4FullCPVCode) as [Class_CPV_$(init_table)Ru],
+       if(IsNull(CPVItem5FullCPVCode), CPVItem5, CPVItem5CPVNameRu&' - '&CPVItem5FullCPVCode) as [Category_CPV_$(init_table)Ru],
+       if(IsNull(CPVItem6FullCPVCode), CPVItem6, CPVItem6CPVNameRu&' - '&CPVItem6FullCPVCode) as [6_CPV_$(init_table)Ru],
+       if(IsNull(CPVItem7FullCPVCode), CPVItem7, CPVItem7CPVNameRu&' - '&CPVItem7FullCPVCode) as [7_CPV_$(init_table)Ru],
+       if(IsNull(CPVItem8FullCPVCode), CPVItem8, CPVItem8CPVNameRu&' - '&CPVItem8FullCPVCode) as [SubCategory_CPV_$(init_table)Ru],
+
+       if(IsNull(CPVItem2FullCPVCode), CPVItem2, CPVItem2CPVNameEn&' - '&CPVItem2FullCPVCode) as [Division_CPV_$(init_table)En],
+       if(IsNull(CPVItem3FullCPVCode), CPVItem3, CPVItem3CPVNameEn&' - '&CPVItem3FullCPVCode) as [Group_CPV_$(init_table)En],
+       if(IsNull(CPVItem4FullCPVCode), CPVItem4, CPVItem4CPVNameEn&' - '&CPVItem4FullCPVCode) as [Class_CPV_$(init_table)En],
+       if(IsNull(CPVItem5FullCPVCode), CPVItem5, CPVItem5CPVNameEn&' - '&CPVItem5FullCPVCode) as [Category_CPV_$(init_table)En],
+       if(IsNull(CPVItem6FullCPVCode), CPVItem6, CPVItem6CPVNameEn&' - '&CPVItem6FullCPVCode) as [6_CPV_$(init_table)En],
+       if(IsNull(CPVItem7FullCPVCode), CPVItem7, CPVItem7CPVNameEn&' - '&CPVItem7FullCPVCode) as [7_CPV_$(init_table)En],
+       if(IsNull(CPVItem8FullCPVCode), CPVItem8, CPVItem8CPVNameEn&' - '&CPVItem8FullCPVCode) as [SubCategory_CPV_$(init_table)En],
+
+       if(IsNull(CPVItem2FullCPVCode), CPVItem2, CPVItem2CPVNameKg&' - '&CPVItem2FullCPVCode) as [Division_CPV_$(init_table)Kg],
+       if(IsNull(CPVItem3FullCPVCode), CPVItem3, CPVItem3CPVNameKg&' - '&CPVItem3FullCPVCode) as [Group_CPV_$(init_table)Kg],
+       if(IsNull(CPVItem4FullCPVCode), CPVItem4, CPVItem4CPVNameKg&' - '&CPVItem4FullCPVCode) as [Class_CPV_$(init_table)Kg],
+       if(IsNull(CPVItem5FullCPVCode), CPVItem5, CPVItem5CPVNameKg&' - '&CPVItem5FullCPVCode) as [Category_CPV_$(init_table)Kg],
+       if(IsNull(CPVItem6FullCPVCode), CPVItem6, CPVItem6CPVNameKg&' - '&CPVItem6FullCPVCode) as [6_CPV_$(init_table)Kg],
+       if(IsNull(CPVItem7FullCPVCode), CPVItem7, CPVItem7CPVNameKg&' - '&CPVItem7FullCPVCode) as [7_CPV_$(init_table)Kg],
+       if(IsNull(CPVItem8FullCPVCode), CPVItem8, CPVItem8CPVNameKg&' - '&CPVItem8FullCPVCode) as [SubCategory_CPV_$(init_table)Kg]
+  Resident $(init_table)FullCPVHierarchy;
+
+  FOR Each vCodeLevel in 2, 3, 4, 5, 6, 7, 8
+      Drop Fields CPVItem$(vCodeLevel), CPVItem$(vCodeLevel)FullCPVCode, CPVItem$(vCodeLevel)CPVNameRu, CPVItem$(vCodeLevel)CPVNameEn, 
+      CPVItem$(vCodeLevel)CPVNameKg;
+  NEXT vCodeLevel
+
+//Drop Fields [$(init_table)_CPVFullHierarchyCodeOrig];// from $(init_table); //в $(init_table)FullCPVHierarchy [$(init_table)_CPVFullHierarchyCodeOrig] остается для отладки
+ENDSUB
+
+// DLO Hierarchy
+SUB FullDLOHierarchyLower(init_table, init_id_field, cpv_class_id_field, scheme_field, cpv_description, cpv_dic_table, cpv_dic_id_field, cpv_dic_name_field, dlo_dic_table, dlo_dic_name_field, dlo_dic_id_field)
+  //					 'PlanItems', 'PlanItemId', 'ItemCPVokgzCode', 'PlanItemScheme', 'ItemCPVokgzName', 'CPVClass', 'IDClassCPVOrig',  'CPVClassName',    'DLOClass',   'DLOClassName',     'IDClassDLOOrig'
+  Left Join($(init_table))
+  Load 
+       [$(init_id_field)],
+       if(Len([$(cpv_class_id_field)])>3, [$(cpv_class_id_field)], '$(notSpecVal)') as $(init_table)_CPV8DLO_id
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'dlo';
+  
+  Left Join($(init_table))
+  Load 
+       [$(init_id_field)],
+       AutoNumber($(init_table)_CPV8DLO_id, '$(init_table)dlo') as $(init_table)_CPV8DLOCode
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'dlo';
+  
+
+  
+  Left Join($(init_table))
+  Load 
+       $(init_table)_CPV8DLOCode,
+       LastValue([$(cpv_description)]) as [$(cpv_description)Dist]
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'dlo'
+  Group By $(init_table)_CPV8DLOCode
+  Order By [$(cpv_description)];
+  
+  [$(init_table)FullDLOHierarchy]:
+  Load Distinct
+       $(init_table)_CPV8DLOCode,
+       if($(init_table)_CPV8DLO_id='$(notSpecVal)', $(init_table)_CPV8DLO_id, 
+       	[$(cpv_description)Dist]&' - '&$(init_table)_CPV8DLO_id) as CPV8DLO_$(init_table)Ru,
+       if($(init_table)_CPV8DLO_id='$(notSpecVal)', $(init_table)_CPV8DLO_id, 
+       	[$(cpv_description)Dist]&' - '&$(init_table)_CPV8DLO_id) as CPV8DLO_$(init_table)En,
+       if($(init_table)_CPV8DLO_id='$(notSpecVal)', $(init_table)_CPV8DLO_id, 
+       	[$(cpv_description)Dist]&' - '&$(init_table)_CPV8DLO_id) as CPV8DLO_$(init_table)Kg
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'dlo';
+  
+  Left Join ([$(init_table)FullDLOHierarchy])
+  Load
+  		[$(dlo_dic_name_field)Ru]&' - '&$(dlo_dic_id_field) as CPV2DLO_$(init_table)Ru,
+        [$(dlo_dic_name_field)En]&' - '&$(dlo_dic_id_field) as CPV2DLO_$(init_table)En,
+        [$(dlo_dic_name_field)Kg]&' - '&$(dlo_dic_id_field) as CPV2DLO_$(init_table)Kg
+  Resident  $(dlo_dic_table);     
+  
+  Drop Fields $(init_table)_CPV8DLO_id, [$(cpv_description)Dist];
+//  Drop Fields CPVNameEn, CPVNameKg From [$(init_table)];
+ENDSUB
+
+//Procedures for translation app fields
+SUB translationsJoin (tableName, keyField)
+
+  FieldNames_tmp:
+  NoConcatenate
+  Load 
+      "Index",
+      [$(Lan1Name)],
+      [$(Lan2Name)],
+      [$(Lan3Name)]
+  Resident FieldNamesTable
+  Where Index like '$(tableName)';
+  
+  TRACE $(tableName);
+
+  Let vLan1FieldName = Peek('$(Lan1Name)', -1, 'FieldNames_tmp');
+  Let vLan2FieldName = Peek('$(Lan2Name)', -1, 'FieldNames_tmp');
+  Let vLan3FieldName = Peek('$(Lan3Name)', -1, 'FieldNames_tmp');
+
+  Left Join("$(tableName)")
+  Load Index as "$(keyField)",
+       [$(Lan1Name)] as "$(vLan1FieldName)",
+       [$(Lan2Name)] as "$(vLan2FieldName)",
+       [$(Lan3Name)] as "$(vLan3FieldName)"
+  Resident InnerDictionaries
+  Where attributeOf like '$(tableName)';
+
+  Drop Table FieldNames_tmp;
+
+ENDSUB
+
+
+SUB translationsNewTable (newTableName, existingTableName, keyField)
+// 0 - wo KEEP
+  FieldNames_tmp:
+  NoConcatenate
+  Load 
+      "Index",
+      [$(Lan1Name)],
+      [$(Lan2Name)],
+      [$(Lan3Name)]
+  Resident FieldNamesTable
+  Where Index like '$(newTableName)';
+  
+  TRACE $(tableName);
+
+  Let vLan1FieldName = Peek('$(Lan1Name)', -1, 'FieldNames_tmp');
+  Let vLan2FieldName = Peek('$(Lan2Name)', -1, 'FieldNames_tmp');
+  Let vLan3FieldName = Peek('$(Lan3Name)', -1, 'FieldNames_tmp');
+
+  IF existingTableName <> 0 THEN
+    [$(newTableName)]:
+    Left Keep("$(existingTableName)")
+    Load 
+        "Index" as [$(keyField)],
+        [$(Lan1Name)] as [$(vLan1FieldName)],
+        [$(Lan2Name)] as [$(vLan2FieldName)],
+        [$(Lan3Name)] as [$(vLan3FieldName)]
+    Resident InnerDictionaries
+    Where attributeOf Like '$(newTableName)';
+    
+    ELSEIF existingTableName = 0 THEN
+    	[$(newTableName)]:
+    	Load 
+            "Index" as [$(keyField)],
+            [$(Lan1Name)] as [$(vLan1FieldName)],
+            [$(Lan2Name)] as [$(vLan2FieldName)],
+            [$(Lan3Name)] as [$(vLan3FieldName)]
+    	Resident InnerDictionaries
+    	Where attributeOf Like '$(newTableName)';
+  ENDIF
+
+  Drop Table FieldNames_tmp;
+
+ENDSUB
+
+SUB translationsJoinInners(tableName, keyField)
+
+  JoinTypes:
+  Load Distinct Reference as joinType
+  Resident InnerDictionaries
+  Where attributeOf Like '$(tableName)';
+
+  For Each vJoinType in FieldValueList('joinType')
+
+    Left Join("$(tableName)")
+    LOAD Index as "$(keyField)",
+         [$(Lan1Name)] as "$(vPrefix)$(tableName)$(vJoinType)$(Lan1Name)",
+         [$(Lan2Name)] as "$(vPrefix)$(tableName)$(vJoinType)$(Lan2Name)",
+         [$(Lan3Name)] as "$(vPrefix)$(tableName)$(vJoinType)$(Lan3Name)"
+    Resident InnerDictionaries
+    Where attributeOf like '$(tableName)' AND Reference Like '$(vJoinType)';
+
+  Next vJoinType
+
+  Drop Table JoinTypes;
+
+ENDSUB
+
+//2. Transactions
+Directory $(TRN_QVD_PATH);
+
+Plans_:
+LOAD
+    PlanYearId,
+    PlanYear, //as _PlanYear,
+    DateCreated,
+//    DateTimeCreated,
+    DateChanged,
+//    DateTimeChanged,
+    PlanStatus,
+    PlanType,
+    PlanId, //as _PlanId,
+    AccountNumber,
+    AccountName,
+    AccountNameNumber,
+    BudgetLineID,
+    BudgetLineName,
+    BudgetLineNameID,
+//     BudgetLineDateCreated,
+//     BudgetLineDateTimeCreated,
+    PlanValue,
+    PlanCurrency,
+//    PlanReservedAmount,
+//    PlanSavedAmount,
+    BuyerId
+FROM [Plans.qvd] (qvd);
+
+Plans:
+Load
+	 *,
+     RowNo() as PlanKey
+Resident Plans_;
+
+Drop Table Plans_;
+
+
+PlanItems:
+LOAD
+    PlanId,
+//    PlanYearId,
+    PlanItemId,
+    ItemQuantity,
+    PlanItemUnitName,
+    PlanItemValue,
+//    PlanItemUnitCurrency,
+    ItemCPVokgzCode, 
+    ItemCPVokgzName, 
+    PlanItemScheme
+//    PlanItemUnitValue
+FROM [PlanItems.qvd] (qvd);
+
+
+Lots:
+LOAD
+    IDLotOrig as LotId, 
+    PlanId, 
+    lot_status as LotStatus, 
+    lot_amount as LotValue
+FROM Lot.qvd (qvd)
+Where Exists(PlanId);
+
+//3. Dictionary
+Directory $(DIC_QVD_PATH);
+
+PlanBuyers:
+LOAD
+    BuyerId,
+    BuyerName,
+    BuyerNameId,
+    BuyerRegion as BuyerRegionRu
+FROM [PlanBuyers.qvd] (qvd);
+
+Left Join (PlanBuyers)
+Load
+	 RegionRu as BuyerRegionRu,
+     RegionEn as BuyerRegionEn,
+     RegionKg as BuyerRegionKg
+From Region_Dictionaries.qvd (qvd);     
+
+CPVClass:
+LOAD
+    IDClassCPVOrig,
+    CPVClassNameRu,
+    CPVClassNameEn,
+    CPVClassNameKg
+FROM [CPVClassification.qvd] (qvd);
+
+DLOClass:
+Load * Inline [
+IDClassDLOOrig,     DLOClassNameRu,		DLOClassNameEn,											DLOClassNameKg
+93000000-3, 		ЭБД ЛС и МИ КР,		Local eCatalogue of medicines and medical products,		КР ДК жана МБ МЭБ
+];
+
+Concatenate(CPVClass)
+Load
+	 IDClassDLOOrig as IDClassCPVOrig,     
+     DLOClassNameRu as CPVClassNameRu,		
+     DLOClassNameEn as CPVClassNameEn,											
+     DLOClassNameKg as CPVClassNameKg
+Resident DLOClass;
+
+Concatenate (CPVClass)
+Load Distinct
+	 ItemCPVokgzCode as IDClassCPVOrig,
+     ItemCPVokgzName as CPVClassNameRu,
+     ItemCPVokgzName as CPVClassNameEn,
+     ItemCPVokgzName as CPVClassNameKg
+Resident PlanItems
+Where NOT Exists(IDClassCPVOrig, ItemCPVokgzCode);     
+
+CPVClassification:
+Left Keep (PlanItems)
+LOAD
+    IDClassCPVOrig as ItemCPVokgzCode, 
+    CPVClassNameRu&' - '&IDClassCPVOrig as ItemCPVokgzCodeNameRu,
+    CPVClassNameEn&' - '&IDClassCPVOrig as ItemCPVokgzCodeNameEn,
+    CPVClassNameKg&' - '&IDClassCPVOrig as ItemCPVokgzCodeNameKg
+Resident CPVClass;
+
+Concatenate (CPVClassification)
+Load
+	 '^' as ItemCPVokgzCode, 
+	 '$(notSpecVal)' as ItemCPVokgzCodeNameRu,
+     '$(notSpecVal)' as ItemCPVokgzCodeNameEn,
+     '$(notSpecVal)' as ItemCPVokgzCodeNameKg
+AutoGenerate 1;     
+
+
+
+CALL FullCPVHierarchyLower('PlanItems', 'PlanItemId', 'ItemCPVokgzCode', 'CPVClass', 'IDClassCPVOrig', 'CPVClassName', 'PlanItemScheme');
+
+CALL FullDLOHierarchyLower('PlanItems', 'PlanItemId', 'ItemCPVokgzCode', 'PlanItemScheme', 'ItemCPVokgzName', 'CPVClass', 'IDClassCPVOrig', 'CPVClassName', 'DLOClass', 'DLOClassName', 'IDClassDLOOrig');					 
+
+Left Join (PlanItems)
+Load
+	 PlanItemId,
+     PlanItems_CPVFullHierarchyCode as PlanItems_CPVFullHierarchyCode_  
+Resident PlanItems; 
+
+Drop Field PlanItems_CPVFullHierarchyCode From PlanItems;
+
+Left Join (PlanItems)
+Load
+	 PlanItemId,
+     if(PlanItemScheme = 'okgz', PlanItems_CPVFullHierarchyCode_, PlanItems_CPV8DLOCode) as PlanItems_CPVFullHierarchyCode  
+Resident PlanItems; 
+Drop Field PlanItems_CPVFullHierarchyCode_ From PlanItems;
+
+Concatenate (PlanItemsFullCPVHierarchy)
+Load
+	 PlanItems_CPV8DLOCode as PlanItems_CPVFullHierarchyCode,
+     CPV8DLO_PlanItemsRu as SubCategory_CPV_PlanItemsRu,
+     CPV8DLO_PlanItemsEn as SubCategory_CPV_PlanItemsEn,
+     CPV8DLO_PlanItemsKg as SubCategory_CPV_PlanItemsKg,
+    
+     CPV2DLO_PlanItemsRu as Division_CPV_PlanItemsRu,
+     CPV2DLO_PlanItemsEn as Division_CPV_PlanItemsEn,
+     CPV2DLO_PlanItemsKg as Division_CPV_PlanItemsKg
+Resident PlanItemsFullDLOHierarchy; 
+
+Drop Table PlanItemsFullDLOHierarchy;
+Drop Field PlanItems_CPV8DLOCode;
+
+Drop Tables CPVClass, DLOClass;
+
+//4. Variables
+SET vPlanYearId = PlanYearId;
+SET vPlanYear = PlanYear;
+SET vDateCreated = DateCreated; // Дата подачи плана; Дата публикации
+SET vDateChanged = DateChanged;
+SET vDatePublished = Дата; // Дата подачи плана; Дата публикации
+SET vPlanStatus = PlanStatus;
+SET vPlanType = PlanType;
+SET vAccountName = AccountName;
+SET vAccountNumber = AccountNumber;
+SET vAccountNameNumber = AccountNameNumber;
+SET vbudgetLineID = BudgetLineID;
+SET vbudgetLineName = BudgetLineName;
+SET vbudgetLineNameID = BudgetLineNameID;
+SET vPlanId = PlanId;
+SET vPlanValue = PlanValue;
+SET vPlanItemId = PlanItemId;
+SET vPlanItemValue = PlanItemValue;
+SET vItemCPVokgzCode = ItemCPVokgzCode;
+SET vItemCPVokgzName = ItemCPVokgzName;
+SET vItemCPVokgzCodeName = ItemCPVokgzCodeName;
+SET vPlanItemQuantity = ItemQuantity;
+SET vPlanItemUnitName = PlanItemUnitName;
+
+SET vBuyerId = BuyerId;
+SET vBuyerName = BuyerName;
+SET vBuyerNameId = BuyerNameId;
+SET vBuyerRegion = BuyerRegion;
+
+SET vLotId = LotId;
+SET vLotStatus = LotStatus;
+SET vPlanLotID = PlanLotID;
+SET vLotValue = LotValue;
+//SET vLotCurrency = LotCurrency;
+
+// === KPIs ===
+SET PARAMS = (=replace('$1', ';', ',')); 
+
+SET _PLANS_COUNT_ = 'COUNT({<$'&PARAMS&'>} Distinct $(vPlanId)'&')';
+LET vPlansCount = $(_PLANS_COUNT_);
+
+SET _PLAN_AMOUNT_ = 'SUM({<$'&PARAMS&'>} $(vPlanValue)'&')';
+LET vPlanAmount = $(_PLAN_AMOUNT_);
+
+SET _BUYER_COUNT_ = 'COUNT({<$'&PARAMS&'>} Distinct $(vBuyerId)'&')';
+LET vBuyersCount = $(_BUYER_COUNT_);
+
+SET _LOT_AMOUNT_ = 'SUM({<$'&PARAMS&'>} $(vLotValue)'&')';
+LET vLotAmount = $(_LOT_AMOUNT_);
+
+LET v%PlanExecution = $(_LOT_AMOUNT_)&'/'&$(_PLAN_AMOUNT_);
+
+SET _PLAN_ITEM_AMOUNT_ = 'SUM({<$'&PARAMS&'>} $(vPlanItemValue)'&')';
+LET vPlanItemsAmount = $(_PLAN_ITEM_AMOUNT_);
+
+SET _PLAN_QTY_ = 'SUM({<$'&PARAMS&'>} $(vPlanItemQuantity)'&')';
+LET vPlanQty = $(_PLAN_QTY_);
+
+SET _BUYER_QTY_ = 'COUNT({<$'&PARAMS&'>} Distinct $(vBuyerId)'&')';
+LET vBuyerQty = $(_BUYER_QTY_);
+
+//5. Multilang
+// Field names of multilanguage dictionaries
+FieldNamesTable:
+LOAD
+    "Index",
+    Reference,
+    Ru,
+    En,
+    Kg
+FROM [$(DIC_QVD_PATH)Multilang_FieldNames.qvd] (qvd);
+
+// Names and Labels for internal KPI tables and dimensions
+InnerDictionaries:
+LOAD
+    "Index",
+    Reference,
+    Ru,
+    En,
+    Kg,
+    attributeOf
+FROM [$(DIC_QVD_PATH)Multilang_Dictionaries.qvd] (qvd);
+
+SET Verbatim = 1;
+// Multilingual interface labels
+Translations:
+NoConcatenate
+load     
+	"Index",
+    Reference,
+    Ru,
+    En,
+    Kg
+From [$(DIC_QVD_PATH)Multilang_Labels.qvd] (qvd);
+
+Language:
+CROSSTABLE (Language, Translation) LOAD 
+	 Index, 
+     Ru,
+     En,
+     Kg
+RESIDENT Translations;
+
+LanguageList:
+LOAD Distinct
+	 Language as _Language
+RESIDENT Language
+WHERE Language > 0;
+
+left join(LanguageList)
+LOAD
+    Index as _Language,
+    Ru as _Index
+Resident InnerDictionaries
+Where attributeOf Like 'LanguageList';
+
+DROP TABLE Translations;
+
+// Vars for interface translation
+LET T = replace('_T_$1_@(=FirstSortedValue(distinct _Language, _Index))', '@', '$');
+
+LET vTranslationsRows = NoOfRows('Language');
+
+FOR i = 0 TO vTranslationsRows - 1 
+	LET _vTranslationId = Peek('Index', i, 'Language');
+	LET _vTranslation = Peek('Translation', i, 'Language');
+	LET _vTrLanguage = Peek('Language', i, 'Language');
+	
+	LET _vTrName = '_T_$(_vTranslationId)_$(_vTrLanguage)';
+	LET $(_vTrName) = '$(_vTranslation)';
+	
+	LET _vTranslationId =;
+	LET _vTranslation =;
+	LET _vTrLanguage =;
+	LET _vTrName =;
+NEXT
+
+DROP Table Language;
+
+
+// Vars for sheet description translation
+Translations:
+Load 
+	 "Index",
+     Ru,
+     En,
+     Kg
+From [$(DIC_QVD_PATH)TranslationsHelp.qvd] (qvd);
+
+Language:
+CROSSTABLE (Language, Translation) LOAD 
+	 Index, 
+     Ru,
+     En,
+     Kg
+RESIDENT Translations;
+
+// Vars for helps translation
+LET H = replace('_H_$1_@(=FirstSortedValue(_Language, _Index))', '@', '$');
+
+LET vTranslationsRows = NoOfRows('Language');
+
+FOR i = 0 TO vTranslationsRows - 1 
+	LET _vTranslationId = Peek('Index', i, 'Language');
+	LET _vTranslation = Peek('Translation', i, 'Language');
+	LET _vTrLanguage = Peek('Language', i, 'Language');
+	
+	LET _vTrName = '_H_$(_vTranslationId)_$(_vTrLanguage)';
+	LET $(_vTrName) = '$(_vTranslation)';
+	
+	LET _vTranslationId =;
+	LET _vTranslation =;
+	LET _vTrLanguage =;
+	LET _vTrName =;
+NEXT
+
+DROP Tables Language, Translations;
+
+//6. Calendar
+MinMaxDates:
+LOAD 
+	Min(DateCreatedTmp) as MinDate,
+	Max(DateCreatedTmp) as MaxDate;	
+
+LOAD Num(Fieldvalue('DateCreated',RecNo())) as DateCreatedTmp 
+AUTOGENERATE FieldValueCount('DateCreated'); 
+
+LET vMinDate = Date(Peek('MinDate', -1, 'MinMaxDates'));
+LET vMaxDate = Date(Peek('MaxDate', -1, 'MinMaxDates'));
+
+DROP TABLE MinMaxDates;
+
+SET MonthNames='$(_T_16_Ru)';
+
+Calendar:
+Left Keep (Plans)
+Load
+	 DateCreated,
+     DateCreated as Дата,
+     Dual(Year(DateCreated)&'-'&Month(DateCreated), (Year(DateCreated)-1) * 12 + Month(DateCreated)) as [$(_T_18_Ru)],
+     Month(DateCreated) as [$(_T_31_Ru)]
+;
+LOAD Date('$(vMinDate)' + RecNo() - 1) as DateCreated
+AutoGenerate vMaxDate - vMinDate + 1;    
+
+SET MonthNames='$(_T_16_En)';
+
+Left Join (Calendar)
+Load
+	 DateCreated,
+     Dual(Year(DateCreated)&'-'&Month(DateCreated), (Year(DateCreated)-1) * 12 + Month(DateCreated)) as [$(_T_18_En)],
+     Month(DateCreated) as [$(_T_31_En)]
+Resident Calendar;     
+
+SET MonthNames='$(_T_16_Kg)';
+
+Left Join (Calendar)
+Load
+	 DateCreated,
+     Dual(Year(DateCreated)&'-'&Month(DateCreated), (Year(DateCreated)-1) * 12 + Month(DateCreated)) as [$(_T_18_Kg)],
+     Month(DateCreated) as [$(_T_31_Kg)]
+Resident Calendar;     
+
+//7. Interface/Trans Tables
+// Actual Plan
+DIMAP:
+Load * Inline [
+_DIMAP
+1
+2
+];
+
+
+// For Report Builder
+KDIM:
+Load * Inline [
+_DIM
+1
+2
+3
+4
+5
+6
+7
+8
+9
+A
+B
+C
+];
+
+KMES:
+Load * Inline [
+_MES
+1
+2
+3
+4
+5
+];
+
+CALL translationsJoinInners('KDIM', '_DIM');
+CALL translationsJoinInners('KMES', '_MES');
+
+
+CALL translationsJoinInners('DIMAP', '_DIMAP');
+
+CALL translationsNewTable('PlanStatus', 'Plans', 'PlanStatus');
+CALL translationsNewTable('PlanType', 'Plans', 'PlanType');
+
+CALL translationsNewTable('LotStatus', 'Lots', 'LotStatus'); 
+
+
+Drop tables FieldNamesTable, InnerDictionaries;
+
+SET NumConvertRu = "Pick(RangeSum(Floor(LOG10($1)),1), NUM($1, '# ##0'), NUM($1, '# ##0'), NUM($1, '# ##0'), NUM($1/1000, '# ##0,00 $(_T_9_Ru)', ',', ' '), NUM($1/1000, '# ##0,00 $(_T_9_Ru)', ',', ' '), NUM($1/1000, '# ##0,00 $(_T_9_Ru)', ',', ' '), NUM($1/1000000, '# ##0,00 $(_T_10_Ru)', ',', ' '), NUM($1/1000000, '# ##0,00 $(_T_10_Ru)', ',', ' '), NUM($1/1000000, '# ##0,00 $(_T_10_Ru)', ',', ' '), NUM($1/1000000000, '# ##0,00 $(_T_11_Ru)', ',', ' '), NUM($1/1000000000, '# ##0,00 $(_T_11_Ru)', ',', ' '), NUM($1/1000000000, '# ##0,00 $(_T_11_Ru)', ',', ' '), NUM($1/1000000000000, '# ##0,00 $(_T_12_Ru)', ',', ' '), NUM($1/1000000000000, '# ##0,00 $(_T_12_Ru)', ',', ' '), NUM($1/1000000000000, '# ##0,00 $(_T_12_Ru)', ',', ' '))";
+SET NumConvertEn = "Pick(RangeSum(Floor(LOG10($1)),1), NUM($1, '# ##0'), NUM($1, '# ##0'), NUM($1, '# ##0'), NUM($1/1000, '# ##0,00$(_T_9_En)', ',', ' '), NUM($1/1000, '# ##0,00$(_T_9_En)', ',', ' '), NUM($1/1000, '# ##0,00$(_T_9_En)', ',', ' '), NUM($1/1000000, '# ##0,00$(_T_10_En)', ',', ' '), NUM($1/1000000, '# ##0,0$(_T_10_En)', ',', ' '), NUM($1/1000000, '# ##0,00$(_T_10_En)', ',', ' '), NUM($1/1000000000, '# ##0,00$(_T_11_En)', ',', ' '), NUM($1/1000000000, '# ##0,00$(_T_11_En)', ',', ' '), NUM($1/1000000000, '# ##0,00$(_T_11_En)', ',', ' '), NUM($1/1000000000000, '# ##0,00$(_T_12_En)', ',', ' '), NUM($1/1000000000000, '# ##0,00$(_T_12_En)', ',', ' '), NUM($1/1000000000000, '# ##0,00$(_T_12_En)', ',', ' '))";
+SET NumConvertKg = "Pick(RangeSum(Floor(LOG10($1)),1), NUM($1, '# ##0'), NUM($1, '# ##0'), NUM($1, '# ##0'), NUM($1/1000, '# ##0,00 $(_T_9_Kg)', ',', ' '), NUM($1/1000, '# ##0,00 $(_T_9_Kg)', ',', ' '), NUM($1/1000, '# ##0,00 $(_T_9_Kg)', ',', ' '), NUM($1/1000000, '# ##0,00 $(_T_10_Kg)', ',', ' '), NUM($1/1000000, '# ##0,00 $(_T_10_Kg)', ',', ' '), NUM($1/1000000, '# ##0,00 $(_T_10_Kg)', ',', ' '), NUM($1/1000000000, '# ##0,00 $(_T_11_Kg)', ',', ' '), NUM($1/1000000000, '# ##0,00 $(_T_11_Kg)', ',', ' '), NUM($1/1000000000, '# ##0,00 $(_T_11_Kg)', ',', ' '), NUM($1/1000000000000, '# ##0,00 $(_T_12_Kg)', ',', ' '), NUM($1/1000000000000, '# ##0,00 $(_T_12_Kg)', ',', ' '), NUM($1/1000000000000, '# ##0,00 $(_T_12_Kg)', ',', ' '))";
+
+//8. Validator
+PlanErrors:
+Load * Inline [
+PlanKey_, Quality, ErrorType
+];
+
+// Absent Items
+AbsentItems:
+Load
+	 PlanKey,
+     PlanId
+Resident Plans
+Where NOT IsNull(PlanId);    
+
+Left Join (AbsentItems)
+Load Distinct
+	 PlanId,
+     1 as PresentItemFlag
+Resident  PlanItems;   
+
+Concatenate (PlanErrors)
+Load
+	 PlanKey as PlanKey_,
+     0 as Quality,
+     'AbsentItems' as ErrorType
+Resident  AbsentItems
+Where PresentItemFlag <> 1;
+
+Drop Table AbsentItems;
+
+// Good Plans
+Concatenate (PlanErrors)
+Load
+	 PlanKey as PlanKey_,
+     1 as Quality
+Resident Plans
+Where NOT Exists(PlanKey_, PlanKey);    
+
+PlanQuality:
+Load
+	 PlanKey_ as PlanKey,
+     Dual(if(Quality=1, '$(vYESText)', '$(vNOText)'), Quality) as [Valid Plans],
+     ErrorType
+Resident  PlanErrors;
+
+Drop Table PlanErrors;
