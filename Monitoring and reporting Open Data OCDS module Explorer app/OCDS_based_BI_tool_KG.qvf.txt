@@ -1,0 +1,2952 @@
+﻿//Main
+//Technical task  https://docs.google.com/spreadsheets/d/1YrJWy67tpgEo2GomPbx0Fp2gYMT7JLArQt8AY1bdfUs
+// + OLD Changes https://docs.google.com/spreadsheets/d/1ybRl-q_GBroTH8QsB-2VeyAll93_BSGwruh8FieV1G4/edit#gid=435002557
+SET ThousandSep=' ';
+SET DecimalSep=',';
+SET MoneyThousandSep=' ';
+SET MoneyDecimalSep=',';
+SET MoneyFormat='# ##0,00 ⊆;-# ##0,00 ⊆';
+SET TimeFormat='hh:mm:ss';
+SET DateFormat='DD.MM.YYYY';
+SET TimestampFormat='DD.MM.YYYY hh:mm:ss[.fff]';
+SET FirstWeekDay=0;
+SET BrokenWeeks=1;
+SET ReferenceDay=0;
+SET FirstMonthOfYear=1;
+SET CollationLocale='en-GB';
+SET CreateSearchIndexOnReload=1; 
+SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
+Set DayNames='Mon;Tue;Wed;Thu;Fri;Sat;Sun';
+SET LongMonthNames='January;February;March;April;May;June;July;August;September;October;November;December';
+SET LongDayNames='Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday';
+SET NumericalAbbreviation='3:k;6:M;9:G;12:T;15:P;18:E;21:Z;24:Y;-3:m;-6:μ;-9:n;-12:p;-15:f;-18:a;-21:z;-24:y';
+SET HidePrefix = '_';
+
+SET DISABLE_INSIGHTS = 1;
+
+LET vCurrentDate = Today(1);
+
+SET DIC_QVD_PATH = 'lib://OCDSKGData/02_QVD_DB/01_Dictionary/';
+SET TRN_QVD_PATH = 'lib://OCDSKGData/02_QVD_DB/02_Transaction/';
+SET FILES_PATH = 'lib://OCDSKGData/01_DataFiles/';
+SET LOCAL_FILES_PATH = 'lib://OCDSKGData/03_LocalFiles/';
+
+SET VALID_TRN_QVD_PATH = 'lib://OCDSKGData/02_QVD_DB/02_Transaction_Valid/';
+
+SET PLAN_TRN_QVD_PATH = 'lib://OCDSKGData/02_QVD_DB/02_Transaction_Plan/';
+
+//SET vOutboundURL = '';
+Set vPrefix = '_';
+SET Lan1Name = 'Ru';
+SET Lan2Name = 'En';
+SET Lan3Name = 'Kg';
+
+SET vMaxDimensions = 4;
+SET vMaxMeasures = 4;
+SET vTenderUrl = 'http://zakupki.gov.kg/popp/view/order/view.xhtml?id=';
+
+SET vYESText = 'YES (ДА)';
+SET vNOText = 'NO (НЕТ)';
+
+//0. Procedures
+SET vCPVItemNotSpecified_field_value = 'not specified';
+
+SUB FullCPVHierarchyLower(init_table, init_id_field, cpv_class_id_field, gsw_id_field, cpv_dic_table, cpv_dic_id_field, cpv_dic_name_field, scheme_field)
+//							'Items', 'IDItemOrig', 'items_classification_id', 'items_classification_gsw', 'CPVClassification', 'IDClassCPVOrig', 'CPVClassName', 'items_classification_scheme'
+  left join($(init_table))
+  Load 
+       [$(init_id_field)],
+       left([$(cpv_class_id_field)], 2)&'000000' as CPVItem2,
+       if(mid([$(cpv_class_id_field)], 3, 1) like '0', '$(vCPVItemNotSpecified_field_value)', left([$(cpv_class_id_field)], 3)&'00000') as CPVItem3,
+       if(mid([$(cpv_class_id_field)], 4, 1) like '0', '$(vCPVItemNotSpecified_field_value)', left([$(cpv_class_id_field)], 4)&'0000') as CPVItem4,
+       if(mid([$(cpv_class_id_field)], 5, 1) like '0', '$(vCPVItemNotSpecified_field_value)', left([$(cpv_class_id_field)], 5)&'000') as CPVItem5,
+       if(mid([$(cpv_class_id_field)], 6, 1) like '0', '$(vCPVItemNotSpecified_field_value)', left([$(cpv_class_id_field)], 6)&'00') as CPVItem6,
+       if(mid([$(cpv_class_id_field)], 7, 1) like '0', '$(vCPVItemNotSpecified_field_value)', left([$(cpv_class_id_field)], 7)&'0') as CPVItem7,
+       if(mid([$(cpv_class_id_field)], 8, 1) like '0', '$(vCPVItemNotSpecified_field_value)', left([$(cpv_class_id_field)], 8)) as CPVItem8
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'OKGZ';
+
+  left join($(init_table))
+  Load 
+       [$(init_id_field)],
+       if([$(scheme_field)] = 'OKGZ',
+       CPVItem2&
+       '_'&CPVItem3&
+       '_'&CPVItem4&
+       '_'&CPVItem5&
+       '_'&CPVItem6&
+       '_'&CPVItem7&
+       '_'&CPVItem8,
+          [$(cpv_class_id_field)]) as [$(init_table)_CPVFullHierarchyCodeOrig]
+       ,
+       if([$(scheme_field)] = 'OKGZ',
+       Autonumber(CPVItem2&
+       '_'&CPVItem3&
+       '_'&CPVItem4&
+       '_'&CPVItem5&
+       '_'&CPVItem6&
+       '_'&CPVItem7&
+       '_'&CPVItem8, '')*100000,
+          [$(cpv_class_id_field)]) as [$(init_table)_CPVFullHierarchyCode]
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'OKGZ';
+
+  [$(init_table)FullCPVHierarchy]:
+  Load Distinct
+       CPVItem2,
+       CPVItem3,
+       CPVItem4,
+       CPVItem5,
+       CPVItem6,
+       CPVItem7,
+       CPVItem8,
+       [$(init_table)_CPVFullHierarchyCode],
+       [$(init_table)_CPVFullHierarchyCodeOrig]
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'OKGZ'
+  ;
+
+  [$(init_table)_$(cpv_dic_table)]:
+  Load Distinct
+       left([$(cpv_dic_id_field)], 8) as $(init_table)_IDCPV,
+       [$(cpv_dic_id_field)] as FullCPVCode,
+       [$(cpv_dic_name_field)Ru] as CPVNameRu,
+       [$(cpv_dic_name_field)En] as CPVNameEn,
+       [$(cpv_dic_name_field)Kg] as CPVNameKg
+  Resident $(cpv_dic_table)
+  Where Len([$(cpv_dic_id_field)]) = 10; 
+  // Ограничил 10 символами, т.к. в справочнике есть и 11 символов коды (9 уровень) и описание для контрольного разряда. 
+  // Для позиций уже определен мин уровень 8. 
+  // Иначе задвоение записей
+
+  for each vCodeLevel in 2, 3, 4, 5, 6, 7, 8
+
+      left join ($(init_table)FullCPVHierarchy)
+      load 
+           $(init_table)_IDCPV as CPVItem$(vCodeLevel),
+           FirstValue(FullCPVCode) as CPVItem$(vCodeLevel)FullCPVCode,
+           FirstValue(CPVNameRu) as CPVItem$(vCodeLevel)CPVNameRu,
+           FirstValue(CPVNameEn) as CPVItem$(vCodeLevel)CPVNameEn,
+           FirstValue(CPVNameKg) as CPVItem$(vCodeLevel)CPVNameKg
+      Resident [$(init_table)_$(cpv_dic_table)]
+      Group By $(init_table)_IDCPV
+      Order By FullCPVCode;
+
+  next vCodeLevel;
+
+  Drop Table [$(init_table)_$(cpv_dic_table)];
+
+  left join ($(init_table)FullCPVHierarchy)
+  load [$(init_table)_CPVFullHierarchyCodeOrig],
+       if(IsNull(CPVItem2FullCPVCode), CPVItem2, CPVItem2CPVNameRu&' - '&CPVItem2FullCPVCode) as [Division_CPV_$(init_table)Ru],
+       if(IsNull(CPVItem3FullCPVCode), CPVItem3, CPVItem3CPVNameRu&' - '&CPVItem3FullCPVCode) as [Group_CPV_$(init_table)Ru],
+       if(IsNull(CPVItem4FullCPVCode), CPVItem4, CPVItem4CPVNameRu&' - '&CPVItem4FullCPVCode) as [Class_CPV_$(init_table)Ru],
+       if(IsNull(CPVItem5FullCPVCode), CPVItem5, CPVItem5CPVNameRu&' - '&CPVItem5FullCPVCode) as [Category_CPV_$(init_table)Ru],
+       if(IsNull(CPVItem6FullCPVCode), CPVItem6, CPVItem6CPVNameRu&' - '&CPVItem6FullCPVCode) as [6_CPV_$(init_table)Ru],
+       if(IsNull(CPVItem7FullCPVCode), CPVItem7, CPVItem7CPVNameRu&' - '&CPVItem7FullCPVCode) as [7_CPV_$(init_table)Ru],
+       if(IsNull(CPVItem8FullCPVCode), CPVItem8, CPVItem8CPVNameRu&' - '&CPVItem8FullCPVCode) as [SubCategory_CPV_$(init_table)Ru],
+
+       if(IsNull(CPVItem2FullCPVCode), CPVItem2, CPVItem2CPVNameEn&' - '&CPVItem2FullCPVCode) as [Division_CPV_$(init_table)En],
+       if(IsNull(CPVItem3FullCPVCode), CPVItem3, CPVItem3CPVNameEn&' - '&CPVItem3FullCPVCode) as [Group_CPV_$(init_table)En],
+       if(IsNull(CPVItem4FullCPVCode), CPVItem4, CPVItem4CPVNameEn&' - '&CPVItem4FullCPVCode) as [Class_CPV_$(init_table)En],
+       if(IsNull(CPVItem5FullCPVCode), CPVItem5, CPVItem5CPVNameEn&' - '&CPVItem5FullCPVCode) as [Category_CPV_$(init_table)En],
+       if(IsNull(CPVItem6FullCPVCode), CPVItem6, CPVItem6CPVNameEn&' - '&CPVItem6FullCPVCode) as [6_CPV_$(init_table)En],
+       if(IsNull(CPVItem7FullCPVCode), CPVItem7, CPVItem7CPVNameEn&' - '&CPVItem7FullCPVCode) as [7_CPV_$(init_table)En],
+       if(IsNull(CPVItem8FullCPVCode), CPVItem8, CPVItem8CPVNameEn&' - '&CPVItem8FullCPVCode) as [SubCategory_CPV_$(init_table)En],
+
+       if(IsNull(CPVItem2FullCPVCode), CPVItem2, CPVItem2CPVNameKg&' - '&CPVItem2FullCPVCode) as [Division_CPV_$(init_table)Kg],
+       if(IsNull(CPVItem3FullCPVCode), CPVItem3, CPVItem3CPVNameKg&' - '&CPVItem3FullCPVCode) as [Group_CPV_$(init_table)Kg],
+       if(IsNull(CPVItem4FullCPVCode), CPVItem4, CPVItem4CPVNameKg&' - '&CPVItem4FullCPVCode) as [Class_CPV_$(init_table)Kg],
+       if(IsNull(CPVItem5FullCPVCode), CPVItem5, CPVItem5CPVNameKg&' - '&CPVItem5FullCPVCode) as [Category_CPV_$(init_table)Kg],
+       if(IsNull(CPVItem6FullCPVCode), CPVItem6, CPVItem6CPVNameKg&' - '&CPVItem6FullCPVCode) as [6_CPV_$(init_table)Kg],
+       if(IsNull(CPVItem7FullCPVCode), CPVItem7, CPVItem7CPVNameKg&' - '&CPVItem7FullCPVCode) as [7_CPV_$(init_table)Kg],
+       if(IsNull(CPVItem8FullCPVCode), CPVItem8, CPVItem8CPVNameKg&' - '&CPVItem8FullCPVCode) as [SubCategory_CPV_$(init_table)Kg]
+  Resident $(init_table)FullCPVHierarchy;
+
+  for each vCodeLevel in 2, 3, 4, 5, 6, 7, 8
+      drop fields CPVItem$(vCodeLevel), CPVItem$(vCodeLevel)FullCPVCode, CPVItem$(vCodeLevel)CPVNameRu, CPVItem$(vCodeLevel)CPVNameEn, CPVItem$(vCodeLevel)CPVNameKg;
+  next vCodeLevel;
+
+  drop fields [$(init_table)_CPVFullHierarchyCodeOrig] from $(init_table); //в $(init_table)FullCPVHierarchy [$(init_table)_CPVFullHierarchyCodeOrig] 
+ENDSUB
+
+
+
+SUB FullCPVHierarchyHigher(init_table, final_table, init_id_field, final_id_field, bridge_id_field, cpv_class_id_field, gsw_id_field, cpv_dic_table, cpv_dic_id_field, cpv_dic_name_field, scheme_field)
+//'Items', 'Lots', 'IDItemOrig', 'IDLotOrig', 'items_relatedLot', 'items_classification_id', 'items_classification_gsw', 'CPVClassification', 'IDClassCPVOrig', 'CPVClassName', 'items_classification_scheme'
+//'ContractItems', 'Contracts', 'contract_items_id', 'IDContractKey', 'IDContractKey', 'items_classification_id', 'items_classification_gsw', 'CPVClassification', 'IDClassCPVOrig', 'CPVClassName', 'items_classification_scheme'
+  left join($(init_table))
+  Load Distinct
+       [$(init_id_field)],
+       left([$(cpv_class_id_field)], 2) as CPVItem2,
+       left([$(cpv_class_id_field)], 3) as CPVItem3,
+       if(mid([$(cpv_class_id_field)], 3, 1) like '0', 1) as CPVItem3_FLAG,
+       left([$(cpv_class_id_field)], 4) as CPVItem4,
+       if(mid([$(cpv_class_id_field)], 4, 1) like '0', 1) as CPVItem4_FLAG,
+       left([$(cpv_class_id_field)], 5) as CPVItem5,
+       if(mid([$(cpv_class_id_field)], 5, 1) like '0', 1) as CPVItem5_FLAG,
+       left([$(cpv_class_id_field)], 6) as CPVItem6,
+       if(mid([$(cpv_class_id_field)], 6, 1) like '0', 1) as CPVItem6_FLAG,
+       left([$(cpv_class_id_field)], 7) as CPVItem7,
+       if(mid([$(cpv_class_id_field)], 7, 1) like '0', 1) as CPVItem7_FLAG,
+       left([$(cpv_class_id_field)], 8) as CPVItem8,
+       if(mid([$(cpv_class_id_field)], 8, 1) like '0', 1) as CPVItem8_FLAG
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'OKGZ'
+  ;
+
+  left join ($(final_table))
+  load [$(bridge_id_field)] as [$(final_id_field)],
+       count(DISTINCT [$(gsw_id_field)]) as gsw_count,
+       concat(DISTINCT [$(gsw_id_field)]) as [$(final_table)_GSW_]
+       ,
+       concat(DISTINCT CPVItem2) as CPVItem2,
+       count(DISTINCT CPVItem2) as CPVItem2_count,
+       concat(DISTINCT CPVItem3) as CPVItem3,
+       count(DISTINCT CPVItem3) as CPVItem3_count,
+       count(CPVItem3_FLAG) as CPVItem3_FLAG_count
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'OKGZ' 
+  group by [$(bridge_id_field)];
+
+  left join ($(final_table))
+  load [$(bridge_id_field)] as [$(final_id_field)],
+
+       concat(DISTINCT CPVItem4) as CPVItem4,
+       count(DISTINCT CPVItem4) as CPVItem4_count,
+       count(CPVItem4_FLAG) as CPVItem4_FLAG_count,
+       concat(DISTINCT CPVItem5) as CPVItem5,
+       count(DISTINCT CPVItem5) as CPVItem5_count,
+       count(CPVItem5_FLAG) as CPVItem5_FLAG_count,
+       concat(DISTINCT CPVItem6) as CPVItem6,
+       count(DISTINCT CPVItem6) as CPVItem6_count,
+       count(CPVItem6_FLAG) as CPVItem6_FLAG_count
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'OKGZ' 
+  group by [$(bridge_id_field)];
+
+  left join ($(final_table))
+  load [$(bridge_id_field)] as [$(final_id_field)],
+       concat(DISTINCT CPVItem7) as CPVItem7,
+       count(DISTINCT CPVItem7) as CPVItem7_count,
+       count(CPVItem7_FLAG) as CPVItem7_FLAG_count,
+       concat(DISTINCT CPVItem8) as CPVItem8,
+       count(DISTINCT CPVItem8) as CPVItem8_count,
+       count(CPVItem8_FLAG) as CPVItem8_FLAG_count
+       ,count(DISTINCT [$(cpv_class_id_field)]) as CPVItem_count
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'OKGZ' //OR [$(cpv_class_id_field)] = '93000000-3'
+  group by [$(bridge_id_field)];
+
+  left join($(final_table))
+  Load [$(final_id_field)],
+       if(CPVItem2_count = 1 AND CPVItem_count = 1, CPVItem2&'000000', if(gsw_count = 1, 'Mixed '&[$(final_table)_GSW_], 'Mixed procurement categories')) as [$(final_table)_IDCPV2], 
+       if(CPVItem3_count = 1 AND CPVItem_count = 1, CPVItem3&'00000', if(CPVItem3_FLAG_count >= 1, 'Undefined', if(gsw_count = 1, 'Mixed '&[$(final_table)_GSW_], 'Mixed procurement categories'))) as [$(final_table)_IDCPV3],
+       if(CPVItem4_count = 1 AND CPVItem_count = 1, CPVItem4&'0000', if(CPVItem4_FLAG_count >= 1, 'Undefined', if(gsw_count = 1, 'Mixed '&[$(final_table)_GSW_], 'Mixed procurement categories'))) as [$(final_table)_IDCPV4],
+       if(CPVItem5_count = 1 AND CPVItem_count = 1, CPVItem5&'000', if(CPVItem5_FLAG_count >= 1, 'Undefined', if(gsw_count = 1, 'Mixed '&[$(final_table)_GSW_], 'Mixed procurement categories'))) as [$(final_table)_IDCPV5],
+       if(CPVItem6_count = 1 AND CPVItem_count = 1, CPVItem6&'00', if(CPVItem6_FLAG_count >= 1, 'Undefined', if(gsw_count = 1, 'Mixed '&[$(final_table)_GSW_], 'Mixed procurement categories'))) as [$(final_table)_IDCPV6],
+       if(CPVItem7_count = 1 AND CPVItem_count = 1, CPVItem7&'0', if(CPVItem7_FLAG_count >= 1, 'Undefined', if(gsw_count = 1, 'Mixed '&[$(final_table)_GSW_], 'Mixed procurement categories'))) as [$(final_table)_IDCPV7],
+       if(CPVItem8_count = 1 AND CPVItem_count = 1, CPVItem8, if(CPVItem8_FLAG_count >= 1, 'Undefined', if(gsw_count = 1, 'Mixed '&[$(final_table)_GSW_], 'Mixed procurement categories'))) as [$(final_table)_IDCPV8],
+       if(gsw_count = 1, 'Mixed '&[$(final_table)_GSW_], 'Mixed') as [$(final_table)_GSW]
+  Resident $(final_table)
+  Where NOT IsNull(CPVItem_count);
+
+  drop fields CPVItem3_FLAG_count, CPVItem4_FLAG_count, CPVItem5_FLAG_count, CPVItem6_FLAG_count, CPVItem7_FLAG_count, CPVItem8_FLAG_count, gsw_count, CPVItem_count, [$(final_table)_GSW_];
+
+  drop Fields CPVItem2, CPVItem3, CPVItem3_FLAG, CPVItem4, CPVItem4_FLAG, CPVItem5, CPVItem5_FLAG, CPVItem6, CPVItem6_FLAG, CPVItem7, CPVItem7_FLAG, CPVItem8, CPVItem8_FLAG from $(init_table);
+
+  Left Join ($(final_table))
+  Load Distinct
+       [$(bridge_id_field)] as [$(final_id_field)],
+       1 as $(final_table)_OKGZscheme
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'OKGZ';
+
+  left join($(final_table))
+  load [$(final_id_field)],
+       AutoNumber($(final_table)_IDCPV2
+       &'_'&$(final_table)_IDCPV3
+       &'_'&$(final_table)_IDCPV4
+       &'_'&$(final_table)_IDCPV5
+       &'_'&$(final_table)_IDCPV6
+       &'_'&$(final_table)_IDCPV7
+       &'_'&$(final_table)_IDCPV8, '$(final_table)CPVFullCode')*100000 as [$(final_table)_CPVFullHierarchyCode]
+       ,$(final_table)_IDCPV2&'_'&$(final_table)_IDCPV3&'_'&$(final_table)_IDCPV4&'_'&$(final_table)_IDCPV5&'_'&$(final_table)_IDCPV6&'_'&$(final_table)_IDCPV7&'_'&$(final_table)_IDCPV8 as [$(final_table)_CPVFullHierarchyCodeOrig]
+  Resident $(final_table)
+  Where $(final_table)_OKGZscheme = 1;
+
+  [$(final_table)FullCPVHierarchy]:
+  Load Distinct 
+       [$(final_table)_CPVFullHierarchyCode],
+       [$(final_table)_CPVFullHierarchyCodeOrig],
+       [$(final_table)_GSW] as [$(final_table)_GSW_],
+       $(final_table)_IDCPV2,
+       $(final_table)_IDCPV3,
+       $(final_table)_IDCPV4,
+       $(final_table)_IDCPV5,
+       $(final_table)_IDCPV6,
+       $(final_table)_IDCPV7,
+       $(final_table)_IDCPV8
+  Resident $(final_table)
+  Where $(final_table)_OKGZscheme = 1;
+
+  [$(final_table)_$(cpv_dic_table)]:
+  Load Distinct
+       left([$(cpv_dic_id_field)], 8) as $(final_table)_IDCPV,
+       [$(cpv_dic_id_field)] as FullCPVCode,
+       [$(cpv_dic_name_field)Ru] as CPVNameRu,
+       [$(cpv_dic_name_field)En] as CPVNameEn,
+       [$(cpv_dic_name_field)Kg] as CPVNameKg
+  Resident $(cpv_dic_table)
+  Where Len([$(cpv_dic_id_field)]) = 10; 
+  // Ограничил 10 символами, т.к. в справочнике есть и 11 символов коды (9 уровень) и описание для контрольного разряда. 
+  // Для лотов и договоров уже определен мин уровень 8. 
+  // Иначе задвоение записей
+
+
+  for each vCodeLevel in 2, 3, 4, 5, 6, 7, 8
+    left join ($(final_table)FullCPVHierarchy)
+    load 
+         $(final_table)_IDCPV as $(final_table)_IDCPV$(vCodeLevel),
+         FirstValue(FullCPVCode) as CPVItem$(vCodeLevel)FullCPVCode,
+         FirstValue(CPVNameRu) as CPVItem$(vCodeLevel)CPVNameRu,
+         FirstValue(CPVNameEn) as CPVItem$(vCodeLevel)CPVNameEn,
+         FirstValue(CPVNameKg) as CPVItem$(vCodeLevel)CPVNameKg
+    Resident [$(final_table)_$(cpv_dic_table)]
+    Group By $(final_table)_IDCPV
+    Order By FullCPVCode; 
+  next vCodeLevel
+
+  Drop Table [$(final_table)_$(cpv_dic_table)];
+
+  left join ($(final_table)FullCPVHierarchy)
+  load Distinct
+       [$(final_table)_CPVFullHierarchyCodeOrig],
+       if(IsNull(CPVItem2FullCPVCode), $(final_table)_IDCPV2, CPVItem2CPVNameRu&' - '&CPVItem2FullCPVCode) as [Division_CPV_$(final_table)Ru],
+       if(IsNull(CPVItem3FullCPVCode), $(final_table)_IDCPV3, CPVItem3CPVNameRu&' - '&CPVItem3FullCPVCode) as [Group_CPV_$(final_table)Ru],
+       if(IsNull(CPVItem4FullCPVCode), $(final_table)_IDCPV4, CPVItem4CPVNameRu&' - '&CPVItem4FullCPVCode) as [Class_CPV_$(final_table)Ru],
+       if(IsNull(CPVItem5FullCPVCode), $(final_table)_IDCPV5, CPVItem5CPVNameRu&' - '&CPVItem5FullCPVCode) as [Category_CPV_$(final_table)Ru],
+       if(IsNull(CPVItem6FullCPVCode), $(final_table)_IDCPV6, CPVItem6CPVNameRu&' - '&CPVItem6FullCPVCode) as [6_CPV_$(final_table)Ru],
+       if(IsNull(CPVItem7FullCPVCode), $(final_table)_IDCPV7, CPVItem7CPVNameRu&' - '&CPVItem7FullCPVCode) as [7_CPV_$(final_table)Ru],
+       if(IsNull(CPVItem8FullCPVCode), $(final_table)_IDCPV8, CPVItem8CPVNameRu&' - '&CPVItem8FullCPVCode) as [SubCategory_CPV_$(final_table)Ru],
+
+       if(IsNull(CPVItem2FullCPVCode), $(final_table)_IDCPV2, CPVItem2CPVNameEn&' - '&CPVItem2FullCPVCode) as [Division_CPV_$(final_table)En],
+       if(IsNull(CPVItem3FullCPVCode), $(final_table)_IDCPV3, CPVItem3CPVNameEn&' - '&CPVItem3FullCPVCode) as [Group_CPV_$(final_table)En],
+       if(IsNull(CPVItem4FullCPVCode), $(final_table)_IDCPV4, CPVItem4CPVNameEn&' - '&CPVItem4FullCPVCode) as [Class_CPV_$(final_table)En],
+       if(IsNull(CPVItem5FullCPVCode), $(final_table)_IDCPV5, CPVItem5CPVNameEn&' - '&CPVItem5FullCPVCode) as [Category_CPV_$(final_table)En],
+       if(IsNull(CPVItem6FullCPVCode), $(final_table)_IDCPV6, CPVItem6CPVNameEn&' - '&CPVItem6FullCPVCode) as [6_CPV_$(final_table)En],
+       if(IsNull(CPVItem7FullCPVCode), $(final_table)_IDCPV7, CPVItem7CPVNameEn&' - '&CPVItem7FullCPVCode) as [7_CPV_$(final_table)En],
+       if(IsNull(CPVItem8FullCPVCode), $(final_table)_IDCPV8, CPVItem8CPVNameEn&' - '&CPVItem8FullCPVCode) as [SubCategory_CPV_$(final_table)En],
+
+       if(IsNull(CPVItem2FullCPVCode), $(final_table)_IDCPV2, CPVItem2CPVNameKg&' - '&CPVItem2FullCPVCode) as [Division_CPV_$(final_table)Kg],
+       if(IsNull(CPVItem3FullCPVCode), $(final_table)_IDCPV3, CPVItem3CPVNameKg&' - '&CPVItem3FullCPVCode) as [Group_CPV_$(final_table)Kg],
+       if(IsNull(CPVItem4FullCPVCode), $(final_table)_IDCPV4, CPVItem4CPVNameKg&' - '&CPVItem4FullCPVCode) as [Class_CPV_$(final_table)Kg],
+       if(IsNull(CPVItem5FullCPVCode), $(final_table)_IDCPV5, CPVItem5CPVNameKg&' - '&CPVItem5FullCPVCode) as [Category_CPV_$(final_table)Kg],
+       if(IsNull(CPVItem6FullCPVCode), $(final_table)_IDCPV6, CPVItem6CPVNameKg&' - '&CPVItem6FullCPVCode) as [6_CPV_$(final_table)Kg],
+       if(IsNull(CPVItem7FullCPVCode), $(final_table)_IDCPV7, CPVItem7CPVNameKg&' - '&CPVItem7FullCPVCode) as [7_CPV_$(final_table)Kg],
+       if(IsNull(CPVItem8FullCPVCode), $(final_table)_IDCPV8, CPVItem8CPVNameKg&' - '&CPVItem8FullCPVCode) as [SubCategory_CPV_$(final_table)Kg]
+  Resident $(final_table)FullCPVHierarchy;
+
+  for each vCodeLevel in 2, 3, 4, 5, 6, 7, 8
+      drop fields $(final_table)_IDCPV$(vCodeLevel), CPVItem$(vCodeLevel)FullCPVCode, CPVItem$(vCodeLevel)CPVNameRu, CPVItem$(vCodeLevel)CPVNameEn, CPVItem$(vCodeLevel)CPVNameKg;
+      drop fields CPVItem$(vCodeLevel)_count; 
+      drop fields CPVItem$(vCodeLevel) from $(final_table);
+  next vCodeLevel
+
+  drop field [$(final_table)_CPVFullHierarchyCodeOrig] from $(final_table); 
+
+ENDSUB
+
+// DLO Hierarchy
+SUB FullDLOHierarchyLower(init_table, init_id_field, cpv_class_id_field, scheme_field, cpv_description, cpv_dic_table, cpv_dic_id_field, cpv_dic_name_field, dlo_dic_table, dlo_dic_name_field, dlo_dic_id_field)
+  //					'Items', 'IDItemOrig', 'items_classification_id', 'items_classification_scheme', 'items_classification_description', 'CPVClassification', 'IDClassCPVOrig', 'CPVClassName', 'DLOClassification', 'DLOClassName', 'IDClassDLOOrig'
+  Left Join($(init_table))
+  Load 
+       [$(init_id_field)],
+       if(Len([$(cpv_class_id_field)])>3, [$(cpv_class_id_field)], '$(vCPVItemNotSpecified_field_value)') as $(init_table)_CPV8DLO_id
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'DLO';
+  
+  Left Join($(init_table))
+  Load 
+       [$(init_id_field)],
+       AutoNumber($(init_table)_CPV8DLO_id, '$(init_table)DLO') as $(init_table)_CPV8DLOCode
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'DLO';
+  
+  
+  Left Join($(init_table))
+  Load 
+       $(init_table)_CPV8DLOCode,
+       LastValue([$(cpv_description)]) as [$(cpv_description)Dist]
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'DLO'
+  Group By $(init_table)_CPV8DLOCode
+  Order By [$(cpv_description)];
+  
+  [$(init_table)FullDLOHierarchy]:
+  Load Distinct
+       $(init_table)_CPV8DLOCode,
+       if($(init_table)_CPV8DLO_id='$(vCPVItemNotSpecified_field_value)', $(init_table)_CPV8DLO_id, 
+       	[$(cpv_description)Dist]&' - '&$(init_table)_CPV8DLO_id) as CPV8DLO_$(init_table)Ru,
+       if($(init_table)_CPV8DLO_id='$(vCPVItemNotSpecified_field_value)', $(init_table)_CPV8DLO_id, 
+       	[$(cpv_description)Dist]&' - '&$(init_table)_CPV8DLO_id) as CPV8DLO_$(init_table)En,
+       if($(init_table)_CPV8DLO_id='$(vCPVItemNotSpecified_field_value)', $(init_table)_CPV8DLO_id, 
+       	[$(cpv_description)Dist]&' - '&$(init_table)_CPV8DLO_id) as CPV8DLO_$(init_table)Kg
+  Resident $(init_table)
+  Where [$(scheme_field)] = 'DLO';
+  
+  Left Join ([$(init_table)FullDLOHierarchy])
+  Load
+  		[$(dlo_dic_name_field)Ru]&' - '&$(dlo_dic_id_field) as CPV2DLO_$(init_table)Ru,
+        [$(dlo_dic_name_field)En]&' - '&$(dlo_dic_id_field) as CPV2DLO_$(init_table)En,
+        [$(dlo_dic_name_field)Kg]&' - '&$(dlo_dic_id_field) as CPV2DLO_$(init_table)Kg
+  Resident  $(dlo_dic_table);     
+  
+//  Drop Fields CPVNameEn, CPVNameKg From [$(init_table)];
+ENDSUB
+
+SUB FullDLOHierarchyHigher(init_table, final_table, final_id_field, bridge_id_field, cpv_class_id_field, /*cpv_dic_table, cpv_dic_id_field, cpv_dic_name_field,*/ scheme_field, DLOflag, dlo_dic_table, dlo_dic_name_field, dlo_dic_id_field, cpv_description)
+//							  'Items', 'Lots', 'IDLotOrig', 'items_relatedLot', 'Items_CPV8DLO_id', 'ItemsFullDLOHierarchy', 'Items_CPV8DLO_id', 'CPV8DLO_Items', 'items_classification_scheme', 1, 'DLOClassification', 'DLOClassName', 'IDClassDLOOrig', 'items_classification_description'
+	 Left Join ($(final_table))
+	 Load 
+           [$(bridge_id_field)] as [$(final_id_field)],
+           Count(DISTINCT [$(cpv_class_id_field)]) as DLOItem_count,
+           Concat(DISTINCT [$(cpv_class_id_field)]) as DLOItem_id,
+           Concat(DISTINCT [$(cpv_description)]) as CPVdescription
+    Resident $(init_table)
+    Where [$(scheme_field)] = 'DLO'
+    Group by [$(bridge_id_field)];
+    
+    Left Join ($(final_table))
+	Load 
+    	 [$(final_id_field)],
+         if(DLOItem_count=1 AND DLOItem_id<>'$(vCPVItemNotSpecified_field_value)', DLOItem_id,
+         	if(DLOItem_id Like '*$(vCPVItemNotSpecified_field_value)*', 'Undefined',
+            	'Mixed Goods')) as $(final_table)_DLO8_id_,
+         if(DLOItem_count=1 AND DLOItem_id<>'$(vCPVItemNotSpecified_field_value)', 1) as  $(final_table)_DLO8_flag     
+	 Resident $(final_table)
+     Where NOT IsNull(DLOItem_id);
+     
+//    Drop Fields  DLOItem_count, DLOItem_id;
+     
+    [$(final_table)FullDLOHierarchy_]:
+    Load Distinct
+         $(final_table)_DLO8_id_,
+         AutoNumber($(final_table)_DLO8_id_, '$(final_table)DLO') as $(final_table)_DLO8_id
+    Resident $(final_table)
+    Where NOT IsNull($(final_table)_DLO8_id_);
+    
+    Left Join ($(final_table))
+    Load
+    	 $(final_table)_DLO8_id_,
+         $(final_table)_DLO8_id
+    Resident  [$(final_table)FullDLOHierarchy_];    
+
+//     Left Join ($(final_table)FullDLOHierarchy_)
+//     Load
+//          [$(cpv_dic_id_field)] as $(final_table)_DLO8_id,
+//          [$(cpv_dic_name_field)Ru] as CPV8DLORu,
+//          [$(cpv_dic_name_field)En] as CPV8DLOEn,
+//          [$(cpv_dic_name_field)Kg] as CPV8DLOKg
+//     Resident $(cpv_dic_table); 
+
+    Left Join ($(final_table)FullDLOHierarchy_)
+    Load
+         $(final_table)_DLO8_id as $(final_table)_DLO8_id,
+         CPVdescription as CPV8DLORu,
+         CPVdescription as CPV8DLOEn,
+         CPVdescription as CPV8DLOKg
+    Resident $(final_table)
+    Where DLOItem_count = 1; 
+    
+    Drop Fields  DLOItem_count, DLOItem_id, CPVdescription;
+
+    [$(final_table)FullDLOHierarchy]:
+    Load
+       $(final_table)_DLO8_id,
+       if(Match($(final_table)_DLO8_id_, '$(vCPVItemNotSpecified_field_value)', 'Undefined', 'Mixed Goods'), $(final_table)_DLO8_id_, 
+          CPV8DLORu&' - '&$(final_table)_DLO8_id_) as DLO8_$(final_table)Ru,
+       if(Match($(final_table)_DLO8_id_, '$(vCPVItemNotSpecified_field_value)', 'Undefined', 'Mixed Goods'), $(final_table)_DLO8_id_, 
+          CPV8DLOEn&' - '&$(final_table)_DLO8_id_) as DLO8_$(final_table)En,   
+       if(Match($(final_table)_DLO8_id_, '$(vCPVItemNotSpecified_field_value)', 'Undefined', 'Mixed Goods'), $(final_table)_DLO8_id_, 
+          CPV8DLOKg&' - '&$(final_table)_DLO8_id_) as DLO8_$(final_table)Kg
+    Resident [$(final_table)FullDLOHierarchy_];
+
+    Drop Table [$(final_table)FullDLOHierarchy_];
+    Drop Field $(final_table)_DLO8_id_;
+    
+    Left Join ([$(final_table)FullDLOHierarchy])
+    Load
+          [$(dlo_dic_name_field)Ru]&' - '&$(dlo_dic_id_field) as DLO2_$(final_table)Ru,
+          [$(dlo_dic_name_field)En]&' - '&$(dlo_dic_id_field) as DLO2_$(final_table)En,
+          [$(dlo_dic_name_field)Kg]&' - '&$(dlo_dic_id_field) as DLO2_$(final_table)Kg
+    Resident  $(dlo_dic_table); 
+    
+    IF DLOflag THEN
+      Left Join($(final_table))
+      Load 
+           $(final_table)_DLO8_id,
+           DLO8_$(final_table)Ru,
+           DLO8_$(final_table)En,
+           DLO8_$(final_table)Kg,
+           
+           DLO2_$(final_table)Ru,
+           DLO2_$(final_table)En,
+           DLO2_$(final_table)Kg
+      Resident $(final_table)FullDLOHierarchy;
+
+      Left Join($(final_table))
+      Load 
+           [$(final_id_field)],
+           if($(final_table)_DLO8_flag=1, DLO8_$(final_table)Ru, DLO2_$(final_table)Ru) as  $(final_table)_DLORu,
+           if($(final_table)_DLO8_flag=1, DLO8_$(final_table)En, DLO2_$(final_table)En) as  $(final_table)_DLOEn,
+           if($(final_table)_DLO8_flag=1, DLO8_$(final_table)Kg, DLO2_$(final_table)Kg) as  $(final_table)_DLOKg
+      Resident $(final_table)
+      Where NOT IsNull($(final_table)_DLO8_id);
+
+      Drop Fields DLO8_$(final_table)Ru, DLO2_$(final_table)Ru, DLO8_$(final_table)En, DLO2_$(final_table)En, DLO8_$(final_table)Kg, DLO2_$(final_table)Kg From $(final_table);
+    ENDIF
+    
+    Drop Field $(final_table)_DLO8_flag;
+ENDSUB
+
+
+SUB translationsJoin (tableName, keyField)
+
+  FieldNames_tmp:
+  NoConcatenate
+  Load 
+      "Index",
+      [$(Lan1Name)],
+      [$(Lan2Name)],
+      [$(Lan3Name)]
+  Resident FieldNamesTable
+  where Index like '$(tableName)';
+  
+  TRACE $(tableName);
+
+  Let vLan1FieldName = Peek('$(Lan1Name)', -1, 'FieldNames_tmp');
+  Let vLan2FieldName = Peek('$(Lan2Name)', -1, 'FieldNames_tmp');
+  Let vLan3FieldName = Peek('$(Lan3Name)', -1, 'FieldNames_tmp');
+
+  left join("$(tableName)")
+  Load Index as "$(keyField)",
+       [$(Lan1Name)] as "$(vLan1FieldName)",
+       [$(Lan2Name)] as "$(vLan2FieldName)",
+       [$(Lan3Name)] as "$(vLan3FieldName)"
+  Resident InnerDictionaries
+  where attributeOf like '$(tableName)';
+
+  drop table FieldNames_tmp;
+
+END SUB;
+
+
+SUB translationsNewTable (newTableName, existingTableName, keyField)
+// 0 - wo KEEP
+  FieldNames_tmp:
+  NoConcatenate
+  Load 
+      "Index",
+      [$(Lan1Name)],
+      [$(Lan2Name)],
+      [$(Lan3Name)]
+  Resident FieldNamesTable
+  where Index like '$(newTableName)';
+  
+  TRACE $(tableName);
+
+  Let vLan1FieldName = Peek('$(Lan1Name)', -1, 'FieldNames_tmp');
+  Let vLan2FieldName = Peek('$(Lan2Name)', -1, 'FieldNames_tmp');
+  Let vLan3FieldName = Peek('$(Lan3Name)', -1, 'FieldNames_tmp');
+
+  IF existingTableName <> 0 THEN
+    [$(newTableName)]:
+    left keep("$(existingTableName)")
+    Load 
+        "Index" as [$(keyField)],
+        [$(Lan1Name)] as [$(vLan1FieldName)],
+        [$(Lan2Name)] as [$(vLan2FieldName)],
+        [$(Lan3Name)] as [$(vLan3FieldName)]
+    Resident InnerDictionaries
+    where attributeOf like '$(newTableName)';
+    
+    ELSEIF existingTableName = 0 THEN
+    	[$(newTableName)]:
+    	Load 
+            "Index" as [$(keyField)],
+            [$(Lan1Name)] as [$(vLan1FieldName)],
+            [$(Lan2Name)] as [$(vLan2FieldName)],
+            [$(Lan3Name)] as [$(vLan3FieldName)]
+    	Resident InnerDictionaries
+    	where attributeOf like '$(newTableName)';
+   ENDIF
+
+  drop table FieldNames_tmp;
+
+END SUB;
+
+SUB translationsJoinInners(tableName, keyField)
+
+  JoinTypes:
+  Load Distinct Reference as joinType
+  Resident InnerDictionaries
+  where attributeOf like '$(tableName)';
+
+  For each vJoinType in FieldValueList('joinType')
+
+    left join("$(tableName)")
+    LOAD Index as "$(keyField)",
+         [$(Lan1Name)] as "$(vPrefix)$(tableName)$(vJoinType)$(Lan1Name)",
+         [$(Lan2Name)] as "$(vPrefix)$(tableName)$(vJoinType)$(Lan2Name)",
+         [$(Lan3Name)] as "$(vPrefix)$(tableName)$(vJoinType)$(Lan3Name)"
+    Resident InnerDictionaries
+    where attributeOf like '$(tableName)'
+    and Reference like '$(vJoinType)';
+
+  next vJoinType;
+
+  drop table JoinTypes;
+
+END SUB
+
+//1. Transactions
+Tender:
+LOAD
+    IDTenderOrig,
+//    IDReleaseOCIDOrig,
+    tender_statusDetails,
+    tender_status,
+    tender_datePublished,
+    tender_date, 
+    tenderNumber,
+    tender_hasPrequalification,
+    tender_procurementMethod,
+    tender_procurementMethodDetails,
+    tender_procurementMethodRationale,
+    tender_procurementSubMethodDetails,
+//    tender_submissionMethod,
+    tender_enquiryPeriod_startDate as [Enquiries Start Date],
+    tender_enquiryPeriod_startDateTime, 
+    tender_enquiryPeriod_endDate as [Enquiries End Date],
+    tender_enquiryPeriod_endDateTime, 
+    tender_tenderPeriod_startDate as [Tendering Start Date],
+    tender_tenderPeriod_startDateTime, 
+    tender_tenderPeriod_endDate as [Tendering End Date],
+    tender_tenderPeriod_endDateTime, 
+    tender_amount as [Tender Value],
+    tender_currency,
+//    IDbuyerOrig,
+    conditionOfContract_id,
+    tender_COC_lateDeliveryRate,
+    tender_COC_latePaymentRate,
+    tender_COC_lateGuaranteeRate,
+    tender_COC_guaranteePercent,
+    tender_COC_maxDeductibleAmountDelivery,
+    tender_COC_maxDeductibleAmountPayment,
+    tender_COC_maxDeductibleAmountGuarantee,
+    tender_COC_hasGuarantee as _tender_COC_hasGuarantee,
+    tender_COC_hasInsurance as _tender_COC_hasInsurance,
+    tender_COC_hasRelatedServices as _tender_COC_hasRelatedServices,
+    tender_COC_hasSpares as _tender_COC_hasSpares,
+    tender_COC_hasTechnicalControl as _tender_COC_hasTechnicalControl,
+    tender_COC_hasPrepayment as _tender_COC_hasPrepayment,
+    tender_COC_hasAcceptancePayment as _tender_COC_hasAcceptancePayment,
+    tender_COC_hasShipmentPayment as _tender_COC_hasShipmentPayment,
+    tender_COC_prepaymentPercent,
+    tender_COC_acceptancePaymentPercent,
+    tender_COC_shipmentPaymentPercent,
+    tender_COC_insuranceType,
+    tender_COC_hasArbitralTribunal,
+    IDReleaseOCIDKey,
+    tender_number_of_allowedTenderers,
+    IDTender as IDTenderKey,
+    IDbuyerKey,
+    tender_mainProcurementCategory
+FROM [lib://OCDSKGData/02_QVD_DB\02_Transaction\Tender.qvd] (qvd);
+
+//releases:
+Left Join (Tender)
+LOAD
+    release_id,
+    IDReleaseOCIDOrig,
+    release_date,
+//    release_tag,
+    release_initiationType,
+    IDReviewBodyOrig,
+    IDReleaseOCID as IDReleaseOCIDKey
+FROM [lib://OCDSKGData/02_QVD_DB\02_Transaction\releases.qvd] (qvd);
+
+Enquiries:
+LOAD
+    enquiries_id,
+    enquiries_date,
+    enquiries_description,
+    enquiries_dateAnswered,
+    enquiries_author_id,
+    enquiries_answer,
+//    IDTenderOrig,
+//    IDReleaseOCIDOrig,
+//    IDReleaseOCIDKey,
+    IDTenderKey,
+    IDenquirerKey
+FROM [lib://OCDSKGData/02_QVD_DB\02_Transaction\Enquiries.qvd]
+(qvd);
+
+Complaints:
+LOAD
+    complaint_id,
+    complaint_status,
+    complaint_dateSubmitted,
+    complaint_type,
+    complaint_complaintNumber,
+    complaint_title,
+    complaint_description,
+    complaint_reviewDate,
+    complaint_responseDate,
+    complaint_author_id,
+//    IDReleaseOCIDOrig,
+//    IDTenderOrig,
+//    IDReleaseOCIDKey,
+    IDTenderKey,
+    IDcomplaintAuthorKey,
+    IDComplaint as IDComplaintKey
+FROM [lib://OCDSKGData/02_QVD_DB\02_Transaction\Complaints.qvd]
+(qvd);
+
+QualificationRequirements:
+LOAD
+    qualificationRequirements_id,
+    qualificationRequirements_type,
+//    IDTenderOrig,
+//    IDReleaseOCIDOrig,
+//    IDReleaseOCIDKey,
+    IDTenderKey
+FROM [lib://OCDSKGData/02_QVD_DB\02_Transaction\QualificationRequirements.qvd]
+(qvd);
+
+// RelatedProcesses:
+// LOAD
+//     relatedProcess_relationship,
+//     relatedProcess_id,
+//     previousProcedure_id,
+//     previousProcedure_number,
+//     relatedProcess_idKey as IDTenderKey
+// //    IDTenderOrig,
+// //    IDReleaseOCIDOrig,
+// //    IDReleaseOCIDKey,
+// //    IDTenderKey
+// FROM [lib://OCDSKGData/02_QVD_DB\02_Transaction\RelatedProcesses.qvd]
+// (qvd);
+
+Lots:
+LOAD
+    IDLotOrig,
+    lot_status as _lot_status,
+    lot_amount as [Lot Value],
+    lot_currency,
+    deliveryTerms,
+    lotNumber,
+    lot_title,
+    relatedPlanID as PlanId,
+//    IDTenderOrig,
+//    IDReleaseOCIDOrig as IDReleaseOCIDOrig_lot_test,
+//    IDReleaseOCIDKey,
+    IDTenderKey,
+    IDLot as IDLotKey
+FROM [lib://OCDSKGData/02_QVD_DB\02_Transaction\Lot.qvd]
+(qvd);
+
+Items:
+LOAD
+    IDItemOrig,
+    items_relatedLot,
+    items_quantity as [Item Quantity],
+    items_classification_id,
+    items_classification_scheme,
+    items_classification_description,
+//    IDTenderOrig,
+//    IDReleaseOCIDOrig,
+    items_unit_id,
+    items_unit_name,
+    items_unit_value_amount as [Unit Price],
+    items_unit_value_currency,
+//    IDReleaseOCIDKey,
+	IDTenderKey as IDTenderKey_Items, 
+    IDLotKey,
+    IDItem as IDItemKey
+FROM [lib://OCDSKGData/02_QVD_DB\02_Transaction\Items.qvd]
+(qvd);
+
+Bids:
+LOAD 
+    IDBidOrig,
+    bid_status,
+    bid_date,
+//    dateDisclosed, 
+//     IDTendererBidsOrig,
+//     IDTenderOrig,
+     IDReleaseOCIDOrig as IDReleaseOCIDOrig_Bids,
+//     IDReleaseOCIDKey,
+     IDTenderKey, 
+     IDTenderKey as IDTenderKey_Bids, 
+    IDBid as IDBidKey,
+    //IDtendererOrig,
+    IDtendererKey
+FROM [lib://OCDSKGData/02_QVD_DB\02_Transaction\Bids.qvd] (qvd);
+
+//priceProposal:
+Left Join (Bids)
+LOAD
+    IDPriceProposalOrig,
+    priceProposal_relatedItem,
+    priceProposal_relatedLot,
+    priceProposal_amount as _priceProposal_amount,
+    priceProposal_currency as [Bid Unit Price Currency],
+//    IDBidOrig,
+//    IDTenderOrig,
+//    IDReleaseOCIDOrig,
+//    IDReleaseOCIDKey,
+//    IDTenderKey,
+    IDBidKey,
+//    IDLotKey,
+    IDItemKey,
+    IDLotBidKey 
+FROM [lib://OCDSKGData/02_QVD_DB\02_Transaction\priceProposal.qvd] (qvd);
+
+Left Join (Bids)
+Load
+	 IDPriceProposalOrig,
+     IDLotBidKey as IDLotBid
+Resident  Bids;    
+
+BidsRelatedLots:
+LOAD
+//    IDBidOrig,
+    bids_relatedLots_amount as [Bid Value],
+//    bids_relatedLots_currency,
+    bids_relatedLots_id,
+//    IDTenderOrig,
+//    IDReleaseOCIDOrig,
+//    IDReleaseOCIDKey,
+//    IDTenderKey,
+//	IDLotKey, 
+    IDBidKey, 
+    IDLotBidKey 
+//    IDBidOrig&bids_relatedLots_id as IDLotBidOrig
+FROM [lib://OCDSKGData/02_QVD_DB\02_Transaction\BidsRelatedLots.qvd] (qvd);
+
+
+Awards:
+LOAD
+    IDAwardOrig,
+    award_status,
+    award_relatedLot,
+    award_relatedBid,
+    award_date,
+    award_amount as _award_amount,
+    award_currency,
+//    IDTenderOrig,
+    IDReleaseOCIDOrig as IDReleaseOCIDOrig_Award,
+//    IDReleaseOCIDKey,
+	IDTenderKey as IDTenderKey_Awards,  
+    IDLotKey, 
+    IDLotBidKey, 
+    IDAward as IDAwardKey
+FROM [lib://OCDSKGData/02_QVD_DB\02_Transaction\Awards.qvd]
+(qvd);
+
+ContractAwards:
+LOAD
+//    IDAwardOrig,
+//    IDContractOrig,
+//    IDTenderOrig,
+//    IDReleaseOCIDOrig,
+//    IDReleaseOCIDKey,
+//    IDTenderKey,
+    IDAwardKey,
+    IDContractKey
+FROM [lib://OCDSKGData/02_QVD_DB\02_Transaction\ContractAwards.qvd]
+(qvd);
+
+Contracts:
+LOAD
+    IDContractOrig,
+//    contract_status,
+//    contract_date,
+	contractNumber,
+    contract_dateSigned,
+    contract_date_Signed,
+    contract_amount,
+    contract_amountDiscounted,
+    contract_currency,
+    IDsupplierOrig as [Supplier ID],
+//    IDTenderOrig,
+//    IDReleaseOCIDOrig,
+//    IDReleaseOCIDKey,
+	IDTenderKey as IDTenderKey_Contracts, 
+    IDContract as IDContractKey
+FROM [lib://OCDSKGData/02_QVD_DB\02_Transaction\Contracts.qvd]
+(qvd);
+
+//2. Dictionary
+CountryMap:
+Mapping
+LOAD
+    CountryDBName,
+    CountryNewDBName
+FROM [lib://OCDSKGData/02_QVD_DB\01_Dictionary\CountryMap.qvd] (qvd);
+
+Map buyer_countryName, [Bidder Country], [Supplier Country]  using CountryMap;
+
+buyer:
+LOAD
+    IDbuyerOrig as [Buyer ID],
+    buyer_scheme,
+    buyer_id,
+    buyer_legalName as Buyer,
+//    buyer_legalName_ru,
+    buyer_legalName_kg,
+    buyer_ateCode,
+    buyer_countryName,
+    buyer_region as [Buyer Region],
+    buyer_subregion,
+    buyer_district,
+    buyer_subdistrict,
+    buyer_subsubdistrict,
+    buyer_locality,
+    buyer_streetAddress,
+//    buyer_complexKeyForCP,
+//    buyer_latestRelease_date,
+    IDbuyer as IDbuyerKey
+FROM [lib://OCDSKGData/02_QVD_DB\01_Dictionary\buyer.qvd]
+(qvd);
+
+
+buyer_regions:
+Left Keep (buyer)
+LOAD
+    region as [Buyer Region],
+    area_coordinates as buyer_area_coordinates
+FROM [lib://OCDSKGData/03_LocalFiles\KGZ_Regions.qvd] (qvd);
+
+Left Join (buyer_regions)
+Load
+	 RegionRu as [Buyer Region],
+     RegionRu as [Buyer RegionRu],
+     RegionEn as [Buyer RegionEn],
+     RegionKg as [Buyer RegionKg]
+FROM [lib://OCDSKGData/02_QVD_DB\01_Dictionary\Region_Dictionaries.qvd] (qvd);
+
+// Маппинг названий стран по iso3
+countryAliases:
+Mapping
+LOAD
+    "Alias",
+    ISO3Code
+FROM [lib://OCDSKGData/03_LocalFiles\countryAliases.qvd] (qvd);
+
+Tenderer:
+LOAD
+    IDtendererOrig as [Bidder ID],
+    tenderer_scheme,
+    tenderer_id,
+    tenderer_legalName as Bidder,
+//    tenderer_legalName_ru as Bidder,
+    tenderer_legalName_kg,
+    tenderer_ateCode,
+    tenderer_countryName as [Bidder Country],
+    tenderer_region as [Bidder Region],
+    tenderer_subregion,
+    tenderer_district,
+    tenderer_subdistrict,
+    tenderer_subsubdistrict,
+    tenderer_locality,
+    tenderer_streetAddress,
+//    tenderer_latestRelease_date
+    IDtenderer AS IDtendererKey
+FROM [lib://OCDSKGData/02_QVD_DB\01_Dictionary\tenderer.qvd]
+(qvd);
+
+// iso3 страны
+Left Join (Tenderer)
+Load
+	 [Bidder ID],
+     ApplyMap('countryAliases', Lower([Bidder Country])) as TendererISO3Code
+Resident  Tenderer; 
+
+TendererCountryPolygon:
+Left Keep (Tenderer)
+LOAD
+    ISO3Code as TendererISO3Code,
+    CountryPolygon
+FROM [lib://OCDSKGData/03_LocalFiles\CountryPolygon.qvd] (qvd);
+
+
+// Tenderer_ContactPoint:
+// LOAD
+// //    IDtendererOrig,
+//     tenderer_contactPoint_name,
+//     tenderer_contactPoint_email,
+//     tenderer_contactPoint_telephone,
+//     tenderer_contactPoint_role,
+// //    tenderer_complexKeyForCP,
+//     tenderer_contactPoint_latestRelease_date
+//     ,IDtenderer as IDtendererKey
+// FROM [lib://OCDSKGData/02_QVD_DB\01_Dictionary\tenderer_additionalContactPoints.qvd]
+// (qvd);
+
+Tenderer_regions:
+Left Keep (Tenderer)
+LOAD
+    region as [Bidder Region],
+    area_coordinates as tenderer_area_coordinates
+FROM [lib://OCDSKGData/03_LocalFiles\KGZ_Regions.qvd]
+(qvd);
+
+// Жалобщик
+Complainer:
+LOAD
+    IDcomplainerOrig as complaint_author_id,
+//    complainer_scheme,
+//    complainer_id,
+    complainer_legalName as Complainer
+//    complainer_legalName_ru
+//    complainer_legalName_kg,
+//    complainer_ateCode,
+//    complainer_countryName,
+//    complainer_region,
+//    complainer_subregion,
+//    complainer_district,
+//    complainer_subdistrict,
+//    complainer_subsubdistrict,
+//    complainer_locality,
+//    complainer_streetAddress,
+//    complainer_latestRelease_date,
+//    IDcomplainer
+FROM [lib://OCDSKGData/02_QVD_DB\01_Dictionary\complainer.qvd]
+(qvd);
+
+// Suppliers
+Suppliers:
+LOAD
+    IDsupplierOrig as [Supplier ID],
+//    supplier_scheme,
+//    supplier_id,
+    supplier_legalName as [Supplier NameRu],
+//    supplier_legalName_ru,
+//    supplier_legalName_kg as [Supplier NameKg]
+//     supplier_ateCode,
+     supplier_countryName as [Supplier Country]
+//     supplier_region,
+//     supplier_subregion,
+//     supplier_district,
+//     supplier_subdistrict,
+//     supplier_subsubdistrict,
+//     supplier_locality,
+//     supplier_streetAddress,
+//     supplier_latestRelease_date,
+//     IDsupplier
+FROM [lib://OCDSKGData/02_QVD_DB\01_Dictionary\supplier.qvd]
+(qvd);
+
+
+//CPV Классификатор
+CPVClassification:
+LOAD
+    IDClassCPVOrig,
+    CPVClassNameRu,
+    CPVClassNameEn,
+    CPVClassNameKg
+FROM [lib://OCDSKGData/02_QVD_DB\01_Dictionary\CPVClassification.qvd]
+(qvd);
+
+//Concatenate(CPVClassification)
+DLOClassification:
+Load * Inline [
+IDClassDLOOrig,     DLOClassNameRu,		DLOClassNameEn,											DLOClassNameKg
+93000000-3, 		ЭБД ЛС и МИ КР,		Local eCatalogue of medicines and medical products,		КР ДК жана МБ МЭБ
+];
+
+Concatenate(CPVClassification)
+Load
+	 IDClassDLOOrig as IDClassCPVOrig,     
+     DLOClassNameRu as CPVClassNameRu,		
+     DLOClassNameEn as CPVClassNameEn,											
+     DLOClassNameKg as CPVClassNameKg
+Resident DLOClassification;
+
+
+//031 - 449
+NumGoodsList:
+LOAD
+	 Text(NUM(RecNo()+2, '00')) as IDClassCPVGoods
+AutoGenerate 42;	 
+
+LET vNumGoodsListCount = NoOfRows('NumGoodsList')+2;
+
+SET vIDClassCPVGoods ='';
+
+FOR Each vFValue in FieldValueList('IDClassCPVGoods')
+	LET vIDClassCPVGoods = vIDClassCPVGoods & chr(39) & vFValue & '*' & chr(39) & if(vFValue<>vNumGoodsListCount, ', ');
+NEXT vFValue;
+
+DROP Table NumGoodsList;
+
+
+Left Join (Items)
+Load
+	 IDItemOrig,
+     if(WildMatch(items_classification_id, $(vIDClassCPVGoods)) OR items_classification_scheme = 'DLO', 'Goods',
+       if((WildMatch(items_classification_id, '45*')), 'Works', 'Services')) as items_classification_gsw
+Resident Items; 
+
+
+CALL FullCPVHierarchyLower('Items', 'IDItemOrig', 'items_classification_id', 'items_classification_gsw', 'CPVClassification', 'IDClassCPVOrig', 'CPVClassName', 'items_classification_scheme');
+
+CALL FullCPVHierarchyHigher('Items', 'Lots', 'IDItemOrig', 'IDLotOrig', 'items_relatedLot', 'items_classification_id', 'items_classification_gsw', 'CPVClassification', 'IDClassCPVOrig', 'CPVClassName', 'items_classification_scheme');
+
+CALL FullDLOHierarchyLower('Items', 'IDItemOrig', 'items_classification_id', 'items_classification_scheme', 'items_classification_description', 'CPVClassification', 'IDClassCPVOrig', 'CPVClassName', 'DLOClassification', 'DLOClassName', 'IDClassDLOOrig');
+
+Left Join (Items)
+Load
+	 IDItemOrig,
+     Items_CPVFullHierarchyCode as Items_CPVFullHierarchyCode_  
+Resident Items; 
+
+Drop Field Items_CPVFullHierarchyCode From Items;
+
+Left Join (Items)
+Load
+	 IDItemOrig,
+     if(items_classification_scheme = 'OKGZ', Items_CPVFullHierarchyCode_, Items_CPV8DLOCode) as Items_CPVFullHierarchyCode  
+Resident Items; 
+Drop Field Items_CPVFullHierarchyCode_ From Items;
+
+Concatenate (ItemsFullCPVHierarchy)
+Load
+	 Items_CPV8DLOCode as Items_CPVFullHierarchyCode,
+     CPV8DLO_ItemsRu as SubCategory_CPV_ItemsRu,
+     CPV8DLO_ItemsEn as SubCategory_CPV_ItemsEn,
+     CPV8DLO_ItemsKg as SubCategory_CPV_ItemsKg,
+    
+     CPV2DLO_ItemsRu as Division_CPV_ItemsRu,
+     CPV2DLO_ItemsEn as Division_CPV_ItemsEn,
+     CPV2DLO_ItemsKg as Division_CPV_ItemsKg
+Resident ItemsFullDLOHierarchy; 
+
+Drop Table ItemsFullDLOHierarchy;
+Drop Field Items_CPV8DLOCode;
+
+
+ContractItems:
+NoConcatenate
+Load
+	 IDAwardKey,
+     IDContractKey
+Resident  ContractAwards;    
+
+Left Join (ContractItems)
+Load
+	 IDAwardKey,
+     IDLotKey as relatedLot
+Resident Awards;
+
+Drop Field IDAwardKey From ContractItems;
+
+Left Join (ContractItems)
+Load
+	 IDLotKey as relatedLot,
+     IDItemOrig as contract_items_id,
+     items_classification_id,
+     items_classification_gsw,
+     items_classification_scheme,
+     items_classification_descriptionDist,
+     Items_CPV8DLO_id
+//     CPV8DLO_Items
+Resident Items;  
+
+Drop Field relatedLot;
+
+// Left Join (ContractItems)
+// Load
+// 	 Items_CPV8DLO_id,
+//      CPV8DLO_ItemsRu,
+//      CPV8DLO_ItemsEn,
+//      CPV8DLO_ItemsKg
+// Resident ItemsFullDLOHierarchy;     
+//Drop Table ItemsFullDLOHierarchy;
+
+CALL FullCPVHierarchyHigher('ContractItems', 'Contracts', 'contract_items_id', 'IDContractKey', 'IDContractKey', 'items_classification_id', 'items_classification_gsw', 'CPVClassification', 'IDClassCPVOrig', 'CPVClassName', 'items_classification_scheme');
+
+CALL FullDLOHierarchyHigher('Items', 'Lots', 'IDLotOrig', 'items_relatedLot', 'Items_CPV8DLO_id', 'items_classification_scheme', 1, 'DLOClassification', 'DLOClassName', 'IDClassDLOOrig', 'items_classification_descriptionDist');
+
+CALL FullDLOHierarchyHigher('ContractItems', 'Contracts', 'IDContractKey', 'IDContractKey', 'Items_CPV8DLO_id', 'items_classification_scheme', 0, 'DLOClassification', 'DLOClassName', 'IDClassDLOOrig', 'items_classification_descriptionDist');
+
+Drop Table DLOClassification; 
+Drop Table ContractItems;
+Drop Field Items_CPV8DLO_id;
+
+buyerLegalForms:
+Left Keep (buyer)
+LOAD
+    organizationId as [Buyer ID],
+    legalForm as [Buyer Legal Form]
+FROM [lib://OCDSKGData/02_QVD_DB\01_Dictionary\legalForms.qvd] (qvd);
+
+
+TendererLegalForms:
+Left Keep (Tenderer)
+LOAD
+    organizationId as [Bidder ID],
+    legalForm as [Bidder Legal Form]
+FROM [lib://OCDSKGData/02_QVD_DB\01_Dictionary\legalForms.qvd] (qvd);
+
+//3. For KPI
+
+Left Join (Bids)
+LOAD
+    CurrencyDate as bid_date, 
+    CurrencyRate,
+    CurrencyCode as [Bid Unit Price Currency]
+//    CurrencyName
+FROM [lib://OCDSKGData/02_QVD_DB\01_Dictionary\Currency.qvd] (qvd);
+
+Left Join (Bids)
+Load
+	 IDPriceProposalOrig,
+     if([Bid Unit Price Currency] <> 'KGS', Round(Floor(_priceProposal_amount*CurrencyRate, 0.001), 0.01), _priceProposal_amount) as [Bid Unit Price]
+Resident Bids;     
+
+Drop Fields _priceProposal_amount, CurrencyRate;
+
+Left Join (Awards)
+Load Distinct
+	 IDLotBidKey,
+     bid_date as CurrencyDate
+Resident Bids;
+
+Left Join (Awards)
+LOAD
+    CurrencyDate, 
+    CurrencyRate,
+    CurrencyCode as award_currency
+//    CurrencyName
+FROM [lib://OCDSKGData/02_QVD_DB\01_Dictionary\Currency.qvd] (qvd);
+
+Left Join (Awards)
+Load
+	 IDAwardKey,
+     if(award_currency <> 'KGS', Round(Floor(_award_amount*CurrencyRate, 0.001), 0.01), _award_amount) as award_amount
+Resident Awards;
+
+Drop Fields CurrencyDate, _award_amount, CurrencyRate;
+
+//Добавление длительности периодов
+left join(ContractAwards)
+Load Distinct // Есть замноженные договора
+	 IDContractKey,
+	 contract_dateSigned
+Resident Contracts
+Where NOT IsNull(contract_dateSigned);
+
+Left join(Awards)
+Load IDAwardKey,
+	 contract_dateSigned,
+     IDContractKey
+Resident ContractAwards;
+
+drop field contract_dateSigned from ContractAwards;	 
+
+left join(Lots)
+Load IDLotKey,
+	 FirstValue(award_date) as lot_min_award_date,
+//     FirstValue(contract_dateSigned)-FirstValue(award_date) as lot_tillContractDuration
+     if(not IsNull(FirstValue(IDContractKey)), 1) as _contract_Flag
+Resident Awards
+where award_status='active'
+Group by IDLotKey
+Order by award_date asc;
+
+drop fields IDContractKey, contract_dateSigned from Awards;
+
+Left join (Tender)
+Load 
+	 IDTenderOrig,
+	 '$(vTenderUrl)'&IDTenderOrig as tender_url,
+//     tender_datePublished as datePublished,
+//	 if(not IsNull(tender_tenderPeriod_endDate) AND not IsNull(tender_tenderPeriod_startDate), tender_tenderPeriod_endDate-tender_tenderPeriod_startDate) as tender_tenderPeriod_duration,
+     if(not IsNull(tender_tenderPeriod_endDateTime) AND not IsNull(tender_tenderPeriod_startDateTime), tender_tenderPeriod_endDateTime-tender_tenderPeriod_startDateTime) as tender_tenderPeriod_duration, 
+//     if(not IsNull(tender_enquiryPeriod_endDate) AND not IsNull(tender_enquiryPeriod_startDate), tender_enquiryPeriod_endDate - tender_enquiryPeriod_startDate) as tender_enquiryPeriod_duration
+     if(not IsNull(tender_enquiryPeriod_endDateTime) AND not IsNull(tender_enquiryPeriod_startDateTime), tender_enquiryPeriod_endDateTime - tender_enquiryPeriod_startDateTime) as tender_enquiryPeriod_duration,
+	 if(not IsNull([Enquiries End Date]) AND not IsNull([Enquiries Start Date]), 1, 0) as tender_enquiriesEnabled,
+     if(tender_procurementMethod = 'direct', 0, 1) as tender_is_competitive,
+     if(RangeSum(Match(tender_procurementMethodDetails, 'oneStage', 'auctionUnlimited', 'egov', 'twostage')) 
+     	AND NOT RangeSum(Match(tender_procurementSubMethodDetails,  'centralised', 'personific', 'framework')), 1, 0) as openFlag,
+     if(tender_procurementMethodDetails = 'twostage' OR (tender_procurementMethodDetails = 'oneStage' 
+     	AND tender_procurementSubMethodDetails <> 'twopackage'), 1, 0) as twostageFlag,
+     if(RangeSum(Match(tender_procurementMethodDetails,  'oneStage', 'auctionUnlimited', 'egov', 'twostage')) AND tender_hasPrequalification
+     	AND NOT RangeSum(Match(tender_procurementSubMethodDetails,  'centralised', 'personific', 'framework')), 1, 0) as  prequalifFlag,
+     if(RangeSum(Match(tender_procurementMethodDetails, 'eAuction', 'downgrade')), 1, 0) as auctionFlag,
+     if(RangeSum(Match(tender_procurementSubMethodDetails,  'requestForQuotation', 'simplicated')) 
+     	AND NOT RangeSum(Match(tender_procurementSubMethodDetails,  'personific', 'framework')), 1, 0) as reqouteFlag,
+     if(tender_procurementMethodDetails = 'singleSource' AND NOT RangeSum(Match(tender_procurementSubMethodDetails,  'personific', 'framework')), 1, 0) as singlesourceFlag,
+     if(RangeSum(Match(tender_procurementMethodDetails, 'auctionLimited', 'consultQualityPrice', 'consultQuality', 
+     	'consultFixedBudget', 'consultPrice', 'consultQualification', 'consultSingleSource', 'personific')), 1, 0) as outherFlag
+Resident Tender;
+
+Drop Fields tender_enquiryPeriod_startDateTime, tender_enquiryPeriod_endDateTime; 
+
+left join(Lots)
+Load IDTenderKey,
+	 tender_tenderPeriod_duration,
+	 tender_enquiryPeriod_duration,
+//     tender_tenderPeriod_endDate
+     tender_tenderPeriod_endDateTime 
+Resident Tender;
+
+Left join(Lots)
+Load IDLotOrig,
+     if(not IsNull(tender_tenderPeriod_endDateTime) AND not IsNull(lot_min_award_date), lot_min_award_date-tender_tenderPeriod_endDateTime) as lot_tillAward_duration, 
+     if(not IsNull(_contract_Flag), RangeSum(tender_enquiryPeriod_duration, tender_tenderPeriod_duration, if(not IsNull(tender_tenderPeriod_endDateTime) AND not IsNull(lot_min_award_date), lot_min_award_date-tender_tenderPeriod_endDateTime)/*, lot_tillContractDuration*/)) as lot_duration
+Resident Lots;
+
+drop field tender_tenderPeriod_endDateTime; 
+
+drop fields tender_tenderPeriod_duration, tender_enquiryPeriod_duration, lot_min_award_date from Lots;
+
+// enquiry
+left join(Enquiries)
+Load enquiries_id,
+	 if(not IsNull(enquiries_dateAnswered), 1, 0) as enquiries_is_answered,
+//     if(not IsNull(enquiries_author_id), 1, 0) as enquiries_from_department,
+	 if(enquiries_author_id = 'KG-INN-01707201410029', 1, 0) as enquiries_from_department,
+     if(not IsNull(enquiries_dateAnswered) and not IsNull(enquiries_date), enquiries_dateAnswered - enquiries_date) as enquiries_time_to_answer
+Resident Enquiries;
+
+
+left join(Lots)
+Load IDTenderKey,
+	 tender_statusDetails,
+     tender_datePublished
+Resident Tender;
+
+left join(Lots)
+Load IDLotOrig,
+     if(_lot_status = 'active' AND '$(vCurrentDate)' - tender_datePublished > 60, 'active60Days', _lot_status) as lot_status
+Resident Lots;
+
+drop field tender_statusDetails, _lot_status, tender_datePublished from Lots;
+
+//Lot CPV 
+Left Join (Lots)
+Load Distinct
+	 Lots_CPVFullHierarchyCode,
+	 Lots_CPVFullHierarchyCode as Lots_CPVFullHierarchyCode_,
+     if(not WildMatch(lower(SubCategory_CPV_LotsRu), '*mixed*', '*undefined*'), SubCategory_CPV_LotsRu,
+     	if(not WildMatch(lower([7_CPV_LotsRu]), '*mixed*', '*undefined*'), "7_CPV_LotsRu",
+        	if(not WildMatch(lower([6_CPV_LotsRu]), '*mixed*', '*undefined*'), "6_CPV_LotsRu",
+        		if(not WildMatch(lower([Category_CPV_LotsRu]), '*mixed*', '*undefined*'), "Category_CPV_LotsRu",
+        			if(not WildMatch(lower([Class_CPV_LotsRu]), '*mixed*', '*undefined*'), "Class_CPV_LotsRu",
+        				if(not WildMatch(lower([Group_CPV_LotsRu]), '*mixed*', '*undefined*'), "Group_CPV_LotsRu",
+        					if(not WildMatch(lower([Division_CPV_LotsRu]), '*mixed*', '*undefined*'), "Division_CPV_LotsRu",
+                            	Lots_GSW_))))))) as [Lot CPVRu_],
+                         
+      if(not WildMatch(lower(SubCategory_CPV_LotsEn), '*mixed*', '*undefined*'), SubCategory_CPV_LotsEn,
+     	if(not WildMatch(lower([7_CPV_LotsEn]), '*mixed*', '*undefined*'), "7_CPV_LotsEn",
+        	if(not WildMatch(lower([6_CPV_LotsEn]), '*mixed*', '*undefined*'), "6_CPV_LotsEn",
+        		if(not WildMatch(lower([Category_CPV_LotsEn]), '*mixed*', '*undefined*'), "Category_CPV_LotsEn",
+        			if(not WildMatch(lower([Class_CPV_LotsEn]), '*mixed*', '*undefined*'), "Class_CPV_LotsEn",
+        				if(not WildMatch(lower([Group_CPV_LotsEn]), '*mixed*', '*undefined*'), "Group_CPV_LotsEn",
+        					if(not WildMatch(lower([Division_CPV_LotsEn]), '*mixed*', '*undefined*'), "Division_CPV_LotsEn",
+                            	Lots_GSW_))))))) as [Lot CPVEn_],
+                         
+      if(not WildMatch(lower(SubCategory_CPV_LotsKg), '*mixed*', '*undefined*'), SubCategory_CPV_LotsKg,
+     	if(not WildMatch(lower([7_CPV_LotsKg]), '*mixed*', '*undefined*'), "7_CPV_LotsKg",
+        	if(not WildMatch(lower([6_CPV_LotsKg]), '*mixed*', '*undefined*'), "6_CPV_LotsKg",
+        		if(not WildMatch(lower([Category_CPV_LotsKg]), '*mixed*', '*undefined*'), "Category_CPV_LotsKg",
+        			if(not WildMatch(lower([Class_CPV_LotsKg]), '*mixed*', '*undefined*'), "Class_CPV_LotsKg",
+        				if(not WildMatch(lower([Group_CPV_LotsKg]), '*mixed*', '*undefined*'), "Group_CPV_LotsKg",
+        					if(not WildMatch(lower([Division_CPV_LotsKg]), '*mixed*', '*undefined*'), "Division_CPV_LotsKg",
+                            	Lots_GSW_))))))) as [Lot CPVKg_]                   
+Resident LotsFullCPVHierarchy;
+
+Drop Field Lots_GSW_;
+Drop Field Lots_CPVFullHierarchyCode From Lots;
+
+Rename Field Lots_GSW to Lots_GSW_;
+
+Left Join (Lots)
+Load
+	 IDLotOrig,
+     if(Lots_OKGZscheme = 1, [Lot CPVRu_], Lots_DLORu) as [Lot CPVRu],
+     if(Lots_OKGZscheme = 1, [Lot CPVEn_], Lots_DLOEn) as [Lot CPVEn],
+     if(Lots_OKGZscheme = 1, [Lot CPVKg_], Lots_DLOKg) as [Lot CPVKg],
+     if(Lots_OKGZscheme = 1, Lots_GSW_, 'Mixed Goods') as Lots_GSW,
+     if(Lots_OKGZscheme = 1, Lots_CPVFullHierarchyCode_, Lots_DLO8_id) as Lots_CPVFullHierarchyCode // OKGZ + DLO
+Resident Lots;    
+
+Drop Fields [Lot CPVRu_], [Lot CPVEn_], [Lot CPVKg_], Lots_DLORu, Lots_DLOEn, Lots_DLOKg, Lots_OKGZscheme, Lots_GSW_, Lots_CPVFullHierarchyCode_;
+
+Concatenate (LotsFullCPVHierarchy)
+Load
+	 Lots_DLO8_id as Lots_CPVFullHierarchyCode, 
+     DLO8_LotsRu as SubCategory_CPV_LotsRu,
+     DLO8_LotsEn as SubCategory_CPV_LotsEn,
+     DLO8_LotsKg as SubCategory_CPV_LotsKg,
+    
+     DLO2_LotsRu as Division_CPV_LotsRu,
+     DLO2_LotsEn as Division_CPV_LotsEn,
+     DLO2_LotsKg as Division_CPV_LotsKg
+Resident LotsFullDLOHierarchy;   
+
+Drop Table LotsFullDLOHierarchy;
+Drop Field Lots_DLO8_id;
+
+CPVLotFieldNames:
+Mapping
+Load * Inline [
+CPVField, CPVNewField
+SubCategory_CPV_LotsRu, CPV CodeRu
+7_CPV_LotsRu, CPV-7Ru
+6_CPV_LotsRu, CPV-6Ru
+Category_CPV_LotsRu, CPV CategoryRu
+Class_CPV_LotsRu, CPV ClassRu
+Group_CPV_LotsRu, CPV GroupRu
+Division_CPV_LotsRu, CPV DivisionRu
+
+SubCategory_CPV_LotsEn, CPV CodeEn
+7_CPV_LotsEn, CPV-7En
+6_CPV_LotsEn, CPV-6En
+Category_CPV_LotsEn, CPV CategoryEn
+Class_CPV_LotsEn, CPV ClassEn
+Group_CPV_LotsEn, CPV GroupEn
+Division_CPV_LotsEn, CPV DivisionEn
+
+SubCategory_CPV_LotsKg, CPV CodeKg
+7_CPV_LotsKg, CPV-7Kg
+6_CPV_LotsKg, CPV-6Kg
+Category_CPV_LotsKg, CPV CategoryKg
+Class_CPV_LotsKg, CPV ClassKg
+Group_CPV_LotsKg, CPV GroupKg
+Division_CPV_LotsKg, CPV DivisionKg
+];
+
+Rename Fields using CPVLotFieldNames;
+
+
+Left Join (Items)
+LOAD
+    IDClassCPVOrig as items_classification_id,
+    LastValue(CPVClassNameEn) as CPVClassNameEn,
+    LastValue(CPVClassNameKg) as CPVClassNameKg
+Resident CPVClassification
+Group By IDClassCPVOrig;
+
+Drop Table CPVClassification; 
+
+Left Join (Items)
+Load
+	 IDItemKey,
+     if(NOT IsNull(items_classification_id) AND NOT IsNull(items_classification_description), 
+     	items_classification_description&' - '&items_classification_id, '$(vCPVItemNotSpecified_field_value)') as [Item CPVRu],
+     
+     if(NOT IsNull(items_classification_id) AND NOT IsNull(CPVClassNameEn), 
+     	if(items_classification_scheme = 'OKGZ', CPVClassNameEn, items_classification_description)&' - '&items_classification_id, '$(vCPVItemNotSpecified_field_value)') as [Item CPVEn],
+     
+     if(NOT IsNull(items_classification_id) AND NOT IsNull(CPVClassNameKg), 
+     	if(items_classification_scheme = 'OKGZ', CPVClassNameKg, items_classification_description)&' - '&items_classification_id, '$(vCPVItemNotSpecified_field_value)') as [Item CPVKg]
+Resident Items;     
+
+Drop Fields  items_classification_id, items_classification_description, CPVClassNameEn, CPVClassNameKg, items_classification_descriptionDist From  Items;
+
+
+//Contract CPV 
+Left Join (Contracts)
+Load Distinct
+	 Contracts_CPVFullHierarchyCode,
+     Contracts_CPVFullHierarchyCode as Contracts_CPVFullHierarchyCode_
+//      if(not WildMatch(lower(SubCategory_CPV_ContractsRu), '*mixed*', '*undefined*'), SubCategory_CPV_ContractsRu,
+//      	if(not WildMatch(lower([7_CPV_ContractsRu]), '*mixed*', '*undefined*'), "7_CPV_ContractsRu",
+//         	if(not WildMatch(lower([6_CPV_ContractsRu]), '*mixed*', '*undefined*'), "6_CPV_ContractsRu",
+//         		if(not WildMatch(lower([Category_CPV_ContractsRu]), '*mixed*', '*undefined*'), "Category_CPV_ContractsRu",
+//         			if(not WildMatch(lower([Class_CPV_ContractsRu]), '*mixed*', '*undefined*'), "Class_CPV_ContractsRu",
+//         				if(not WildMatch(lower([Group_CPV_ContractsRu]), '*mixed*', '*undefined*'), "Group_CPV_ContractsRu",
+//         					if(not WildMatch(lower([Division_CPV_ContractsRu]), '*mixed*', '*undefined*'), "Division_CPV_ContractsRu",
+//                             	Contracts_GSW_))))))) as Contracts_CPVRu_,
+                                
+//      if(not WildMatch(lower(SubCategory_CPV_ContractsEn), '*mixed*', '*undefined*'), SubCategory_CPV_ContractsEn,
+//      	if(not WildMatch(lower([7_CPV_ContractsEn]), '*mixed*', '*undefined*'), "7_CPV_ContractsEn",
+//         	if(not WildMatch(lower([6_CPV_ContractsEn]), '*mixed*', '*undefined*'), "6_CPV_ContractsEn",
+//         		if(not WildMatch(lower([Category_CPV_ContractsEn]), '*mixed*', '*undefined*'), "Category_CPV_ContractsEn",
+//         			if(not WildMatch(lower([Class_CPV_ContractsEn]), '*mixed*', '*undefined*'), "Class_CPV_ContractsEn",
+//         				if(not WildMatch(lower([Group_CPV_ContractsEn]), '*mixed*', '*undefined*'), "Group_CPV_ContractsEn",
+//         					if(not WildMatch(lower([Division_CPV_ContractsEn]), '*mixed*', '*undefined*'), "Division_CPV_ContractsEn",
+//                             	Contracts_GSW_))))))) as Contracts_CPVEn_,
+                                
+//      if(not WildMatch(lower(SubCategory_CPV_ContractsKg), '*mixed*', '*undefined*'), SubCategory_CPV_ContractsKg,
+//      	if(not WildMatch(lower([7_CPV_ContractsKg]), '*mixed*', '*undefined*'), "7_CPV_ContractsKg",
+//         	if(not WildMatch(lower([6_CPV_ContractsKg]), '*mixed*', '*undefined*'), "6_CPV_ContractsKg",
+//         		if(not WildMatch(lower([Category_CPV_ContractsKg]), '*mixed*', '*undefined*'), "Category_CPV_ContractsKg",
+//         			if(not WildMatch(lower([Class_CPV_ContractsKg]), '*mixed*', '*undefined*'), "Class_CPV_ContractsKg",
+//         				if(not WildMatch(lower([Group_CPV_ContractsKg]), '*mixed*', '*undefined*'), "Group_CPV_ContractsKg",
+//         					if(not WildMatch(lower([Division_CPV_ContractsKg]), '*mixed*', '*undefined*'), "Division_CPV_ContractsKg",
+//                             	Contracts_GSW_))))))) as Contracts_CPVKg_                          
+Resident ContractsFullCPVHierarchy;
+
+Drop Field Contracts_GSW_;
+Drop Field Contracts_CPVFullHierarchyCode From Contracts;
+
+Rename Field Contracts_GSW to Contracts_GSW_;
+
+Left Join (Contracts)
+Load
+	 IDContractOrig,
+//      if(Contracts_OKGZscheme = 1, Contracts_CPVRu_, Contracts_DLORu) as Contracts_CPVRu,
+//      if(Contracts_OKGZscheme = 1, Contracts_CPVEn_, Contracts_DLOEn) as Contracts_CPVEn,
+//      if(Contracts_OKGZscheme = 1, Contracts_CPVKg_, Contracts_DLOKg) as Contracts_CPVKg,
+     if(Contracts_OKGZscheme = 1, Contracts_GSW_, 'Mixed Goods') as Contracts_GSW,
+     if(Contracts_OKGZscheme = 1, Contracts_CPVFullHierarchyCode_, Contracts_DLO8_id) as Contracts_CPVFullHierarchyCode // OKGZ + DLO
+Resident Contracts;    
+
+Drop Fields /*Contracts_CPVRu_, Contracts_CPVEn_, Contracts_CPVKg_, Contracts_DLORu, Contracts_DLOEn, Contracts_DLOKg,*/ Contracts_GSW_, Contracts_OKGZscheme, Contracts_CPVFullHierarchyCode_;
+
+Concatenate (ContractsFullCPVHierarchy)
+Load
+	 Contracts_DLO8_id as Contracts_CPVFullHierarchyCode, 
+     DLO8_ContractsRu as SubCategory_CPV_ContractsRu,
+     DLO8_ContractsEn as SubCategory_CPV_ContractsEn,
+     DLO8_ContractsKg as SubCategory_CPV_ContractsKg,
+   
+     DLO2_ContractsRu as Division_CPV_ContractsRu,
+     DLO2_ContractsEn as Division_CPV_ContractsEn,
+     DLO2_ContractsKg as Division_CPV_ContractsKg
+Resident ContractsFullDLOHierarchy;   
+
+Drop Table ContractsFullDLOHierarchy;
+Drop Field Contracts_DLO8_id;
+
+//Complaint type
+Rename Field complaint_type to complaint_type_;
+
+left join(Complaints)
+Load complaint_id,
+	 if(not IsNull(complaint_type_), complaint_type_, 'undefined') AS complaint_type
+Resident Complaints;
+
+drop Field complaint_type_;
+
+//Процент понижения цены
+left join(Awards)
+Load IDLotKey,
+	 [Lot Value]
+Resident Lots
+;
+
+//drop Field IDLotKey from Awards;
+
+Left join(Awards)
+Load IDAwardOrig,
+	 [Lot Value]-award_amount AS award_price_reduction
+Resident Awards
+where award_status = 'active';
+
+drop field [Lot Value] from Awards;
+
+vTrace = NoOfRows('BidsRelatedLots');
+Trace 'Бидов изначально $(vTrace)';
+
+
+left join(BidsRelatedLots)
+Load Distinct
+	 IDBidKey,
+	 IDtendererKey, 
+     bid_status as bid_status_
+Resident Bids;
+
+//Drop Field IDBidKey  From BidsRelatedLots; 
+
+vTrace = NoOfRows('BidsRelatedLots');
+Trace 'Бидов после добавления статуса $(vTrace)';
+
+left join(BidsRelatedLots)
+Load IDLotBidKey,
+	 LastValue(award_status) as award_status, 
+     count(DISTINCT IDAwardOrig) as bid_lot_no_of_awards 
+Resident Awards
+group by IDLotBidKey
+Order By award_date;
+
+Rename Field award_date to award_date_;
+
+Left Join (Awards)
+Load
+	 IDAwardKey,
+     Date(Floor(award_date_)) as award_date
+Resident Awards;
+
+Drop Field award_date_;
+
+vTrace = NoOfRows('BidsRelatedLots');
+Trace 'Бидов после добавления статуса эворда $(vTrace)';
+
+left join(BidsRelatedLots)
+Load 
+	 IDLotBidKey,
+	 if(bid_status_ = 'pending', 'pending.qualification',
+     	if(bid_status_ = 'disqualified', 'disqualified.qualification',
+        	if(bid_status_ = 'valid' and IsNull(bid_lot_no_of_awards), 'pending.evaluation',
+                	if(bid_status_ = 'valid' and award_status = 'disqualified', 'disqualified.evaluation',
+                    	if(bid_status_ = 'valid' and award_status = 'rejected', 'rejected',
+                        	if(bid_status_ = 'valid' and award_status = 'active', 'winner', 'loser')))))) as bid_lot_status,
+      if(bid_status_ = 'disqualified' OR (bid_status_ = 'valid' and award_status = 'disqualified'), 1, 0) as  disqualified_bid                     
+Resident BidsRelatedLots;
+
+drop Fields bid_status_, award_status from BidsRelatedLots;
+
+vTrace = NoOfRows('BidsRelatedLots');
+Trace 'Бидов после формирования статуса $(vTrace)';
+
+//Признак иностранного участника
+Left join(Tenderer)
+Load [Bidder ID],
+	 if(left(tenderer_ateCode, 3) <> '417', 1, 0) as tenderer_is_foreigner
+Resident Tenderer;
+
+left join(BidsRelatedLots)
+Load IDtendererKey,
+	 tenderer_is_foreigner
+Resident Tenderer;
+
+left join(BidsRelatedLots)
+Load 
+	 IDLotBidKey,
+	 if(tenderer_is_foreigner = 1, DUAL('$(vYESText)',1), DUAL('$(vNOText)',0)) as bid_lot_foreign_participant,
+     if(tenderer_is_foreigner = 1 AND bid_lot_status = 'winner', DUAL('$(vYESText)',1), DUAL('$(vNOText)',0)) as bid_lot_foreign_winner,
+     if(tenderer_is_foreigner = 1 AND WildMatch(bid_lot_status, 'disqualified*'), DUAL('$(vYESText)',1), DUAL('$(vNOText)',0)) as bid_lot_foreign_disqualified
+Resident BidsRelatedLots;
+
+drop Field tenderer_is_foreigner, IDtendererKey from BidsRelatedLots;
+
+
+left join(Bids)
+Load IDTenderKey,
+	 tender_is_competitive
+Resident Tender;
+
+drop field IDTenderKey from Bids;
+
+left join(Tenderer)
+Load IDtendererKey,
+	 if(Concat(DISTINCT tender_is_competitive)='0', 1, 0) as tenderer_only_nonCompetitive
+Resident Bids
+Group by IDtendererKey;
+
+drop field tender_is_competitive from Bids; 
+
+
+left join(buyer)
+Load IDbuyerKey,
+	 if(Concat(DISTINCT tender_is_competitive)='0', 1, 0) as buyer_only_nonCompetitive
+Resident Tender
+Group by IDbuyerKey;
+
+//drop Field IDLotKey from Awards;
+
+
+// Suppliers only Noncompetitive
+Left Join(Contracts)
+Load IDTenderKey as IDTenderKey_Contracts,
+	 tender_is_competitive
+Resident Tender;
+
+//DROP FIELD [IDTenderKey_Contracts];
+
+Left Join(Suppliers)
+Load [Supplier ID],
+	 if(Concat(DISTINCT tender_is_competitive)='0', 1, 0) as supplier_only_nonCompetitive
+Resident Contracts
+Group by [Supplier ID];
+
+Drop Field tender_is_competitive from Suppliers, Contracts;
+
+
+FOR Each vQualificationRequirements in FieldValueList('qualificationRequirements_type')
+
+    Left Join (Tender)
+    Load Distinct
+         IDTenderKey,
+         DUAL('$(vYESText)',1) as [_$(vQualificationRequirements)]
+    Resident QualificationRequirements
+    Where qualificationRequirements_type = '$(vQualificationRequirements)';
+    
+    Left Join (Tender)
+    Load 
+         IDTenderKey,
+         Alt([_$(vQualificationRequirements)], DUAL('$(vNOText)',0)) as [$(vQualificationRequirements)]
+    Resident Tender;
+    
+    Drop Field [_$(vQualificationRequirements)];
+
+NEXT
+
+Drop Tables QualificationRequirements;
+
+Left Join (Tender)
+Load 
+    IDTenderKey,
+    if(_tender_COC_hasGuarantee = 1, DUAL('$(vYESText)',1), DUAL('$(vNOText)',0)) as [Has Guarantee],
+    if(_tender_COC_hasInsurance = 1, DUAL('$(vYESText)',1), DUAL('$(vNOText)',0)) as [Has Insurance],
+    if(_tender_COC_hasRelatedServices = 1, DUAL('$(vYESText)',1), DUAL('$(vNOText)',0)) as [Has Related Services],
+    if(_tender_COC_hasSpares = 1, DUAL('$(vYESText)',1), DUAL('$(vNOText)',0)) as [Has Spares],
+    if(_tender_COC_hasTechnicalControl = 1, DUAL('$(vYESText)',1), DUAL('$(vNOText)',0)) as [Has Technical Control],
+    if(_tender_COC_hasPrepayment = 1, DUAL('$(vYESText)',1), DUAL('$(vNOText)',0)) as [Has Prepayment],
+    if(_tender_COC_hasAcceptancePayment = 1, DUAL('$(vYESText)',1), DUAL('$(vNOText)',0)) as [Has Acceptance Payment],
+    if(_tender_COC_hasShipmentPayment = 1, DUAL('$(vYESText)',1), DUAL('$(vNOText)',0)) as [Has Shipment Payment],
+    if(openFlag OR auctionFlag OR reqouteFlag OR singlesourceFlag OR outherFlag, 1, 0) as totalFlag
+Resident Tender;
+
+Drop Fields _tender_COC_hasGuarantee,_tender_COC_hasGuarantee,_tender_COC_hasRelatedServices,_tender_COC_hasSpares,_tender_COC_hasTechnicalControl,_tender_COC_hasPrepayment,_tender_COC_hasAcceptancePayment,_tender_COC_hasShipmentPayment from Tender;
+
+items_tmp:
+NoConcatenate
+load IDLotKey,
+	 IDItemKey
+resident Items;
+
+left join (items_tmp)
+load IDItemKey,
+	 IDLotBidKey
+resident Bids;
+
+//Drop Field IDItemKey From Bids;
+
+left join (Lots)
+load IDLotKey, count(distinct IDLotBidKey) as bids_lot_qty
+resident items_tmp
+group by IDLotKey;
+
+DROP TABLE items_tmp;
+
+Left Join (Contracts)
+Load
+	 IDContractKey,
+     if(NOT IsNull(contract_amountDiscounted), contract_amountDiscounted, contract_amount) as contract_value_discounted
+Resident Contracts; 
+
+Drop Field contract_amountDiscounted;
+
+// Link NonCompetitive Awards to Items
+NonCompetitiveAwards:
+Load
+	 IDLotBidKey,
+     IDLotKey
+Resident  Awards
+Where IDReleaseOCIDOrig_Award Like '*contract-based*';   
+
+drop Field IDLotKey from Awards;
+
+Left Join (NonCompetitiveAwards)
+Load
+	 IDLotKey,
+     IDItemKey
+Resident Items;   
+
+Concatenate (Bids)
+Load Distinct
+	 IDLotBidKey,
+     IDItemKey
+Resident   NonCompetitiveAwards;
+
+Drop Table NonCompetitiveAwards;
+
+//4. Variables
+SET vTenderId = 'IDTenderOrig';
+SET vTenderNumber = 'tenderNumber';
+SET vTenderStatus = '[tender_status]';
+SET vTenderSubStatus = '[tender_statusDetails]';
+SET vTenderProcurementMethod = '[tender_procurementMethod]';
+SET vTenderProcurementMethodLocal = '[tender_procurementMethodDetails]';
+SET vTenderProcurementSubMethodDetails = '[tender_procurementSubMethodDetails]';
+SET vTenderProcurementMethodRationale = '[tender_procurementMethodRationale]';
+SET vTenderCompetitiveness = '[tender_is_competitive]';
+SET vTenderDatePublished = '[tender_datePublished]'; 
+SET vTenderBiddingStart = '[Tendering Start Date]';
+SET vTenderBiddingEnd = '[Tendering End Date]';
+SET vTenderEnquiriesStart = '[Enquiries Start Date]';
+SET vTenderEnquiriesEnd = '[Enquiries End Date]';
+SET vTenderEnquiriesEnabled = '[tender_enquiriesEnabled]';
+SET vTenderValue = '[Tender Value]';
+
+SET vLotId = '[IDLotOrig]';
+SET vLotStatus = '[lot_status]';
+//SET vLotsSubStatus = '[lot_currentStage]';
+SET vLotValue = '[Lot Value]';
+SET vLotTitle = 'lot_title';
+SET vLotNumber = 'lotNumber';
+// SET vLotDisqualQty = 'disqualified_bids_lot_qty';
+SET vLotBidsQty = 'bids_lot_qty';
+SET vLotCPV = '[Lot CPV]';
+SET vLotCPV2 = '[CPV Division]';
+SET vLotCPV3 = '[CPV Group]';
+SET vLotCPV4 = '[CPV Class]';
+SET vLotCPV5 = '[CPV Category]';
+SET vLotCPV6 = '[CPV-6]';
+SET vLotCPV7 = '[CPV-7]';
+SET vLotCPV8 = '[CPV Code]';
+SET vLotGSW = '[Lots_GSW]';
+//SET vLotForeignParticipant = '[]'; 
+//SET vLotForeignWinner = '[]';
+//SET vLotForeignDisqualified = '[]';
+
+SET vItemId = '[IDItemOrig]';
+SET vItemCPV = '[Item CPV]';
+SET vItemQuantity = '[Item Quantity]';
+SET vItemUnitPrice = '[Unit Price]';
+SET vItemCPV2 = '[Division_CPV_Items]';
+SET vItemCPV3 = '[Group_CPV_Items]';
+SET vItemCPV4 = '[Class_CPV_Items]';
+SET vItemCPV5 = '[Category_CPV_Items]';
+SET vItemCPV6 = '[6_CPV_Items]';
+SET vItemCPV7 = '[7_CPV_Items]';
+SET vItemCPV8 = '[SubCategory_CPV_Items]';
+SET vItemGSW = '[items_classification_gsw]';
+
+SET vQualificationRequirementId = '[qualificationRequirements_id]';
+SET vQualificationRequirementType = '[qualificationRequirements_type]';
+
+SET vConditionOfContractId = '[conditionOfContract_id]';
+SET vConditionOfContractLateDeliveryRate = '[tender_COC_lateDeliveryRate]';
+SET vConditionOfContractLatePaymentRate = '[tender_COC_latePaymentRate]';
+SET vConditionOfContractLateGuaranteeRate = '[tender_COC_lateGuaranteeRate]';
+SET vConditionOfContractGuaranteePercent = '[tender_COC_guaranteePercent]';
+SET vConditionOfContractMaxDeductibleAmountDelivery = '[tender_COC_maxDeductibleAmountDelivery]';
+SET vConditionOfContractMaxDeductibleAmountPayment = '[tender_COC_maxDeductibleAmountPayment]';
+SET vConditionOfContractMaxDeductibleAmountGuarantee = '[tender_COC_maxDeductibleAmountGuarantee]';
+
+SET vConditionOfContractHasGuarantee = '[Has Guarantee]';
+SET vConditionOfContractHasInsurance = '[Has Insurance]';
+SET vConditionOfContractHasRelatedServices = '[Has Related Services]';
+SET vConditionOfContractHasSpares = '[Has Spares]';
+SET vConditionOfContractHasTechnicalcontrol = '[Has Technical Control]';
+SET vConditionOfContractHasPrepayment = '[Has Prepayment]';
+SET vConditionOfContractHasAcceptancePayment = '[Has Acceptance Payment]';
+SET vConditionOfContractHasShipmentPayment = '[Has Shipment Payment]';
+
+SET vConditionOfContractPrepaymentPercent = '[tender_COC_prepaymentPercent]';
+SET vConditionOfContractAcceptancePaymentPercent = '[tender_COC_acceptancePaymentPercent]';
+SET vConditionOfContractShipmentPaymentPercent = '[tender_COC_shipmentPaymentPercent]';
+SET vConditionOfContractInsuranceType = 'deliveryTerms'; //'[tender_COC_insuranceType]';
+SET vConditionOfContractHasArbitralTribunal = '[tender_COC_hasArbitralTribunal]';
+
+SET vEnquiryId = '[enquiries_id]';
+SET vEnquiryDate = '[enquiries_date]';
+SET vEnquiryIsAnswered = 'enquiries_is_answered';
+SET vEnquiryFromDepartment = 'enquiries_from_department';
+SET vEnquiryDateAnswered = '[enquiries_dateAnswered]';
+
+SET vBidId = 'IDLotBid';
+SET vBidStatus = '[bid_lot_status]';
+SET vBidDate = '[bid_date]';
+SET vBidValue = '[Bid Value]';
+SET vDisqualifiedBid = 'disqualified_bid';
+
+SET vPriceProposalId = '[IDPriceProposalOrig]';
+SET vPriceProposalUnitPrice = '[Bid Unit Price]';
+SET vPriceProposalCurrency = '[Bid Unit Price Currency]';
+
+SET vAwardId = '[IDAwardOrig]';
+SET vAwardDate = '[award_date]';
+SET vAwardStatus = '[award_status]';
+SET vAwardValue = '[award_amount]';
+
+SET vContractId = '[IDContractOrig]';
+SET vContractValue = '[contract_amount]';
+SET vContractValDiscounted = 'contract_value_discounted';
+SET vContractNumber = 'contractNumber';
+//SET vContractDate = '[contract_date]';
+SET vContractDateSigned = '[contract_date_Signed]';
+SET vContractCPV2 = '[Division_CPV_Contracts]';
+SET vContractCPV3 = '[Group_CPV_Contracts]';
+SET vContractCPV4 = '[Class_CPV_Contracts]';
+SET vContractCPV5 = '[Category_CPV_Contracts]';
+SET vContractCPV6 = '[6_CPV_Contracts]';
+SET vContractCPV7 = '[7_CPV_Contracts]';
+SET vContractCPV8 = '[SubCategory_CPV_Contracts]';
+SET vContractGSW = '[Contracts_GSW]';
+SET vContractCPV = '[Contracts_CPV]';
+
+SET vComplaintId = '[complaint_id]';
+SET vComplaintStatus = '[complaint_status]';
+SET vComplaintType = '[complaint_type]';
+SET vCompaintDateSubmitted = '[complaint_dateSubmitted]';
+SET vComplainеReviewDate = '[complaint_reviewDate]';
+SET vComplaintResponseDate = '[complaint_responseDate]';
+
+SET vBuyerId = '[Buyer ID]';
+SET vBuyerNameRu = 'Buyer';
+SET vBuyerNameEn = '[]';
+SET vBuyerNameKg = '[]';
+SET vBuyerAteCode = '[]';
+SET vBuyerCountry = '[]';
+SET vBuyerRegion = '[Buyer Region]';
+SET vBuyerSubregion = '[]';
+SET vBuyerDistrict = 'buyer_district';
+SET vBuyerSubdistrict = '[]';
+SET vBuyerSubsubdistrict = '[]';
+SET vBuyerLocality = '[]';
+SET vBuyerStreetAddress = '[]';
+SET vBuyerOnlyNoncompetitive = 'buyer_only_nonCompetitive';
+
+SET vBidderId = '[Bidder ID]';
+SET vBidderNameRu = 'Bidder';
+SET vBidderNameEn = '[]';
+SET vBidderNameKg = '[]';
+SET vBidderAteCode = '[]';
+SET vBidderCountry = '[Bidder Country]';
+SET vBidderRegion = '[Bidder Region]';
+SET vBidderSubregion = '[]';
+SET vBidderDistrict = 'tenderer_district';
+SET vBidderSubdistrict = '[]';
+SET vBidderSubsubdistrict = '[]';
+SET vBidderLocality = '[]';
+SET vBidderStreetAddress = '[]';
+SET vBidderOnlyNoncompetitive = 'tenderer_only_nonCompetitive';
+
+SET vSupplierId = '[Supplier ID]';
+SET vSupplierNameRu = '[Supplier NameRu]';
+//SET vSupplierNameKg = '[Supplier NameKg]';
+SET vSupplierOnlyNoncompetitive = 'supplier_only_nonCompetitive';
+SET vSupplierCountry = '[Supplier Country]';
+
+SET vComplainerId = '[complaint_author_id]';
+SET vComplainerNameRu = 'Complainer';
+SET vComplainerNameEn = '[]';
+SET vComplainerNameKg = '[]';
+SET vComplainerAteCode = '[]';
+SET vComplainerCountry = '[]';
+SET vComplainerRegion = '[]';
+SET vComplainerSubregion = '[]';
+SET vComplainerDistrict = '[]';
+SET vComplainerSubdistrict = '[]';
+SET vComplainerSubsubdistrict = '[]';
+SET vComplainerLocality = '[]';
+SET vComplainerStreetAddress = '[]';
+
+SET vPriceReductionField = 'award_price_reduction';
+SET vTenderEnquiriesDurationField = 'tender_enquiryPeriod_duration';
+SET vTenderTenderingDurationField = 'tender_tenderPeriod_duration';
+SET vLotTillAwardDurationField = 'lot_tillAward_duration';
+SET vLotTillContractDurationField = 'lot_tillContractDuration';
+SET vBidForeignParticipant = 'bid_lot_foreign_participant';
+SET vBidForeignWinner = 'bid_lot_foreign_winner';
+SET vBidForeignDisqualified = 'bid_lot_foreign_disqualified';
+SET vTendererIsForeignerField = 'tenderer_is_foreigner';
+SET vEnquiriesTimeToAnswerField = 'enquiries_time_to_answer';
+SET vLotDurationField = 'lot_duration';
+
+
+SET ACTIVE_AWARD = '$(vAwardStatus)={active}';
+SET FOREING_BIDDER = '$(vTendererIsForeignerField)={1}'; 
+SET NONCOMP = '$(vTenderCompetitiveness)={0}'; 
+SET COMP = '$(vTenderCompetitiveness)={1}'; 
+SET DISQUALIFIED_BID = '$(vDisqualifiedBid)={1}'; 
+SET UNANSWERED_QUESTION = '$(vEnquiryIsAnswered)={0}'; 
+SET COMPLETE_LOT = '$(vLotStatus)={complete}'; 
+
+
+
+SET PARAMS = (=replace('$1', ';', ',')); 
+
+SET _TENDERS_COUNT_ = 'COUNT({<$'&PARAMS&'>} Distinct $(vTenderId)'&')';
+LET vTendersCount = $(_TENDERS_COUNT_);
+
+SET _TENDER_AMOUNT_ = 'SUM({<$'&PARAMS&'>} $(vTenderValue)'&')';
+LET vTenderAmount = $(_TENDER_AMOUNT_);
+
+SET _LOTS_COUNT_ = 'COUNT({<$'&PARAMS&'>} Distinct $(vLotId)'&')';
+LET vLotsCount = $(_LOTS_COUNT_);
+
+SET _LOT_AMOUNT_ = 'SUM({<$'&PARAMS&'>} $(vLotValue)'&')';
+LET vLotAmount = $(_LOT_AMOUNT_);
+
+SET _BID_AMOUNT_ = 'SUM({<$'&PARAMS&'>} $(vBidValue)'&')';
+LET vBidAmount = $(_BID_AMOUNT_);
+
+SET _CONTRACTS_COUNT_ = 'COUNT({<$'&PARAMS&'>} Distinct $(vContractId)'&')';
+LET vContractCount = $(_CONTRACTS_COUNT_);
+
+SET _CONTRACT_VAL_DS_ = 'SUM({<$'&PARAMS&'>} $(vContractValDiscounted)'&')'; 
+LET vContractValueDiscounted = $(_CONTRACT_VAL_DS_);
+
+SET _CONTRACT_AMOUNT_ = 'SUM({<$'&PARAMS&'>} $(vContractValue)'&')'; 
+LET vContractAmount = $(_CONTRACT_AMOUNT_);
+
+SET _PRICE_REDUCTION_ = 'SUM({<$'&PARAMS&'>} $(vPriceReductionField) '&')';
+LET vPriceReduction = $(_PRICE_REDUCTION_);
+
+SET _PRICE_REDUCTION%_ = 'SUM({<$'&PARAMS&',$(ACTIVE_AWARD)>} $(vPriceReductionField)'&')/SUM({<$'&PARAMS&',$(ACTIVE_AWARD)>} $(vLotValue)'&')';
+LET vPriceReduction% = $(_PRICE_REDUCTION%_);
+
+SET _BIDDERS_COUNT_ = 'COUNT({<$'&PARAMS&'>} Distinct $(vBidderId)'&')';
+LET vBiddersCount = $(_BIDDERS_COUNT_);
+
+SET _BUYER_COUNT_ = 'COUNT({<$'&PARAMS&'>} Distinct $(vBuyerId)'&')';
+LET vBuyersCount = $(_BUYER_COUNT_);
+
+SET _AVG_ENQUIRY_PERIOD_ = 'AVG({<$'&PARAMS&'>} $(vTenderEnquiriesDurationField)'&')';
+Let vEnquiryPeriodDuration = $(_AVG_ENQUIRY_PERIOD_);
+
+SET _AVG_TENDERING_PERIOD_ = 'AVG({<$'&PARAMS&'>} $(vTenderTenderingDurationField)'&')';
+Let vTenderignPeriodDuration = $(_AVG_TENDERING_PERIOD_);
+
+SET _AVG_TILLAWARD_PERIOD_ = 'AVG({<$'&PARAMS&'>} $(vLotTillAwardDurationField)'&')';
+Let vTillAwardDuration = $(_AVG_TILLAWARD_PERIOD_);
+
+SET _AVG_TILLCONTRACT_PERIOD_ = 'AVG({<$'&PARAMS&'>} $(vLotTillContractDurationField)'&')';
+Let vTillContractDuration = $(_AVG_TILLCONTRACT_PERIOD_);
+
+SET _AVG_PROCEDURE_DURATION_ = 'AVG({<$'&PARAMS&'>} $(vLotDurationField)'&')';
+Let vProcedureDuration = $(_AVG_PROCEDURE_DURATION_);
+
+SET _FOREING_BIDDERS%_ = 'COUNT({<$'&PARAMS&',$(FOREING_BIDDER)>} Distinct $(vBidderId)'&')/COUNT({<$'&PARAMS&'>} Distinct $(vBidderId)'&')';
+LET vForeignBidders% = $(_FOREING_BIDDERS%);
+
+SET _BIDS_COUNT_ = 'COUNT({<$'&PARAMS&'>} Distinct $(vBidId)'&')';
+LET vBidsCount = $(_BIDS_COUNT_);
+
+SET _ENQUIRIES_COUNT_ = 'COUNT({<$'&PARAMS&'>} Distinct $(vEnquiryId)'&')';
+LET vEnquiriesCount = $(_ENQUIRIES_COUNT_);
+
+SET _AVG_TIME_TOANSWER = 'AVG({<$'&PARAMS&'>} $(vEnquiriesTimeToAnswerField)'&')';
+LET vEnquiriesTimeToAnswer = $(_AVG_TIME_TOANSWER);
+
+SET _COMPLAINTS_COUNT_ = 'COUNT({<$'&PARAMS&'>} Distinct $(vComplaintId)'&')';
+LET vComplaintsCount = $(_COMPLAINTS_COUNT_);
+
+SET _AWARDS_COUNT_ = 'COUNT({<$'&PARAMS&'>} Distinct $(vAwardId)'&')';
+LET vAwardsCount = $(_AWARDS_COUNT_);
+
+SET _ITEMS_COUNT_ = 'COUNT({<$'&PARAMS&'>} Distinct $(vItemId)'&')';
+LET vItemsCount = $(_ITEMS_COUNT_);
+
+// For Validation
+SET _PLANS_BI_COUNT_ = 'COUNT({<$'&PARAMS&'>} Distinct PlanningBIIds'&')';
+LET vPlanningBICount = $(_PLANS_BI_COUNT_);
+
+//5. Multilang
+FieldNamesTable:
+NoConcatenate
+LOAD
+    "Index",
+    Reference,
+    Ru,
+    En,
+    Kg
+FROM [$(DIC_QVD_PATH)//Multilang_FieldNames.qvd]
+(qvd);
+
+
+InnerDictionaries:
+NoConcatenate
+LOAD
+    "Index",
+    Reference,
+    Ru,
+    En,
+    Kg,
+    attributeOf
+FROM [$(DIC_QVD_PATH)//Multilang_Dictionaries.qvd]
+(qvd);
+
+set Verbatim = 1;
+
+Translations:
+NoConcatenate
+load     "Index",
+    Reference,
+    Ru,
+    En,
+    Kg
+From [$(DIC_QVD_PATH)Multilang_Labels.qvd] (qvd);
+
+Language:
+CROSSTABLE (Language, Translation) LOAD 
+	 Index, 
+     Ru,
+     En,
+     Kg
+RESIDENT Translations;
+
+LanguageList:
+LOAD Distinct
+	 Language as _Language
+     //AutoNumber(Language) as Index_
+RESIDENT Language
+WHERE Language > 0;
+
+left join(LanguageList)
+LOAD
+    Index as [_Language],
+    Ru as [Index_]
+Resident InnerDictionaries
+where attributeOf like 'LanguageList'
+;
+
+DROP TABLE Translations;
+
+
+LET T = replace('_T_$1_@(=FirstSortedValue(distinct _Language, Index_))', '@', '$');
+
+LET vTranslationsRows = NoOfRows('Language');
+
+FOR i = 0 TO vTranslationsRows - 1 
+	LET _vTranslationId = Peek('Index', i, 'Language');
+	LET _vTranslation = Peek('Translation', i, 'Language');
+	LET _vTrLanguage = Peek('Language', i, 'Language');
+	
+	LET _vTrName = '_T_$(_vTranslationId)_$(_vTrLanguage)';
+	LET $(_vTrName) = '$(_vTranslation)';
+	
+//	TRACE $(_vTrName);
+
+	LET _vTranslationId =;
+	LET _vTranslation =;
+	LET _vTrLanguage =;
+	LET _vTrName =;
+NEXT;
+
+DROP Table Language;
+
+
+Translations:
+Load 
+	 "Index",
+     Ru,
+     En,
+     Kg
+From [$(DIC_QVD_PATH)TranslationsHelp.qvd] (qvd);
+
+Language:
+CROSSTABLE (Language, Translation) LOAD 
+	 Index, 
+     Ru,
+     En,
+     Kg
+RESIDENT Translations;
+
+
+LET H = replace('_H_$1_@(=FirstSortedValue(_Language, Index_))', '@', '$');
+
+LET vTranslationsRows = NoOfRows('Language');
+
+FOR i = 0 TO vTranslationsRows - 1 
+	LET _vTranslationId = Peek('Index', i, 'Language');
+	LET _vTranslation = Peek('Translation', i, 'Language');
+	LET _vTrLanguage = Peek('Language', i, 'Language');
+	
+	LET _vTrName = '_H_$(_vTranslationId)_$(_vTrLanguage)';
+	LET $(_vTrName) = '$(_vTranslation)';
+	
+	LET _vTranslationId =;
+	LET _vTranslation =;
+	LET _vTrLanguage =;
+	LET _vTrName =;
+NEXT
+
+DROP Tables Language, Translations;
+
+//6. Calendars
+MinMaxDates:
+LOAD 
+	Min(tender_dateTmp) as MinDate,
+	Max(tender_dateTmp) as MaxDate;	
+
+LOAD Num(Fieldvalue('tender_datePublished',RecNo())) as tender_dateTmp 
+AUTOGENERATE FieldValueCount('tender_datePublished'); 
+
+LET vMinDate = Date(Peek('MinDate', -1, 'MinMaxDates'));
+LET vMaxDate = Date(Peek('MaxDate', -1, 'MinMaxDates'));
+
+DROP TABLE MinMaxDates;
+
+SET MonthNames='$(_T_63_Ru)';
+
+FullCalendar:
+Load
+	 "tender_datePublished",
+     "tender_datePublished" as Date,
+     Dual(Year(tender_datePublished)&'-'&Month(tender_datePublished), (Year(tender_datePublished)-1) * 12 + Month(tender_datePublished)) as [$(_T_215_Ru)],
+     Month(tender_datePublished) as [$(_T_273_Ru)]
+;
+LOAD Date('$(vMinDate)' + RecNo() - 1) as "tender_datePublished"
+AutoGenerate vMaxDate - vMinDate + 1;    
+
+SET MonthNames='$(_T_63_En)';
+
+Left Join (FullCalendar)
+Load
+	 Date,
+     Dual(Year(tender_datePublished)&'-'&Month(tender_datePublished), (Year(tender_datePublished)-1) * 12 + Month(tender_datePublished)) as [$(_T_215_En)],
+     Month(tender_datePublished) as [$(_T_273_En)]
+Resident FullCalendar;     
+
+SET MonthNames='$(_T_63_Kg)';
+
+Left Join (FullCalendar)
+Load
+	 Date,
+     Dual(Year(tender_datePublished)&'-'&Month(tender_datePublished), (Year(tender_datePublished)-1) * 12 + Month(tender_datePublished)) as [$(_T_215_Kg)],
+     Month(tender_datePublished) as [$(_T_273_Kg)]
+Resident FullCalendar;     
+
+Calendar: 
+  DECLARE FIELD DEFINITION Tagged ('$date')
+FIELDS
+  Dual(Year($1), YearStart($1)) AS [Year] Tagged ('$axis', '$year'),
+  Dual('K'&Num(Ceil(Num(Month($1))/3)),Num(Ceil(NUM(Month($1))/3),00)) AS [Quarter] Tagged ('$quarter', '$cyclic'),
+  Dual(Year($1)&'-K'&Num(Ceil(Num(Month($1))/3)),QuarterStart($1)) AS [Year-Quarter] Tagged ('$axis', '$yearquarter', '$qualified'),
+  Dual('Q'&Num(Ceil(Num(Month($1))/3)),QuarterStart($1)) AS [_YearQuarter] Tagged ('$yearquarter', '$hidden', '$simplified'),
+  Month($1) AS [Month] Tagged ('$month', '$cyclic'),
+  Dual(Year($1)&'-'&Month($1), monthstart($1)) AS [Year-Month] Tagged ('$axis', '$yearmonth', '$qualified'),
+  Dual(Month($1), monthstart($1)) AS [_YearMonth] Tagged ('$axis', '$yearmonth', '$simplified', '$hidden'),
+  Dual('Q'&Num(Week($1),00), Num(Week($1),00)) AS [Week] Tagged ('$weeknumber', '$cyclic'),
+  Date(Floor($1)) AS [Date] Tagged ('$axis', '$date', '$qualified'),
+  Date(Floor($1), 'D') AS [_Date] Tagged ('$axis', '$date', '$hidden', '$simplified');
+  
+DERIVE FIELDS FROM FIELDS [Date] USING [Calendar];
+
+//7. Interface/Trans Tables
+//====KPI Tables====
+
+KPIList:
+Load
+	 _KPINo, 
+     replace(_Exp, '@', '$') as _Exp
+;
+Load * Inline [
+_KPINo, 	_Exp
+1,			@(vLotsCount(@(COMP)))
+2,			@(vLotAmount(@(COMP)))
+3,			@(vPriceReduction(@(COMP)))
+];
+
+KPIPS:
+Load 
+	 _KPINoPS, 
+     replace(_ExpPS, '@', '$') as _ExpPS
+;
+Load * Inline [
+_KPINoPS, 	_ExpPS
+1,			@(vProcedureDuration(@(COMP);@(COMPLETE_LOT)))
+2,			@(vEnquiryPeriodDuration(@(COMP);@(COMPLETE_LOT)))
+3,			@(vTenderignPeriodDuration(@(COMP);@(COMPLETE_LOT)))
+4,			@(vTillAwardDuration(@(COMP);@(COMPLETE_LOT)))
+];
+//5,			@(vTillContractDuration(@(COMPLETE_LOT))) // 04.12.2018 Исключил по запросу Д. Архарова
+
+KPINCB:
+Load 
+	 _KPINoNCB, 
+     replace(_ExpNCB, '@', '$') as _ExpNCB
+;
+Load * Inline [
+_KPINoNCB| 	_ExpNCB
+1|			NUM(@(vTendersCount(@(NONCOMP))), '# ##0')
+2|			NUM(@(vContractAmount(@(NONCOMP))), '# ##0')
+3|			NUM(@(vTendersCount(@(NONCOMP)))/@(vTendersCount), '# ##0,00%')
+4|			NUM(@(vContractAmount(@(NONCOMP)))/@(vContractAmount), '# ##0,00%')
+] (delimiter is '|');
+
+KPINCS: 
+Load 
+	 _KPINoNCS, 
+     replace(_ExpNCS, '@', '$') as _ExpNCS
+;
+Load * Inline [
+_KPINoNCS, 	_ExpNCS
+1,			@(vTendersCount(@(NONCOMP)))
+2,			@(vContractAmount(@(NONCOMP)))
+];
+
+KPIDS:
+Load 
+	 _KPINoDS, 
+     replace(_ExpDS, '@', '$') as _ExpDS
+;
+Load * Inline [
+_KPINoDS, 	_ExpDS
+1,			@(vLotsCount(@(DISQUALIFIED_BID);@(COMP)))
+2,			@(vLotAmount(@(DISQUALIFIED_BID);@(COMP)))
+3,			@(vBidsCount(@(DISQUALIFIED_BID);@(COMP)))
+4,			@(vBidsCount(@(DISQUALIFIED_BID);@(COMP)))/@(vLotsCount(@(DISQUALIFIED_BID);@(COMP)))
+];
+
+KPIEQ:
+Load 
+	 _KPINoEQ, 
+     replace(_ExpEQ, '@', '$') as _ExpEQ
+;
+Load * Inline [
+_KPINoEQ| 	_ExpEQ
+1|			NUM(@(vEnquiriesCount(@(COMP))), '# ##0')
+2|			NUM(@(vEnquiriesCount(@(UNANSWERED_QUESTION);@(COMP)))/@(vEnquiriesCount(@(COMP))), '# ##0,00%')
+3|			NUM(@(vEnquiriesTimeToAnswer(@(COMP))), '# ##0,00')
+]
+(delimiter is '|');
+
+KPIGB:
+Load 
+	 _KPINoGB, 
+     replace(_ExpGB, '@', '$') as _ExpGB
+;
+Load * Inline [
+_KPINoGB, 	_ExpGB
+1,			@(vLotsCount(@(COMP)))
+2,			@(vLotAmount(@(COMP)))
+3,			@(vContractAmount(@(COMP)))
+4,			@(vBidsCount(@(COMP);@(COMPLETE_LOT)))/@(vLotsCount(@(COMP);@(COMPLETE_LOT)))
+];
+
+KPIGT:
+Load 
+	 _KPINoGT, 
+     replace(_ExpGT, '@', '$') as _ExpGT
+;
+Load * Inline [
+_KPINoGT, 	_ExpGT
+1,			@(vLotsCount(@(COMP);@(vBidderId)=P()))
+2,			@(vLotAmount(@(COMP);@(vBidderId)=P()))
+3,			@(vContractAmount(@(COMP)))
+4,			@(vBidsCount(@(COMP);@(COMPLETE_LOT)))/@(vLotsCount(@(COMP);@(COMPLETE_LOT)))
+];
+
+KPICT:
+Load 
+	 _KPINoCT, 
+     replace(_ExpCT, '@', '$') as _ExpCT
+;
+Load * Inline [
+_KPINoCT, 	_ExpCT
+1,			@(vContractCount)
+2,			@(vContractAmount)
+];
+
+KPICC:
+Load 
+	 _KPINoCC, 
+     replace(_ExpCC, '@', '$') as _ExpCC
+;
+Load * Inline [
+_KPINoCC, 	_ExpCC
+1,			@(vLotsCount(@(COMP)))
+2,			@(vLotAmount(@(COMP)))
+];
+
+KPIWS:
+Load 
+	 _KPINoWS, 
+     replace(_ExpWS, '@', '$') as _ExpWS
+;
+Load * Inline [
+_KPINoWS, 	_ExpWS
+1,			@(vAwardsCount(@(COMP)))
+2,			@(vLotsCount(@(ACTIVE_AWARD);@(COMP)))
+3,			@(vLotAmount(@(ACTIVE_AWARD);@(COMP)))
+];
+
+// Для конструктора
+KDIM:
+Load * Inline [
+_DIM
+1
+3
+4
+5
+6
+7
+8
+9
+A
+B
+C
+D
+E
+F
+G
+H
+I
+J
+K
+L
+M
+N
+O
+P
+Q
+R
+S
+T
+U
+V
+W
+X
+Y
+Z
+];
+
+KMES:
+Load * Inline [
+_MES
+1
+2
+3
+4
+5
+6
+7
+8
+9
+A
+C
+D
+E
+F
+G
+H
+];
+
+//Добавление полей с переводами лейблов KPI Таблиц
+CALL translationsJoinInners('KPIList', '_KPINo');
+CALL translationsJoinInners('KPIPS', '_KPINoPS'); //PS = Procedure status
+CALL translationsJoinInners('KPINCB', '_KPINoNCB');	//NCB = NonCompetitive Big
+CALL translationsJoinInners('KPINCS', '_KPINoNCS'); //NCB = NonCompetitive Small
+CALL translationsJoinInners('KPIDS', '_KPINoDS'); //DS = disqualification
+CALL translationsJoinInners('KPIGB', '_KPINoGB'); //GB = Geography Buyer
+CALL translationsJoinInners('KPIGT', '_KPINoGT'); //GT = Georgraphy Tenderer
+CALL translationsJoinInners('KPICT', '_KPINoCT'); //CT = contracts
+CALL translationsJoinInners('KPICC', '_KPINoCC'); //CC = CPV Card
+CALL translationsJoinInners('KPIEQ', '_KPINoEQ'); //EQ = Enquiries
+CALL translationsJoinInners('KPIWS', '_KPINoWS'); //WS = Winner selection
+CALL translationsJoinInners('KDIM', '_DIM');
+CALL translationsJoinInners('KMES', '_MES');
+
+
+CALL translationsNewTable('TenderStatus', 'Tender', 'tender_status');
+CALL translationsNewTable('TenderSubStatus', 'Tender', 'tender_statusDetails');
+CALL translationsNewTable('ProcurementMethod', 'Tender', 'tender_procurementMethod');
+CALL translationsNewTable('ProcurementMethodDetails', 'Tender', 'tender_procurementMethodDetails');
+CALL translationsNewTable('ProcurementSubMethodDetails', 'Tender', 'tender_procurementSubMethodDetails');
+CALL translationsNewTable('ProcurementMethodRationale', 'Tender', 'tender_procurementMethodRationale');
+CALL translationsNewTable('mainProcurementCategory', 'Tender', 'tender_mainProcurementCategory');
+
+CALL translationsNewTable('Competitiveness', 'Tender', 'tender_is_competitive');
+CALL translationsNewTable('EnquiriesEnabled', 'Tender', 'tender_enquiriesEnabled');
+CALL translationsNewTable('LotStatus', 'Lots', 'lot_status');
+//CALL translationsNewTable('LotSubStatus', 'Lots', 'lot_currentStage');
+//CALL translationsNewTable('ProcurementCategory', 'LotsFullCPVHierarchy', 'Lots_GSW_');
+CALL translationsNewTable('ProcurementCategory', 'Lots', 'Lots_GSW');
+CALL translationsNewTable('ProcurementCategoryItem', 'Items', 'items_classification_gsw');
+CALL translationsNewTable('CourtType', 'Tender', 'tender_COC_hasArbitralTribunal');
+CALL translationsNewTable('BidStatus', 'BidsRelatedLots', 'bid_lot_status');
+CALL translationsNewTable('AwardStatus', 'Awards', 'award_status');
+//CALL translationsNewTable('ProcurementCategoryContract', 'ContractsFullCPVHierarchy', 'Contracts_GSW_'); 
+CALL translationsNewTable('ProcurementCategoryContract', 'Contracts', 'Contracts_GSW'); 
+CALL translationsNewTable('ComplaintStatus', 'Complaints', 'complaint_status');
+CALL translationsNewTable('ComplaintType', 'Complaints', 'complaint_type');
+
+CALL translationsNewTable('NonCompetitiveBuyer', 0, '$(vBuyerOnlyNoncompetitive)');
+CALL translationsNewTable('NonCompetitiveBidder', 0, '$(vBidderOnlyNoncompetitive)');
+CALL translationsNewTable('NonCompetitiveSupplier', 0, '$(vSupplierOnlyNoncompetitive)');
+
+CALL translationsNewTable('ForeignParticipant', 0, '$(vTendererIsForeignerField)');
+CALL translationsNewTable('ForeignWinner', 0, '$(vBidForeignWinner)');
+CALL translationsNewTable('ForeignDisqualified', 0, '$(vBidForeignDisqualified)');
+
+CALL translationsNewTable('UnansweredQuestions', 0, '$(vEnquiryIsAnswered)');
+CALL translationsNewTable('EnquiryFromDepartment', 0, '$(vEnquiryFromDepartment)');
+
+
+SET NumConvertRu = "Pick(RangeSum(Floor(LOG10($1)),1), NUM($1, '# ##0'), NUM($1, '# ##0'), NUM($1, '# ##0'), NUM($1/1000, '# ##0,00 $(_T_56_Ru)', ',', ' '), NUM($1/1000, '# ##0,00 $(_T_56_Ru)', ',', ' '), NUM($1/1000, '# ##0,00 $(_T_56_Ru)', ',', ' '), NUM($1/1000000, '# ##0,00 $(_T_57_Ru)', ',', ' '), NUM($1/1000000, '# ##0,00 $(_T_57_Ru)', ',', ' '), NUM($1/1000000, '# ##0,00 $(_T_57_Ru)', ',', ' '), NUM($1/1000000000, '# ##0,00 $(_T_58_Ru)', ',', ' '), NUM($1/1000000000, '# ##0,00 $(_T_58_Ru)', ',', ' '), NUM($1/1000000000, '# ##0,00 $(_T_58_Ru)', ',', ' '), NUM($1/1000000000000, '# ##0,00 $(_T_59_Ru)', ',', ' '), NUM($1/1000000000000, '# ##0,00 $(_T_59_Ru)', ',', ' '), NUM($1/1000000000000, '# ##0,00 $(_T_59_Ru)', ',', ' '))";
+SET NumConvertEn = "Pick(RangeSum(Floor(LOG10($1)),1), NUM($1, '# ##0'), NUM($1, '# ##0'), NUM($1, '# ##0'), NUM($1/1000, '# ##0,00$(_T_56_En)', ',', ' '), NUM($1/1000, '# ##0,00$(_T_56_En)', ',', ' '), NUM($1/1000, '# ##0,00$(_T_56_En)', ',', ' '), NUM($1/1000000, '# ##0,00$(_T_57_En)', ',', ' '), NUM($1/1000000, '# ##0,0$(_T_57_En)', ',', ' '), NUM($1/1000000, '# ##0,00$(_T_57_En)', ',', ' '), NUM($1/1000000000, '# ##0,00$(_T_58_En)', ',', ' '), NUM($1/1000000000, '# ##0,00$(_T_58_En)', ',', ' '), NUM($1/1000000000, '# ##0,00$(_T_58_En)', ',', ' '), NUM($1/1000000000000, '# ##0,00$(_T_59_En)', ',', ' '), NUM($1/1000000000000, '# ##0,00$(_T_59_En)', ',', ' '), NUM($1/1000000000000, '# ##0,00$(_T_59_En)', ',', ' '))";
+SET NumConvertKg = "Pick(RangeSum(Floor(LOG10($1)),1), NUM($1, '# ##0'), NUM($1, '# ##0'), NUM($1, '# ##0'), NUM($1/1000, '# ##0,00 $(_T_56_Kg)', ',', ' '), NUM($1/1000, '# ##0,00 $(_T_56_Kg)', ',', ' '), NUM($1/1000, '# ##0,00 $(_T_56_Kg)', ',', ' '), NUM($1/1000000, '# ##0,00 $(_T_57_Kg)', ',', ' '), NUM($1/1000000, '# ##0,00 $(_T_57_Kg)', ',', ' '), NUM($1/1000000, '# ##0,00 $(_T_57_Kg)', ',', ' '), NUM($1/1000000000, '# ##0,00 $(_T_58_Kg)', ',', ' '), NUM($1/1000000000, '# ##0,00 $(_T_58_Kg)', ',', ' '), NUM($1/1000000000, '# ##0,00 $(_T_58_Kg)', ',', ' '), NUM($1/1000000000000, '# ##0,00 $(_T_59_Kg)', ',', ' '), NUM($1/1000000000000, '# ##0,00 $(_T_59_Kg)', ',', ' '), NUM($1/1000000000000, '# ##0,00 $(_T_59_Kg)', ',', ' '))";
+
+//8. Validation
+// 	TT https://docs.google.com/spreadsheets/d/1JfPSJ8zQnQycppnIipvnkZzhxE9L1ATg-aGVcbAdGeY/edit?ts=5ee0d5d5#gid=1837208524
+
+PlanCount:
+LOAD
+    PlanningResultCount,
+    PlanningSourceCount,
+//    ValidationId,
+//    DateTime,
+    "Date"
+FROM [lib://OCDSKGData/02_QVD_DB/02_Transaction_Valid/PlanCount.qvd]
+(qvd);
+
+LET vPlanningSourceCount = Peek('PlanningSourceCount', -1, 'PlanCount');
+LET vPlanningResultCount = Peek('PlanningResultCount', -1, 'PlanCount');
+LET vValidDate = Peek('Date', -1, 'PlanCount');
+
+Drop Table PlanCount;
+
+TenderCount:
+LOAD
+    TendersResultCount,
+    TendersResultContractBasedCount,
+    TendersSourceCount,
+    TendersSourceContractBasedCount
+//     ValidationId,
+//     DateTime,
+//     "Date"
+FROM [lib://OCDSKGData/02_QVD_DB/02_Transaction_Valid/TenderCount.qvd]
+(qvd);
+
+LET vTendersSourceCount = Peek('TendersSourceCount', -1, 'TenderCount');
+LET vTendersResultCount = Peek('TendersResultCount', -1, 'TenderCount');
+LET vTendersBICount = NoOfRows('Tender');
+
+Drop Table TenderCount;
+
+ContractCount:
+LOAD
+    ContractsResultCount,
+    ContractsResultCentralizedCount,
+    ContractsResultContractBasedCount,
+    ContractsSourceCount,
+    ContractsSourceCentralizedCount,
+    ContractsSourceContractBasedCount
+//     ValidationId,
+//     DateTime,
+//     "Date"
+FROM [lib://OCDSKGData/02_QVD_DB/02_Transaction_Valid/ContractCount.qvd]
+(qvd);
+
+LET vContractsSourceCount = Peek('ContractsSourceCount', -1, 'ContractCount')
++Peek('ContractsSourceCentralizedCount', -1, 'ContractCount')+Peek('ContractsSourceContractBasedCount', -1, 'ContractCount');
+LET vContractsResultCount = Peek('ContractsResultCount', -1, 'ContractCount')
++Peek('ContractsResultCentralizedCount', -1, 'ContractCount')+Peek('ContractsResultContractBasedCount', -1, 'ContractCount');
+LET vContractsBICount = NoOfRows('Contracts');
+
+Drop Table ContractCount;
+
+// PlanIDs
+PlanningSourceIDs:
+LOAD
+    PlanningSourceIds
+FROM [lib://OCDSKGData/02_QVD_DB/02_Transaction_Valid/PlanSourceIDs.qvd]
+(qvd);
+
+PlanningIDs:
+LOAD
+    PlanningSourceIds,
+    PlanningSourceIds as PlanningSRIds,
+    PlanningSourceIds as PlanningSBIds
+Resident  PlanningSourceIDs;
+
+Drop Table PlanningSourceIDs;
+
+PlanningResultIDs:
+LOAD
+    PlanningResultIds
+FROM [lib://OCDSKGData/02_QVD_DB/02_Transaction_Valid/PlanResultIDs.qvd]
+(qvd);
+
+Outer Join (PlanningIDs)
+Load
+	 PlanningResultIds as PlanningSRIds,
+     PlanningResultIds
+Resident  PlanningResultIDs;  
+
+Drop Table PlanningResultIDs;
+
+PlanningBIIDs_:
+LOAD Distinct
+    PlanId
+FROM [lib://OCDSKGData/02_QVD_DB/02_Transaction_Plan/Plans.qvd] (qvd);
+
+PlanningBIIDs:
+NoConcatenate
+Load
+	 PlanId
+Resident  PlanningBIIDs_
+Where Not IsNull(PlanId); 
+
+Drop Table PlanningBIIDs_;     
+
+LET vPlanningBICount = NoOfRows('PlanningBIIDs');
+
+Outer Join (PlanningIDs)
+Load
+	PlanId as PlanningSBIds,
+    PlanId as PlanningBIIds
+Resident PlanningBIIDs;
+
+Drop Table PlanningBIIDs;
+
+PlanningValidation:
+Load
+	 PlanningSourceIds,
+     PlanningResultIds,
+     PlanningBIIds,
+     if(NOT IsNull(PlanningSourceIds) AND PlanningSourceIds<>PlanningResultIds, 'Отсутствует') as NoPlanIDinOCDS,
+     if(NOT IsNull(PlanningSourceIds) AND PlanningSourceIds<>PlanningBIIds, 'Отсутствует') as NoPlanIDinBI
+Resident PlanningIDs;     
+
+Drop Table PlanningIDs;
+
+// TenderIDs
+TendersSourceIDs:
+LOAD
+    TendersSourceIds
+FROM [lib://OCDSKGData/02_QVD_DB/02_Transaction_Valid/TenderSourceIDs.qvd]
+(qvd);
+
+TendersIDs:
+LOAD
+    TendersSourceIds,
+    TendersSourceIds as TendersSRIds,
+    TendersSourceIds as TendersSBIds
+Resident   TendersSourceIDs;
+
+Drop Table TendersSourceIDs;
+
+TendersResultIDs:
+LOAD
+    TendersResultIds
+FROM [lib://OCDSKGData/02_QVD_DB/02_Transaction_Valid/TenderResultIDs.qvd]
+(qvd);
+
+Outer Join (TendersIDs)
+Load
+	 TendersResultIds as TendersSRIds,
+     TendersResultIds
+Resident  TendersResultIDs;  
+
+Drop Table TendersResultIDs;
+
+Outer Join (TendersIDs)
+Load
+	$(vTenderId) as TendersSBIds,
+    $(vTenderId) as TendersBIIds
+Resident Tender;
+
+TendersValidation:
+Load
+	 TendersSourceIds,
+     TendersResultIds,
+     TendersBIIds,
+     if(NOT IsNull(TendersSourceIds) AND TendersSourceIds<>TendersResultIds, 'Отсутствует') as NoTenderIDinOCDS,
+     if(NOT IsNull(TendersSourceIds) AND TendersSourceIds<>TendersBIIds, 'Отсутствует') as NoTenderIDinBI
+Resident TendersIDs;     
+
+Drop Table TendersIDs;
+
+
+// ContractIDs
+ContractsSourceIDs:
+LOAD
+    ContractsSourceIds
+FROM [lib://OCDSKGData/02_QVD_DB/02_Transaction_Valid/ContractSourceIDs.qvd]
+(qvd);
+
+Concatenate (ContractsSourceIDs)
+LOAD
+    ContractsSourceCentralizedIds as ContractsSourceIds
+FROM [lib://OCDSKGData/02_QVD_DB/02_Transaction_Valid/ContractSourceCentralizedIDs.qvd]
+(qvd);
+
+Concatenate (ContractsSourceIDs)
+LOAD
+    ContractsSourceСontractBasedIds as ContractsSourceIds
+FROM [lib://OCDSKGData/02_QVD_DB/02_Transaction_Valid/ContractSourceСontractBasedIDs.qvd]
+(qvd);
+
+ContractsIDs:
+LOAD
+    ContractsSourceIds,
+    ContractsSourceIds as ContractsSRIds,
+    ContractsSourceIds as ContractsSBIds
+Resident   ContractsSourceIDs;
+
+Drop Table ContractsSourceIDs;
+
+ContractsResultIDs:
+LOAD
+    ContractsResultIds
+FROM [lib://OCDSKGData/02_QVD_DB/02_Transaction_Valid/ContractResultIDs.qvd]
+(qvd);
+
+Concatenate (ContractsResultIDs)
+LOAD
+    ContractsResultCentralizedIds as ContractsResultIds
+FROM [lib://OCDSKGData/02_QVD_DB/02_Transaction_Valid/ContractResultCentralizedIDs.qvd]
+(qvd);
+
+Concatenate (ContractsResultIDs)
+LOAD
+    ContractsResultContractBasedIds as ContractsResultIds
+FROM [lib://OCDSKGData/02_QVD_DB/02_Transaction_Valid/ContractResultContractBasedIDs.qvd]
+(qvd);
+
+Outer Join (ContractsIDs)
+Load
+	 ContractsResultIds as ContractsSRIds,
+     ContractsResultIds
+Resident  ContractsResultIDs;  
+
+Drop Table ContractsResultIDs;
+
+Outer Join (ContractsIDs)
+Load
+	$(vContractId) as ContractsSBIds,
+    $(vContractId) as ContractsBIIds
+Resident Contracts;
+
+ContractsValidation:
+Load
+	 ContractsSourceIds,
+     ContractsResultIds,
+     ContractsBIIds,
+     if(NOT IsNull(ContractsSourceIds) AND ContractsSourceIds<>ContractsResultIds, 'Отсутствует') as NoContractIDinOCDS,
+     if(NOT IsNull(ContractsSourceIds) AND ContractsSourceIds<>ContractsBIIds, 'Отсутствует') as NoContractIDinBI
+Resident ContractsIDs;     
+
+Drop Table ContractsIDs;
+
+
+
+KPIVALID:
+Load 
+	 _KPINoVALID, 
+     NUM(_ExpSourceVALID, '# ##0') as _ExpSourceVALID,
+     NUM(_ExpResultVALID, '# ##0') as _ExpResultVALID,
+     NUM(_ExpBIVALID, '# ##0') as _ExpBIVALID
+;
+Load * Inline [
+_KPINoVALID, 	_ExpSourceVALID,						_ExpResultVALID,				_ExpBIVALID
+1,				$(vTendersSourceCount),					$(vTendersResultCount),			$(vTendersBICount)
+2,				$(vContractsSourceCount),				$(vContractsResultCount),		$(vContractsBICount)
+3,				$(vPlanningSourceCount),				$(vPlanningResultCount),		$(vPlanningBICount)
+];
+
+CALL translationsJoinInners('KPIVALID', '_KPINoVALID');
+
+//9. Validator (Quality)
+TenderError_tmp:
+LOAD * Inline [
+IDTenderKey_, Quality_, error_type
+];
+
+//BAD ITEMS
+baditems:
+Load distinct 
+	 [IDTenderKey]
+Resident Tender;
+
+Left Join (baditems)
+Load 
+	 [IDTenderKey_Items] as [IDTenderKey],
+	 [IDItemKey],
+     [items_relatedLot]
+Resident Items;
+
+DROP FIELD [IDTenderKey_Items];
+
+Concatenate (TenderError_tmp)
+Load distinct 
+	[IDTenderKey] as [IDTenderKey_],
+	0 AS [Quality_],
+    'ItemsMissing' as [error_type]
+resident baditems
+WHERE ISNULL([IDItemKey]) or ISNULL([items_relatedLot]);
+
+DROP TABLE baditems;
+
+// Bids or PriceProposals wo relatedLotId (LotStatus=complete)
+CompleteLots:
+LOAD
+    IDLotOrig,
+    IDTenderKey
+Resident Lots
+Where lot_status = 'complete';
+
+IsBids:
+Right Keep (CompleteLots)
+LOAD Distinct
+     IDTenderKey_Bids as IDTenderKey
+Resident Bids
+Where NOT IsNull(IDBidOrig);
+Drop Table IsBids;
+
+Left Join (CompleteLots)
+LOAD Distinct
+    IDPriceProposalOrig,
+    priceProposal_relatedLot as IDLotOrig
+Resident Bids
+Where NOT IsNull(IDPriceProposalOrig);
+
+Left Join (CompleteLots)
+LOAD Distinct
+    IDBidKey,
+    bids_relatedLots_id as IDLotOrig
+Resident BidsRelatedLots;
+
+Drop Field IDBidKey  From BidsRelatedLots; 
+
+Concatenate (TenderError_tmp)
+Load Distinct
+	 IDTenderKey as IDTenderKey_,
+     0 AS [Quality_],
+    'LotswoBids' as [error_type]
+Resident CompleteLots
+Where IsNull(IDPriceProposalOrig) OR IsNull(IDBidKey);   
+Drop Table CompleteLots;
+
+
+//BuyerRegion is missing
+buyer_nullRegion:
+Load [IDbuyerKey]
+Resident buyer
+WHERE ISNULL([Buyer Region]);
+
+Left Join (buyer_nullRegion)
+Load 
+	 [IDbuyerKey],
+     [IDTenderKey]
+Resident Tender;
+
+Concatenate (TenderError_tmp)
+Load distinct 
+	 [IDTenderKey] as [IDTenderKey_],
+	 0 AS [Quality_],
+     'Buyer_nullRegion' as [error_type]
+Resident buyer_nullRegion;
+
+DROP TABLE buyer_nullRegion;
+
+
+//CONTRACT SIGNED TENDERS W/O CONTRACT
+signedContract:
+Load 
+	[IDTenderKey]
+Resident Tender
+WHERE [tender_statusDetails]='contractSigned';
+
+Left Join (signedContract)
+Load distinct 
+	 [IDTenderKey_Bids] AS [IDTenderKey],
+	 1 as bidsIsPresent
+Resident Bids
+Where NOT IsNull([IDBidKey]);
+
+Left Join (signedContract)
+Load Distinct 
+	[IDTenderKey_Contracts] as [IDTenderKey],
+	[IDContractKey] as [IDContractKey_]
+Resident Contracts;
+
+Concatenate (TenderError_tmp)
+Load distinct 
+	[IDTenderKey] as [IDTenderKey_],
+	0 AS [Quality_],
+    if(isnull(bidsIsPresent),'BidsMissing','DBChronoIncomplete') as [error_type]
+Resident signedContract
+WHERE ISNULL([IDContractKey_]);
+
+//DROP FIELD [IDTenderKey_Contracts];
+DROP TABLE signedContract;
+
+
+//BAD BIDS
+Concatenate (TenderError_tmp)
+Load distinct 
+	[IDTenderKey_Bids]  as [IDTenderKey_],
+	0 AS [Quality_],
+    'TendererMissing' as [error_type]
+Resident Bids
+WHERE ISNULL([IDtendererKey]) AND NOT IsNull(IDTenderKey_Bids);
+
+//DROP FIELD [IDTenderKey_Bids];
+
+//Several AWARDS
+twoawards:
+Load Distinct
+	[IDTenderKey_Awards],
+    if(count(DISTINCT [award_relatedBid])>1,1,0) AS twoawards_flag
+Resident Awards
+Where [award_status] = 'active'
+Group By [IDTenderKey_Awards],[award_relatedLot];
+
+Concatenate (TenderError_tmp)
+Load distinct 
+	[IDTenderKey_Awards]  as [IDTenderKey_],
+	0 AS [Quality_],
+    'SeveralAwards' as [error_type]
+Resident twoawards
+WHERE [twoawards_flag]=1;
+
+Drop Table twoawards;
+//DROP FIELD [IDTenderKey_Awards]; 
+
+//Contracts w/o Suppliers
+Concatenate (TenderError_tmp)
+Load Distinct
+	 IDTenderKey_Contracts as IDTenderKey_,
+     0 AS [Quality_],
+    'Contract_nullSupplier' as [error_type]
+Resident Contracts
+Where IsNull([Supplier ID]);     
+
+DROP FIELD [IDTenderKey_Contracts];
+
+
+// Bids in Awards and not in releases
+AwardBids:
+LOAD Distinct
+    award_relatedBid,
+	IDTenderKey_Awards  
+Resident Awards
+Where NOT IsNull(award_relatedBid);
+
+DROP FIELD [IDTenderKey_Awards] From Awards; 
+
+Left Join (AwardBids)
+LOAD
+    IDBidOrig as award_relatedBid,
+    1 as Flag
+Resident Bids
+Where NOT IsNull(IDBidOrig);   
+
+Concatenate (TenderError_tmp)
+Load Distinct
+	 IDTenderKey_Awards as IDTenderKey_,
+     0 AS [Quality_],
+    'BidsInsideAwards' as [error_type]
+Resident AwardBids
+Where Flag<>1;   
+
+Drop Table AwardBids;
+
+//GOOD TENDERS
+concatenate (TenderError_tmp)
+load [IDTenderKey] as [IDTenderKey_],
+	1 AS [Quality_]
+resident Tender
+Where not Exists([IDTenderKey_], [IDTenderKey]);
+
+TenderQuality:
+NoConcatenate
+load [IDTenderKey_] as [IDTenderKey],
+	IF([Quality_]=1,DUAL('$(vYESText)',1),DUAL('$(vNOText)',0)) as [Valid Tenders], //[Quality_] as [Quality], 
+    [error_type]
+resident TenderError_tmp;
+
+drop table TenderError_tmp;
+
+CALL translationsNewTable('ErrorType', 'TenderQuality', 'error_type');
+Drop table FieldNamesTable;
+Drop table InnerDictionaries;
+
+
