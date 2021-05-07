@@ -12,6 +12,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Handle updating catalogues from database and sending it to web API
+ */
+
 @Component
 @Slf4j
 @AllArgsConstructor

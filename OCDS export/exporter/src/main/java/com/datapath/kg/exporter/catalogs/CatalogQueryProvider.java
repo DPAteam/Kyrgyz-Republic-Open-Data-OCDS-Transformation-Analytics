@@ -10,6 +10,12 @@ import java.io.IOException;
 import static java.nio.charset.Charset.defaultCharset;
 import static org.springframework.util.StreamUtils.copyToString;
 
+
+/**
+ * SQL query provider for getting catalog entities
+ */
+
+
 @Component
 @Getter
 public class CatalogQueryProvider {

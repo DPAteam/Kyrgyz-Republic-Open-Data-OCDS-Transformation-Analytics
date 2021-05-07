@@ -74,7 +74,7 @@ public class TenderingProvider {
         release.setAwards(getAwards(tenderId));
 
         List<ContractDAO> contracts;
-        if (tender.getDatePublished().getYear() > 2019) {
+        if (tender.getDatePublished() != null && tender.getDatePublished().getYear() > 2019) {
             contracts = getContracts(tenderId);
         } else {
             List<ContractDAO> oldContracts = getOldContracts(tenderId);

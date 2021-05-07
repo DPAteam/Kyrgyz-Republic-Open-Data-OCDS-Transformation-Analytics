@@ -13,6 +13,8 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface EntityMapper {
 
+    ZoneOffset BISHKEK_OFFSET = ZoneOffset.of("+6");
+
     @Mapping(source = "classificationId", target = "classification.id")
     @Mapping(source = "classificationDescription", target = "classification.description")
     @Mapping(source = "classificationScheme", target = "classification.scheme")
@@ -83,11 +85,11 @@ public interface EntityMapper {
 
     static OffsetDateTime map(String value) {
         if (value == null) return null;
-        return OffsetDateTime.of(LocalDate.parse(value), LocalTime.MIDNIGHT, ZoneOffset.UTC);
+        return OffsetDateTime.of(LocalDate.parse(value), LocalTime.MIDNIGHT, BISHKEK_OFFSET);
     }
 
     static OffsetDateTime map(LocalDateTime value) {
         if (value == null) return null;
-        return OffsetDateTime.of(value, ZoneOffset.UTC);
+        return OffsetDateTime.of(value, BISHKEK_OFFSET);
     }
 }

@@ -10,6 +10,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.PostConstruct;
+import java.time.ZoneId;
+import java.util.TimeZone;
+
 // Use exclude start up mongo in exporter because dependency from common module include mongo starter. Need to review scuh problem
 @SpringBootApplication(exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @EnableScheduling
@@ -25,6 +29,12 @@ public class ExporterApplication {
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
+    }
+
+
+    @PostConstruct
+    public void init() {
+        TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.of("Asia/Bishkek")));
     }
 
 }

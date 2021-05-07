@@ -13,4 +13,12 @@ public class Value {
     private String currency;
     private BigDecimal amountDiscounted;
 
+    public boolean isEmpty() {
+        return amount == null
+                && initialAmount == null
+                && reservedAmount == null
+                && savedAmount == null
+                && amountDiscounted == null;
+    }
+
 }

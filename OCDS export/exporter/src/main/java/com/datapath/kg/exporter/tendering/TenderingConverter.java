@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,14 +25,16 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 
 //fixme replace manual converting by mapstruct if need or possible
 
+/**
+ * Converts releases from database into OCDS releases
+ */
 @Component
 @AllArgsConstructor
 public class TenderingConverter {
 
     private static final String INN = "-INN-";
     private static final String CONTRACT_BASED = "contract-based-";
-    public static final String CENTRALIZED = "centralized";
-
+    private static final ZoneOffset BISHKEK_OFFSET = ZoneOffset.of("+6");
 
     private final EntityMapper mapper;
 
@@ -42,7 +45,7 @@ public class TenderingConverter {
 
         release.setOcid(OCID_PREFIX + (releaseDAO.isContractBased() ? CONTRACT_BASED : "") + tenderDAO.getId());
         release.setTag(getTags(releaseDAO));
-        release.setDate(OffsetDateTime.now());
+        release.setDate(OffsetDateTime.now().withOffsetSameLocal(BISHKEK_OFFSET));
         release.setId(OCID_PREFIX + release.getTag().get(0) + "-" + release.getDate().toLocalDate() + "-" + tenderDAO.getId());
         release.setInitiationType(TENDER_INITIATION_TYPE);
         release.setParties(toParties(releaseDAO.getParties()));
@@ -62,7 +65,91 @@ public class TenderingConverter {
         release.setRelatedProcesses(toProcesses(releaseDAO.getRelatedProcesses()));
         release.setPlanning(getPlanning(releaseDAO.getBudget()));
 
+        clearEmptyValueObject(release);
+
         return release;
+    }
+
+    // https://dpa.atlassian.net/browse/KIFMPATPI-123
+    private void clearEmptyValueObject(TenderingRelease release) {
+        Tender tender = release.getTender();
+
+        if (!isEmpty(release.getAwards())) {
+            release.getAwards().forEach(award -> {
+                if (award.getValue() != null) {
+                    if (award.getValue().isEmpty()) {
+                        award.setValue(null);
+                    }
+                }
+            });
+        }
+
+        if (!isEmpty(release.getContracts())) {
+            release.getContracts().forEach(contract -> {
+                if (contract.getValue() != null) {
+                    if (contract.getValue().isEmpty()) {
+                        contract.setValue(null);
+                    }
+                }
+            });
+        }
+
+        if (!isEmpty(tender.getLots())) {
+            tender.getLots().forEach(lot -> {
+                if (lot.getValue() != null && lot.getValue().isEmpty()) {
+                    lot.setValue(null);
+                }
+            });
+        }
+
+        if (tender.getValue() != null) {
+            if (tender.getValue().isEmpty()) {
+                tender.setValue(null);
+            }
+        }
+
+        if (tender.getItems() != null) {
+            tender.getItems().forEach(item -> {
+                if (item.getUnit() != null && item.getUnit().getValue() != null) {
+                    if (item.getUnit().getValue().isEmpty()) {
+                        item.getUnit().setValue(null);
+                    }
+                }
+            });
+        }
+
+        if (release.getBids() != null) {
+            if (!isEmpty(release.getBids().getDetails())) {
+                release.getBids().getDetails().forEach(bidDetail -> {
+                    if (!isEmpty(bidDetail.getPriceProposal())) {
+                        bidDetail.getPriceProposal().forEach(priceProposal -> {
+                            if (priceProposal.getUnit() != null && priceProposal.getUnit().getValue() != null) {
+                                if (priceProposal.getUnit().getValue().isEmpty()) {
+                                    priceProposal.getUnit().setValue(null);
+                                }
+                            }
+                        });
+                    }
+
+                    if (!isEmpty(bidDetail.getRelatedLots())) {
+                        bidDetail.getRelatedLots().forEach(lot -> {
+                            if (lot.getValue() != null && lot.getValue().isEmpty()) {
+                                lot.setValue(null);
+                            }
+                        });
+                    }
+                });
+            }
+        }
+
+        if (release.getPlanning() != null) {
+
+            Value value = release.getPlanning().getBudget().getValue();
+            if (value != null && value.isEmpty()) {
+                release.getPlanning().getBudget().setValue(null);
+            }
+        }
+
     }
 
     private List<String> getTags(ReleaseDAO release) {

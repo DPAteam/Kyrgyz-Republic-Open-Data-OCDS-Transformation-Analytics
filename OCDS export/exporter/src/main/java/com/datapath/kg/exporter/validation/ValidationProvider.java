@@ -6,6 +6,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Provider for each objects used to combine full validation reports
+ */
 @Component
 @AllArgsConstructor
 public class ValidationProvider {

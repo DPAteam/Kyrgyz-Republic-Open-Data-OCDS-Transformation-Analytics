@@ -10,6 +10,9 @@ import java.io.IOException;
 import static java.nio.charset.Charset.defaultCharset;
 import static org.springframework.util.StreamUtils.copyToString;
 
+/**
+ * Provider of sql queries to get different validation parts
+ */
 @Component
 @Getter
 public class ValidationQueryProvider {

@@ -13,11 +13,14 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
+import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.TimeZone;
 
 @SpringBootApplication
 @EnableSwagger2
@@ -27,6 +30,11 @@ public class ApiApplication {
         SpringApplication application = new SpringApplication(ApiApplication.class);
         application.addListeners(new ApplicationPidFileWriter());
         application.run(args);
+    }
+
+    @PostConstruct
+    public void init() {
+        TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.of("Asia/Bishkek")));
     }
 
     @Bean
@@ -61,7 +69,7 @@ public class ApiApplication {
         @Override
         public OffsetDateTime convert(Date source) {
             if (source == null) return null;
-            return source.toInstant().atOffset(ZoneOffset.UTC);
+            return source.toInstant().atOffset(ZoneOffset.of("+6"));
         }
     }
 

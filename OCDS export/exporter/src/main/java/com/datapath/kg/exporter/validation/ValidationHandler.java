@@ -7,14 +7,15 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+/**
+ * Component that construct and send validation reports to Web API
+ */
 @Component
 @AllArgsConstructor
 public class ValidationHandler  implements InitializingBean {
 
     private final ValidationProvider provider;
     private final ApiManager apiManager;
-
-
 
     @Scheduled(cron = "${validation.cron}")
     public void handle() {

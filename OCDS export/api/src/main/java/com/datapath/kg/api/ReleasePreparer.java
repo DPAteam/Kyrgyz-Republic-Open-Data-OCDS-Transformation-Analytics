@@ -14,6 +14,10 @@ import java.util.stream.Collectors;
 
 import static org.springframework.util.CollectionUtils.isEmpty;
 
+/**
+ * Post handling OCDS releases on api side
+ */
+
 @Component
 @AllArgsConstructor
 public class ReleasePreparer {

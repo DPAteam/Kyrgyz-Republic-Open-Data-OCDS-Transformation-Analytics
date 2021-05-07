@@ -10,6 +10,9 @@ import java.io.IOException;
 import static java.nio.charset.Charset.defaultCharset;
 import static org.springframework.util.StreamUtils.copyToString;
 
+/**
+ * Query provider for combining all tender parts
+ */
 @Component
 @Getter
 public class TenderingQueryProvider {

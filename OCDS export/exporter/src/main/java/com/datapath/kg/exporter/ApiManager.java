@@ -7,6 +7,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * Manager to work with api module.
+ * For example - saving releases, validation reports, currency rates and legal forms catalogues
+ */
 @Component
 public class ApiManager {
 

@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Handler processes all tenders from database
+ */
 @Component
 @Slf4j
 @AllArgsConstructor

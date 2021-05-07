@@ -14,6 +14,10 @@ import java.util.List;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 
+/**
+ * Converts planning received from database into OCDS format
+ */
+
 @Component
 public class PlanningConverter {
 
@@ -29,11 +33,12 @@ public class PlanningConverter {
         planning.setStatus(dao.getStatus());
         planning.setType(dao.getType());
 
-        Value value = new Value();
-        value.setAmount(dao.getAmount());
-        value.setCurrency(dao.getCurrency());
-        planning.setValue(value);
-
+        if (dao.getAmount() != null) {
+            Value value = new Value();
+            value.setAmount(dao.getAmount());
+            value.setCurrency(dao.getCurrency());
+            planning.setValue(value);
+        }
 
         ProcuringEntity buyer = new ProcuringEntity();
         buyer.setId(dao.getBuyerId());
@@ -54,12 +59,16 @@ public class PlanningConverter {
         plan.setBudgetLineName(daoPlan.getBudgetLineName());
         plan.setDateCreated(daoPlan.getDateCreated());
 
-        Value value = new Value();
-        value.setAmount(daoPlan.getAmount());
-        value.setReservedAmount(daoPlan.getReservedAmount());
-        value.setSavedAmount(daoPlan.getSavedAmount());
-        value.setCurrency(daoPlan.getCurrency());
-        plan.setValue(value);
+        if (daoPlan.getAmount() != null
+                && daoPlan.getReservedAmount() != null
+                && daoPlan.getSavedAmount() != null) {
+            Value value = new Value();
+            value.setAmount(daoPlan.getAmount());
+            value.setReservedAmount(daoPlan.getReservedAmount());
+            value.setSavedAmount(daoPlan.getSavedAmount());
+            value.setCurrency(daoPlan.getCurrency());
+            plan.setValue(value);
+        }
 
         return plan;
     }
