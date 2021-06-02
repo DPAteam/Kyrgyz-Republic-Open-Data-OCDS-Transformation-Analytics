@@ -1,0 +1,304 @@
+{
+  "uri": "ссылка на release package",
+  "version": "1.1",
+  "extensions": [
+    "https://raw.githubusercontent.com/open-contracting-extensions/ocds_lots_extension/v1.1.4/extension.json",
+    "https://raw.githubusercontent.com/open-contracting-extensions/ocds_enquiry_extension/master/extension.json",
+    "https://raw.githubusercontent.com/open-contracting-extensions/ocds_bid_extension/master/extension.json"
+  ],
+  "publisher": {
+    "name": "Ministry of Finance, Public Procurement Department"
+  },
+  "publishedDate": "Дата создания release package",
+  "releases": [
+    {
+      "ocid": "<Идентификатор процесса>",
+      "id": "<Идентификатор релиза>",
+      "date": "<Дата публикации>",
+      "tag": [
+        ""
+      ],
+      "initiationType": "tender",
+      "planning": {
+        "rationale": "Годовой план",
+        "budget": {
+          "id": "<id заголовка плана>",
+          "description": "<бюджетный год плана>",
+          "value": {
+              "amount": "<сумма заголовка плана>",
+              "currency": "<Валюта>"
+          },
+          "source": "<ссылка на планы модуля планирования>"
+        }
+      },
+      "parties": [
+        {
+          "id": "<Название классификатора + код организации>",
+          "identifier": {
+            "scheme": "<Название классификатора>",
+            "id": "<Код организации по заданному классификатору>",
+            "legalName": "<Полное юридическое имя организации на русском языке>",
+            "legalName_kg": "<Полное юридическое имя организации на кыргызском языке"
+          },
+          "address": {
+            "ateCode": "<Код по классификатору местности ate>",
+            "countryName": "<Страна>",
+            "region": "<Область>",
+            "subregion": "<Административная единица внутри области>",
+            "district": "<Район>",
+            "subdistrict": "<Административная единица внутри района>",
+            "subsubdistrict": "<Административная единица внутри района 2 уровня>",
+            "locality": "<Город/село/поселок>",
+            "streetAddress": "<Адрес>"
+          },
+          "roles": [
+            "Роли данной организации в процессе"
+          ]
+        }
+      ],
+      "tender": {
+        "id": "<Идентификатор процедуры>",
+        "title": "<Наименование процедуры>",
+        "tenderNumber": "<Номер процедуры>",
+        "status": "<Статус процедуры>",
+        "statusDetails": "<Подробный статус процедуры>",
+        "datePublished": "<Дата публикации процедуры на портале>",
+        "date": "<Дата последнего изменения поля status>",
+        "procurementMethod": "<Метод закупки по OCDS>",
+        "procurementMethodDetails": "<Локальный метод закупки>",
+        "hasPrequalification": "<Присутствует ли предквалификация>",
+        "hasExternalSystem": "<Закупки лекарств (департамент лекарственного обеспечения)>",
+        "procurementSubMethodDetails": "<Формат закупки>",
+        "procurementMethodRationale": "<Обоснование метода закупки>",
+        "value": {
+          "amount": "<Планируемая стоимость процедуры>",
+          "currency": "<Валюта>"
+        },
+        "tenderPeriod": {
+          "startDate": "<Начало периода подачи предложений>",
+          "endDate": "<Конец периода подачи предложений>"
+        },
+        "enquiryPeriod": {
+          "startDate": "<Начало периода уточнений>",
+          "endDate": "<Конец периода уточнений>"
+        },
+        "qualificationRequirements": [
+          {
+            "id": "<Идентификатор квалификационного требования>",
+            "type": "<Тип квалификационного требования>",
+            "typeDetails": "<Требование текстовое>"
+          }
+        ],
+        "guarantee": {
+            "amount": "<Размер гарантийного обеспечения конкурсной заявки>",
+            "monetary": "<Представлен ли размер гарантийного обеспечени в виде денежной суммы>"
+        },
+        "lots": [
+          {
+            "id": "<Идентификатор лота>",
+            "title": "<Наименование лота>",
+            "status": "<Статус лота>",
+            "value": {
+              "amount": "<Ожидаемая стоимость лота>",
+              "currency": "<Валюта>"
+            },
+            "lotNumber": "<Номер лота>",
+            "relatedPlanID": "<id соответствующего плана>",
+            "deliveryAddress": "<Адрес поставки>",
+            "deliveryDateDetails": "<Сроки поставки>",
+            "deliveryTerms": "<Условия поставки по Incoterms>"
+          }
+        ],
+        "items": [
+          {
+            "id": "<Идентификатор позиции>",
+            "relatedLot": "<Идентификатор лота, к которому относится позиция>",
+            "classification": {
+              "scheme": "<Название классификатора предметов закупки>",
+              "id": "<Код предмета закупки по заданному классификатору>",
+              "description": "<Наименование предмета закупки по классификатору>"
+            },
+            "quantity": "<Количество в единицах измерения>",
+            "unit": {
+              "id": "<Идентификатор единицы измерения>",
+              "name": "<Название единицы измерения>",
+              "value": {
+                "amount": "<Цена за единицу товара>",
+                "currency": "<Валюта>"
+              }
+            }
+          }
+        ],
+        "conditionOfContract": {
+          "id": "<Идентификатор особых условий договора>",
+          "lateDeliveryRate": "<Штраф за позднюю доставку>",
+          "latePaymentRate": "<Штраф за позднюю оплату>",
+          "lateGuaranteeRate": "<Штраф за позднее выполнение гарантийных обязательств>",
+          "guaranteePercent": "<Процент гарантийного обеспечения>",
+          "maxDeductibleAmountDelivery": "<Максимальный штраф за позднюю доставку>",
+          "maxDeductibleAmountPayment": "<Максимальный штраф за позднюю оплату>",
+          "maxDeductibleAmountGuarantee": "<Максимальный штраф за позднее выполнение гарантийных обязательств>",
+          "hasGuarantee": "<Имеется ли гарантийное обеспечение>",
+          "hasInsurance": "<Имеется ли страховка>",
+          "hasRelatedServices": "<Имеются ли сопутствующие услуги>",
+          "hasSpares": "<Предусмотрены ли запасные части>",
+          "hasTechnicalControl": "<Предусмотен ли технический контроль>",
+          "hasPrepayment": "<Присутствует ли предполата>",
+          "hasAcceptancePayment": "<Присутствует ли оплата при приёмке>",
+          "hasShipmentPayment": "<Присутствует ли оплата при отгрузке>",
+          "prepaymentPercent": "<Процент предоплаты>",
+          "acceptancePaymentPercent": "<Процент оплаты при приёмке>",
+          "shipmentPaymentPercent": "<Процент оплаты при отгрузке>",
+          "insuranceType": "<Условия incoterms>",
+          "hasArbitralTribunal": "<Используется ли для разбирательств третейский суд>"
+        },
+        "documents": [
+          {
+            "id": "<Идентификатор документа>",
+            "title": "<Заголовок документа>",
+            "relatedItems": [],
+            "relatedLots": [],
+            "datePublished": "<Дата публикации документа>",
+            "dateModified": "<Дата последнего изменения>"
+          }
+        ],
+        "enquiries": [
+          {
+            "id": "<Идентификатор вопроса>",
+            "date": "<Дата, когда вопрос был задан>",
+            "description": "<Текст вопроса>",
+            "author": {
+              "id": "<Название классификатора + код организации>"
+            },
+            "dateAnswered": "<Дата, когда на вопрос был дан ответ>",
+            "answer": "<Текст ответа>"
+          }
+        ],
+        "procuringEntity": {
+            "id": "Название классификатора + код организации",
+            "name": "Имя организации"
+        }
+      },
+      "bids": {
+        "details": [
+          {
+            "id": "<Идентификатор предложения>",
+            "status": "<Статус предложения>",
+            "date": "<Дата последнего изменения статуса>",
+            "relatedLots": [
+              {
+                "id": "<Идентификатор лота, на который подано предложение>",
+                "value": {
+                  "initialAmount": "<Изначальная сумма заявки по данному лоту>",
+                  "amount": "<Финальная сумма заявки по данному лоту>",
+                  "currency": "<Валюта>"
+                }
+              }
+            ],
+            "priceProposal": [
+              {
+                "id": "<Идентификатор ценовго предложения>",
+                "relatedLot": "<Идентификатор лота, к которому идет ценовое предложение>",
+                "relatedItem": "<Идентификатор позиции в лоте, на которую идет предложение>",
+                "unit": {
+                  "value": {
+                    "amount": "<Финальная цена заявки за единицу>",
+                    "currency": "<Валюта>"
+                  }
+                }
+              }
+            ],
+            "tenderers": [
+              {
+                "id": "<Идентификатор участника>"
+              }
+            ]
+          }
+        ]
+      },
+      "complaints": [
+        {
+          "id": "<Идентификатор жалобы>",
+          "status": "<Статус жалобы>",
+          "dateSubmitted": "<Дата получения жалобы>",
+          "type": "<Тип жалобы>",
+          "complaintNumber": "<Номер жалобы на портале>",
+          "title": "<Заголовок жалобы>",
+          "description": "<Текст жалобы>",
+          "author": {
+            "id": "<Название классификатора + код организации>"
+          },
+          "reviewDate": "<Дата взятия на рассмотрение>",
+          "responseDate": "<Дата получения результата по жалобе>",
+          "resolution": "<Результат по жалобе>",
+          "documents": [
+            {
+              "id": "<Идентификатор документа>"
+            }
+          ]
+        }
+      ],
+      "awards": [
+        {
+          "id": "<Идентификатор выбора победителя>",
+          "status": "<Статус выбора победителя>",
+          "relatedLots": [
+            "<Идентификатор соответствующего лота>"
+          ],
+          "relatedBid": "<Идентификатор соответствующего предложения>",
+          "date": "<Дата выбора победителя>",
+          "value": {
+            "amount": "<Цена предложения победителя>",
+            "currency": "<Валюта>"
+          }
+        }
+      ],
+      "contracts": [
+        {
+          "id": "materialized_contract.id",
+          "contractNumber": "materialized_contract.contract_number",
+          "dateSigned": "materialized_contract.date_of_contract",
+          "value": {
+            "amountDiscounted": "sum(pt.auction_price)",
+            "amount": "sum(pt.sum_contest)",
+            "currency": "KGS"
+          },
+          "awardIDs": [],
+          "deliveriesSchedule": [
+            {
+              "deliveryPeriod": {
+                "startDate": "date_from",
+                "endDate": "date_to"
+              },
+              "deliveryAddress": "delivery_place",
+              "deliveryConditions": "delivery_condition"
+            }
+          ],
+          "paymentsSchedule": [
+            {
+              "paymentType": "type",
+              "paymentDate": "date_from",
+              "paymentDueDate": "date_to",
+              "paymentCondition": "doc"
+            }
+          ]
+        }
+      ],
+      "relatedProcesses": [
+        {
+          "relationship": [
+            "<Тип связи с предшествующим процессом>"
+          ],
+          "identifier": "<Идентификатор предшествующего процесса>",
+          "tenderNumber": "<Введенный заказчиком номер предыдущего тендера>",
+          "id": "",
+          "scheme": ""
+        }
+      ]
+    }
+  ],
+"links": {
+    "next": "http://.../tendering?offset=x",
+    "prev": "http://.../tendering?offset=x"
+}
+}
