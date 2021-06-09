@@ -16,6 +16,14 @@ export const BAR_NAV_CONFIG = [
     adminPermissions: false,
     iconType: 'unordered-list',
   },
+  {
+    label: 'common.text.164',
+    key: '',
+    icon: '',
+    menuKey: '3',
+    adminPermissions: true,
+    iconType: 'setting',
+  },
   // {
   //   label: 'common.text.menu_administration_title',
   //   key: 'administration',

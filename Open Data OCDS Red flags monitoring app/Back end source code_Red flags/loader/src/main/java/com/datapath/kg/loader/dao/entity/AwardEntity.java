@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import static javax.persistence.FetchType.LAZY;
 
@@ -17,7 +17,7 @@ public class AwardEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private Integer outerId;
-    private LocalDateTime date;
+    private OffsetDateTime date;
     private String status;
     private Double valueAmount;
     private String valueCurrency;

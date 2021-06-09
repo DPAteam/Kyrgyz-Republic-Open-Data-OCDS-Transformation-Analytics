@@ -4,6 +4,8 @@ import com.datapath.kg.loader.dto.ReleasesPage;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.OffsetDateTime;
+
 import static org.springframework.util.StringUtils.isEmpty;
 
 @Component
@@ -15,7 +17,7 @@ public class RestManager {
         this.restTemplate = restTemplate;
     }
 
-    public ReleasesPage getReleases(String date) {
+    public ReleasesPage getReleases(OffsetDateTime date) {
         if (!isEmpty(date)) {
             return restTemplate.getForObject("/tendering?size=10&since={date}", ReleasesPage.class, date);
         } else {

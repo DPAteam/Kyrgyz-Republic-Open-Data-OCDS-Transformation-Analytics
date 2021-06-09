@@ -8,6 +8,18 @@ public final class Constants {
     private Constants() {
     }
 
+    public static final String RECOVERY_SUBJECT = "Reset password";
+    public static final String VERIFICATION_SUBJECT = "Account verification";
+
+    public static final String ACCOUNT_UNLOCKED_MESSAGE = "Ваш аккаунт активирован, вы можете авторизоваться по ссылке (%s)\n" +
+            "Your account has been activated successfully. You can now log in.";
+    public static final String ACCOUNT_LOCKED_MESSAGE = "К сожалению, Ваш аккаунт не прошел верификацию.\n" +
+            "Unfortunately, your account has not passed verification.";
+    public static final String ACCOUNT_NOT_VERIFIED_MESSAGE = "К сожалению, Ваш аккаунт не прошел верификацию.\n" +
+            "Unfortunately, your account has not passed verification.";
+
+    public static final String RESET_PASSWORD_MESSAGE = "%s/reset-password?token=%s&locale=%s";
+
     public static final String USER_IS_DISABLED_ERROR_JSON_MESSAGE = "{\"errorMessageCode\": 2}";
     public static final String BAD_CREDENTIALS_ERROR_JSON_MESSAGE = "{\"errorMessageCode\": 1}";
 

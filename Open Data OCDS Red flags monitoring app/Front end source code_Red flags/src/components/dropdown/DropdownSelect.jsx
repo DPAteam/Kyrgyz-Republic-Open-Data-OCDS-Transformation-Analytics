@@ -51,6 +51,7 @@ class DropdownSelect extends React.PureComponent {
   render() {
     const selectProps = this.props
     return <Select
+      autoClearSearchValue={false}
       onChange={() => this.props.onChange(this.selected, this.props.options)}
       className={this.props.className}
       {...selectProps}

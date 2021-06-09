@@ -237,30 +237,23 @@ public class ConverterImpl implements Converter {
     }
 
     private boolean isBadQuality(ReleaseDTO releaseDTO) {
-        return existBidRelatedLotsWithoutLots(releaseDTO) ||
-                isActiveTenderWithoutActiveLots(releaseDTO);
-    }
+        if (isNull(releaseDTO.getTender().getDatePublished())) return true;
 
-    private boolean existBidRelatedLotsWithoutLots(ReleaseDTO releaseDTO) {
-        if (isNull(releaseDTO.getBids()) || isEmpty(releaseDTO.getBids().getDetails())) return false;
+        if (isEmpty(releaseDTO.getTender().getLots())) return true;
 
-        boolean existBidRelatedLots = releaseDTO.getBids().getDetails()
-                .stream()
-                .anyMatch(b -> !isEmpty(b.getRelatedLots()));
+        if (ACTIVE.equals(releaseDTO.getTender().getStatus())) {
+            boolean hasActiveLots = releaseDTO.getTender().getLots()
+                    .stream()
+                    .anyMatch(lot -> !LOT_GOOD_QUALITY_STATUS_DETAILS.contains(lot.getStatus()));
 
-        return existBidRelatedLots && isEmpty(releaseDTO.getTender().getLots());
-    }
+            if (!hasActiveLots) return true;
+        }
 
-    private boolean isActiveTenderWithoutActiveLots(ReleaseDTO releaseDTO) {
-        if (!ACTIVE.equals(releaseDTO.getTender().getStatus()) ||
-                isEmpty(releaseDTO.getTender().getLots())) return false;
+        if (SKIPPED_BIDS_TENDER_STATUS_DETAILS.contains(releaseDTO.getTender().getStatusDetails()) &&
+                (isNull(releaseDTO.getBids()) || isEmpty(releaseDTO.getBids().getDetails())))
+            return true;
 
-        boolean existActiveLot = releaseDTO.getTender().getLots()
-                .stream()
-                .anyMatch(lot -> !CANCELLED.equals(lot.getStatus()) &&
-                        !UNSUCCESSFUL.equals(lot.getStatus())
-                );
-
-        return !existActiveLot;
+        return SKIPPED_AWARDS_TENDER_STATUS_DETAILS.contains(releaseDTO.getTender().getStatusDetails()) &&
+                isEmpty(releaseDTO.getAwards());
     }
 }

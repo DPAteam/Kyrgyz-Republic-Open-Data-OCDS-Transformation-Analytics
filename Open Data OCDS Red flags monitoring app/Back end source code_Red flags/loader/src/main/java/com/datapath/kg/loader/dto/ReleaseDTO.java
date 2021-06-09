@@ -2,12 +2,13 @@ package com.datapath.kg.loader.dto;
 
 import lombok.Data;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Data
 public class ReleaseDTO {
     private String ocid;
-    private String date;
+    private OffsetDateTime date;
     private String id;
     private String initiationType;
     private List<String> tag;

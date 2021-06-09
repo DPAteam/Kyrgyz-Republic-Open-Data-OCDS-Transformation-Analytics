@@ -1,7 +1,8 @@
 package com.datapath.kg.site.security;
 
-    import com.datapath.kg.site.services.UserWebService;
+import com.datapath.kg.site.services.user.UserWebService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -35,6 +36,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private BCryptPasswordEncoder passwordEncoder;
     @Autowired
     private UserWebService userWebService;
+    @Value("${oauth.target-url}")
+    private String oauthTargetUrl;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -94,7 +97,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         GoogleSuccessHandler successHandler = new GoogleSuccessHandler(userWebService);
 
         //TODO read from properties
-        successHandler.setDefaultTargetUrl("http://kgztest.kdcoding.com:99");
+        successHandler.setDefaultTargetUrl(oauthTargetUrl);
         successHandler.setAlwaysUseDefaultTargetUrl(true);
         successHandler.setRedirectStrategy(new GoogleRedirectStrategy());
         return successHandler;

@@ -589,7 +589,7 @@
 
 .languages-selector-wrapper {
   .languages-selector-content {
-    margin-left: 50px;
+    //margin-left: 25px;
     display: flex;
     justify-content: space-between;
     width: 160px;
@@ -610,6 +610,14 @@
       content: url('../../common/img/icons/flag_gb.svg');
     }
   }
+}
+
+.documentation-link-wrapper {
+  margin-right: 25px;
+}
+
+.documentation-link {
+  content: url('../../common/img/icons/info.svg');
 }
 
 .legend-card-title {
@@ -772,4 +780,73 @@
 
 .margin-bottom-30 {
   margin-bottom: 30px !important;
+}
+
+.admin-panel-modal {
+  width: 300px !important;
+  height: 100%;
+  padding-bottom: 0 !important;
+
+  .ant-modal-content {
+    height: 100%;
+    overflow: scroll;
+  }
+
+  .users-list__item {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .ant-modal-close-x {
+    width: 26px !important;
+    height: 26px !important;
+
+    .ant-modal-close-icon {
+      position: absolute;
+      top: 10px;
+      left: 4px;
+    }
+  }
+
+  .users-list__buttons-group {
+    margin-top: 12px;
+
+    .delete-user-button {
+      padding: 4px;
+      margin-right: 12px;
+      height: 30px;
+    }
+
+    .delete-user-button {
+      &:focus {
+        background: #1890ff;
+      }
+    }
+  }
+
+  .save-button-wrapper {
+    width: 300px;
+    background: gray;
+    position: fixed;
+    bottom: 0;
+    margin-left: -24px;
+    height: 40px;
+
+    .save-button {
+      position: absolute;
+      margin-top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  }
+}
+
+.delete-user-modal,
+.save-users-modal {
+  top: 40% !important;
+  right: 300px !important;
+  width: 300px !important;
 }

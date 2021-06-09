@@ -14,6 +14,8 @@ const initialState = {
   sendEmailStatue: {},
   checkTokenStatus: {},
   setNewPasswordStatus: {},
+  showRegistrationModal: false,
+  googleToken: ''
 }
 
 const handleSignIn = token => {
@@ -60,7 +62,7 @@ const auth = (state = initialState, action) => {
           // description: action.payload.message,
           name: action.payload.name,
           status: action.payload.status,
-          description: action.payload.message,
+          description: action.payload.errorMessageCode,
         },
       }
 
@@ -266,6 +268,35 @@ case (AuthConstants.SAVE_NEW_PASSWORD + STATUSES.req):
         isAuth: true,
         isFetching: false,
       }
+
+    case (AuthConstants.SHOW_REGISTRATION_MODAL):
+      return {
+        ...state,
+        showRegistrationModal: true
+      }
+
+
+    case (AuthConstants.CLOSE_REGISTRATION_MODAL):
+      return {
+        ...state,
+        showRegistrationModal: false
+      }
+
+
+    case (AuthConstants.SET_GOOLE_TOKEN):
+      return {
+        ...state,
+        googleToken: action.googleToken
+      }
+
+
+    case (AuthConstants.REMOVE_GOOGLE_TOKEN):
+      localStorage.removeItem('googleToken');
+      return {
+        ...state,
+        googleToken: ''
+      }
+
 
     default:
       return state

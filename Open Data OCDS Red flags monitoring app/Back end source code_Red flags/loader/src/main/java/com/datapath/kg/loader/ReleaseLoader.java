@@ -5,35 +5,30 @@ import com.datapath.kg.loader.dao.service.ReleaseDAOService;
 import com.datapath.kg.loader.dto.ReleaseDTO;
 import com.datapath.kg.loader.dto.ReleasesPage;
 import com.datapath.kg.loader.handlers.ReleaseHandler;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.OffsetDateTime;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 @Component
 @Slf4j
+@AllArgsConstructor
 public class ReleaseLoader {
 
-    private static final String FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(FORMAT);
+    private static final OffsetDateTime PROCESSED_TENDER_DATE_TIME = OffsetDateTime.parse("2018-01-01T00:00:00.000Z");
 
-    private static final ZonedDateTime PROCESSED_TENDER_DATE_TIME = ZonedDateTime.parse("2018-01-01T00:00:00.000Z");
-
-    @Autowired
     private ReleaseDAOService releaseDAOService;
-    @Autowired
     private RestManager restManager;
-    @Autowired
     private ReleaseHandler releaseHandler;
 
     public void run() {
         ReleasesPage releasesPage;
 
-        String date = getLastOffset();
+        OffsetDateTime date = getLastOffset();
 
         do {
             log.info("Download releases since {}", date);
@@ -46,24 +41,25 @@ public class ReleaseLoader {
             }
 
             if (nonNull(releasesPage.getPublishedDate())) {
-                date = releasesPage.getPublishedDate().format(FORMATTER);
+                date = releasesPage.getPublishedDate();
             } else {
                 break;
             }
 
         } while (true);
+        log.info("All releases downloaded");
     }
 
-    private String getLastOffset() {
+    private OffsetDateTime getLastOffset() {
         ReleaseEntity release = releaseDAOService.getLastRelease();
         if (nonNull(release)) {
-            return release.getDate().format(FORMATTER);
+            return release.getDate();
         }
-
         return null;
     }
 
     private boolean isProcessed(ReleaseDTO releaseDTO) {
-        return ZonedDateTime.parse(releaseDTO.getTender().getDatePublished()).isAfter(PROCESSED_TENDER_DATE_TIME);
+        if (isNull(releaseDTO.getTender().getDatePublished())) return true;
+        return releaseDTO.getTender().getDatePublished().isAfter(PROCESSED_TENDER_DATE_TIME);
     }
 }

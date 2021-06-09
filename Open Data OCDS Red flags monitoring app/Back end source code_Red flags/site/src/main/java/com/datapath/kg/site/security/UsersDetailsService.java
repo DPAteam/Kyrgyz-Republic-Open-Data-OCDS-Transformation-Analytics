@@ -30,11 +30,11 @@ public class UsersDetailsService implements UserDetailsService {
                 .builder()
                 .username(user.getEmail())
                 .password(user.getPassword())
+                .accountLocked(user.getAccountLocked())
 
                 .authorities(user.getPermissions().stream()
                         .map(permission -> new SimpleGrantedAuthority(permission.getName()))
                         .collect(Collectors.toList()))
-
                 .build();
     }
 

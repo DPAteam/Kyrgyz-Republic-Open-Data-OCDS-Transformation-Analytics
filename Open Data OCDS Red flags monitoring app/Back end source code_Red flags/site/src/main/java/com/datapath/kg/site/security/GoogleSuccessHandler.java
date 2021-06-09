@@ -2,7 +2,7 @@ package com.datapath.kg.site.security;
 
 import com.datapath.kg.persistence.entity.UserEntity;
 import com.datapath.kg.site.dto.ApplicationUser;
-import com.datapath.kg.site.services.UserWebService;
+import com.datapath.kg.site.services.user.UserWebService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.AllArgsConstructor;
@@ -37,18 +37,21 @@ public class GoogleSuccessHandler extends SavedRequestAwareAuthenticationSuccess
 
         UserEntity user = userWebService.findByEmail(email);
 
-        String token = Jwts.builder()
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
-                .setSubject(user.getEmail())
-                .setId(user.getId().toString())
-                .claim("permissions", authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(toList()))
-                .compact();
+        if (!user.getAccountLocked()) {
+            String token = Jwts.builder()
+                    .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                    .setSubject(user.getEmail())
+                    .setId(user.getId().toString())
+                    .claim("permissions", authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(toList()))
+                    .compact();
 
-        UsersStorageService.addUser(user.getId());
+            UsersStorageService.addUser(user.getId());
 
-        request.setAttribute("jwt", token);
+            request.setAttribute("jwt", token);
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
         super.onAuthenticationSuccess(request, response, authentication);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     private void register(String email, String fullName) {

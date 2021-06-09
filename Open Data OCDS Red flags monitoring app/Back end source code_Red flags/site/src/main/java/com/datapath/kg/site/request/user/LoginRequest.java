@@ -1,4 +1,4 @@
-package com.datapath.kg.site.request;
+package com.datapath.kg.site.request.user;
 
 import lombok.Data;
 

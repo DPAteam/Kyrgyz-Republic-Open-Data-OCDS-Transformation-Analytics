@@ -70,11 +70,23 @@ class FilterForm extends PureComponent {
     this.props.onSearch(filterKey, value)
   }
 
+  handleSearchInMappings = (filterKey, value) => {
+    this.props.onSearch(filterKey, value)
+  }
+
+  handleSearchBy = (filterKey, value) => {
+    if (filterKey === 'itemCpv2' || filterKey === 'itemCpv') {
+      this.handleSearchInMappings(filterKey, value)
+    } else {
+      this.handleSearch(filterKey, value)
+    }
+  }
+
   renderSelectedFilters = (key, data) => {
     if (data[key].translationOptions.mappingKey) {
       let prepareString = ''
       if (_.isArray(data[key].selected)) {
-        return _.map(data[key].selected, (op) => {
+        return _.map(data[key].selected, (op, index) => {
           if (typeof op === 'string') {
             if (data[key].translationOptions.needMD5Hash) {
               prepareString = `${data[key].translationOptions.prefixName}${md5.hex_md5(op)}`
@@ -88,13 +100,14 @@ class FilterForm extends PureComponent {
           let findValue = _.find(this.props.mappings[data[key].translationOptions.mappingKey], { [data[key].translationOptions.searchKey]: prepareString })
           if (findValue) {
             if (data[key].translationOptions.doubleNameKey) {
-              return <Tag><b>{findValue[data[key].translationOptions.doubleNameKey]}</b> - {findValue[data[key].translationOptions[this.props.lang]]}
+              return <Tag
+                key={`tag_${index}`}><b>{findValue[data[key].translationOptions.doubleNameKey]}</b> - {findValue[data[key].translationOptions[this.props.lang]]}
               </Tag>
             } else {
-              return <Tag>{findValue[data[key].translationOptions[this.props.lang]]}</Tag>
+              return <Tag key={`tag_${index}`}>{findValue[data[key].translationOptions[this.props.lang]]}</Tag>
             }
           } else {
-            return <Tag>{op}</Tag>
+            return <Tag key={`tag_${index}`}>{op}</Tag>
           }
         })
       } else {
@@ -113,8 +126,10 @@ class FilterForm extends PureComponent {
       }
     } else {
       if (!!data[key].props) return <Tag>{data[key].props.children}</Tag>
-      if (!!data[key].selected) return _.map(data[key].selected, (item) => <Tag>{item}</Tag>)
-      if (!!data[key].selectedUA) return _.map(data[key].selectedUA, item => <Tag>{item}</Tag>)
+      if (!!data[key].selected) return _.map(data[key].selected, (item, index) => <Tag
+        key={`tag_${index}`}>{item}</Tag>)
+      if (!!data[key].selectedUA) return _.map(data[key].selectedUA, (item, index) => <Tag
+        key={`tag_${index}`}>{item}</Tag>)
     }
   }
 
@@ -129,7 +144,7 @@ class FilterForm extends PureComponent {
         if (key === 'minExpectedValue' && !!filtersDisplay[key].selected) return <div
           className="selected-filter mt-1">
           <span className="selected-filter__title">{intl.formatMessage({ id: 'common.text.112.4' })}:&nbsp;</span>
-          <span className="selected-filter__list">
+          <span className="selected-filter__list">.
             <Tag>{filtersDisplay[key].selected}</Tag>
           </span>
         </div>
@@ -145,7 +160,7 @@ class FilterForm extends PureComponent {
         if (Array.isArray(filtersDisplay[key].selected) && _.isEmpty(filtersDisplay[key].selected)) return
         if (!Array.isArray(filtersDisplay[key].selected) && _.isEmpty(filtersDisplay[key].selected) && filtersDisplay[key].props === undefined) return
         if (filtersDisplay[key].props === false) return
-        return <div className="selected-filter mt-1">
+        return <div className="selected-filter mt-1" key={`filter_${key}`}>
           {/*<span className="selected-filter__title">{filtersDisplay[key].keyUA}:&nbsp;</span>*/}
           <span className="selected-filter__title">{filtersDisplay[key].keyUA.matchAll(/common.text/g) ?
             <FormattedMessage id={filtersDisplay[key].keyUA} /> : filtersDisplay[key].keyUA}:&nbsp;</span>
@@ -204,9 +219,16 @@ class FilterForm extends PureComponent {
             translatedValue = op[filter.translationOptions.searchValueKey]
           }
 
-          return {
-            key: op.key,
-            value: translatedValue,
+          if (filter.key === 'itemCpv2' || filter.key === 'itemCpv') {
+            return {
+              key: op.key,
+              value: op.key + ' - ' + translatedValue,
+            }
+          } else {
+            return {
+              key: op.key,
+              value: translatedValue,
+            }
           }
         })
       }
@@ -225,7 +247,7 @@ class FilterForm extends PureComponent {
             mode={this.getSelectType(filter.type)}
             filterOption={false}
             key={filter.key}
-            onSearch={filter.type === 'search' ? (value) => this.handleSearch(filter.key, value, filter.options) : null}
+            onSearch={filter.type === 'search' ? (value) => this.handleSearchBy(filter.key, value, filter.options) : null}
             placeholder={intl.formatMessage({ id: filter.keyUA })}
             options={clonedFilterOptions}
             onChange={filter.type === 'select' ?
@@ -238,6 +260,14 @@ class FilterForm extends PureComponent {
                 !!props && props.props,
               )
               : null}
+            onSelect={(selected, props) => this.props.onSelect(
+              filter.key,
+              selected,
+              filter.options,
+              filter.keyUA,
+              filter.translationOptions,
+              !!props && props.props,
+            )}
             onBlur={filter.type !== 'select'
               ? (selected, props) => onFilterData(
                 filter.key,
@@ -250,7 +280,8 @@ class FilterForm extends PureComponent {
               ) : null}
             // style={{ width: '100%' }}
             animdelay={50}
-            disabled={_.isEmpty(filter.options) || (filter.group === 'queuePriority' && this.state.disabled)}
+            // disabled={_.isEmpty(filter.options) || (filter.group === 'queuePriority' && this.state.disabled)}
+            disabled={(filter.key !== 'itemCpv2' && filter.key !== 'itemCpv') && _.isEmpty(filter.options) || (filter.group === 'queuePriority' && this.state.disabled)}
           />
         </div>
     })
@@ -274,13 +305,22 @@ class FilterForm extends PureComponent {
   }
 
   renderClearBtn = (data) => {
-    if (_.isEmpty(data)) return
+    let viewResetButton = false
+    if (_.isEmpty(data)) {
+      return
+    } else {
+      _.forEach(Object.keys(data), dataKey => {
+        if (!_.isEmpty(data[dataKey].selected)) {
+          viewResetButton = true
+        }
+      })
+    }
 
     const { intl } = this.context
-    return (<div className="mt-2 clear-filters-btn" onClick={this.handleClearFilter}>
+    return viewResetButton ? (<div className="mt-2 clear-filters-btn" onClick={this.handleClearFilter}>
       <span>{intl.formatMessage({ id: 'common.text.143' })}</span>
       <span></span>
-    </div>)
+    </div>) : null
   }
 
   handleSetMinExpectedValue = value => {

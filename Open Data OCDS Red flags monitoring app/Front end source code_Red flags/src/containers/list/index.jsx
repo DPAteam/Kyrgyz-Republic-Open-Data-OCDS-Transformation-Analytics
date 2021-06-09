@@ -31,6 +31,7 @@ import { OKGZ_FIELD_BY_LANGUAGE, TRANSLATED_FIELD_BY_LANGUAGE } from '../private
 
 
 import '../../index.scss'
+import {EXPORT_TO} from "../../api/constants";
 // import './Bucket.scss'
 
 const Panel = Collapse.Panel
@@ -201,7 +202,7 @@ class ListComponent extends Component {
     const { selectedProcedureKeys } = this.state
     const FILE_NAME = `basket_${moment().format('DD-MM-YYYY_HH-mm')}`
     if (selectedProcedureKeys.length < 60000)
-      this.props.exportToEXCEL({
+      this.props.exportToEXCEL(EXPORT_TO, {
         locale: this.props.lang.toUpperCase(),
         tenderIds: selectedProcedureKeys,
       }, FILE_NAME).then(() =>

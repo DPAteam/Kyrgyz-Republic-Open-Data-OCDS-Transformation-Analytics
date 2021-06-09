@@ -5,7 +5,7 @@ import com.datapath.kg.loader.dto.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = {LocalDateTimeMapper.class})
+@Mapper(componentModel = "spring")
 public interface DataMapper {
 
     @Mapping(target = "tender.awards", source = "awards")

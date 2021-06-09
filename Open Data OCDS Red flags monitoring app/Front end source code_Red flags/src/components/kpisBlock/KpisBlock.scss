@@ -312,14 +312,75 @@
   }
 }
 
-@media only screen and (max-width: 1349px) {
+//@media only screen and (max-width: 1349px) {
+@media only screen and (min-width: 992px) and (max-width: 1010px) {
+  .kpis-block {
+    .switch-card-info-wrapper {
+      .switch-card-info-row {
+        .switch-card-info-bold-text {
+          font-weight: 600;
+          font-size: 15px !important;
+          line-height: 21px !important;
+          text-align: center;
+          letter-spacing: 0;
+          color: #2A577F;
+        }
+
+        .switch-card-info-simple-text {
+          font-weight: 300;
+          font-size: 15px;
+          line-height: 21px !important;
+          text-align: center;
+          letter-spacing: 0;
+          color: #2A577F;
+        }
+
+        &:not(:last-child) {
+          padding-bottom: 0 !important;
+        }
+      }
+    }
+  }
+}
+
+@media only screen and (min-width: 1011px) and (max-width: 1272px) {
+  .kpis-block {
+    .switch-card-info-wrapper {
+      .switch-card-info-row {
+        .switch-card-info-bold-text {
+          font-weight: 600;
+          font-size: 15px !important;
+          line-height: 21px !important;
+          text-align: center;
+          letter-spacing: 0;
+          color: #2A577F;
+        }
+
+        .switch-card-info-simple-text {
+          font-weight: 300;
+          font-size: 15px;
+          line-height: 21px !important;
+          text-align: center;
+          letter-spacing: 0;
+          color: #2A577F;
+        }
+
+        &:not(:last-child) {
+          padding-bottom: 8px;
+        }
+      }
+    }
+  }
+}
+
+@media only screen and (max-width: 1512px) {
   .kpis-block {
     .switch-card-info-wrapper {
       .switch-card-info-row {
         .switch-card-info-bold-text {
           font-weight: 600;
           font-size: 16px;
-          line-height: 27px;
+          line-height: 23px;
           text-align: center;
           letter-spacing: 0;
           color: #2A577F;

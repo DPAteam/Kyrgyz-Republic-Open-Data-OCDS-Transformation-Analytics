@@ -5,7 +5,7 @@ import com.datapath.kg.elasticsearchintegration.domain.FilteringDTO;
 import com.datapath.kg.elasticsearchintegration.services.ElasticsearchDataExtractorService;
 import com.datapath.kg.persistence.domain.BaseEntitiesCountData;
 import com.datapath.kg.persistence.service.TenderDataService;
-import com.datapath.kg.site.request.ExportRequest;
+import com.datapath.kg.site.request.export.ExportRequest;
 import com.datapath.kg.site.services.export.ExportService;
 import com.datapath.kg.site.util.exception.CustomException;
 import com.datapath.kg.site.util.exception.ExceptionInfo;
@@ -14,6 +14,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class MonitoringIndicatorsWebService {
@@ -74,6 +75,14 @@ public class MonitoringIndicatorsWebService {
         Resource resource = new ByteArrayResource(exportService.export(exportRequest.getTenderIds(), exportRequest.getLocale().getKey()));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Ternders_Export.xlsx\"")
+                .body(resource);
+    }
+
+    @Transactional
+    public ResponseEntity<Resource> export() {
+        Resource resource = new ByteArrayResource(exportService.export());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Failed Releases.xlsx\"")
                 .body(resource);
     }
 }

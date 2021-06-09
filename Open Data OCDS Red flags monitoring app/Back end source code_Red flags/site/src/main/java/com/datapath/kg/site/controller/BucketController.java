@@ -1,7 +1,7 @@
 package com.datapath.kg.site.controller;
 
-import com.datapath.kg.site.request.BucketFilterRequest;
-import com.datapath.kg.site.request.BucketRequest;
+import com.datapath.kg.site.request.bucket.BucketFilterRequest;
+import com.datapath.kg.site.request.bucket.BucketRequest;
 import com.datapath.kg.site.response.BucketResponse;
 import com.datapath.kg.site.services.BucketWebService;
 import org.springframework.web.bind.annotation.*;

@@ -43,7 +43,8 @@ import {
   GET_MAPPINGS,
   DROP_OPTION,
   CLEAR_CHECKLIST,
-  GET_FAKE_FORBIDDEN
+  GET_FAKE_FORBIDDEN,
+  CPV_SEARCH_VALUES
 } from './constants'
 
 import * as MonitoringConstants from './constants'
@@ -89,9 +90,9 @@ export const setRegions = () => {
   }
 }
 
-export const exportToExcel = (ids, fileName) => {
+export const exportToExcel = (path, ids, fileName) => {
   return (dispatch, getState) => {
-    return dispatch(exportToEXCEL(ids))
+    return dispatch(exportToEXCEL(path, ids))
       .then(() => {
         const {
           excelFile,
@@ -107,7 +108,7 @@ export const exportToExcel = (ids, fileName) => {
   }
 }
 
-export const exportToEXCEL = ids => {
+export const exportToEXCEL = (path, ids) => {
   const TYPES = [
     PROC_EXPORT + STATUSES.req,
     {
@@ -124,7 +125,7 @@ export const exportToEXCEL = ids => {
     },
     PROC_EXPORT + STATUSES.err,
   ]
-  return fileFetch(EXPORT_TO, TYPES, ids)
+  return fileFetch(path, TYPES, ids)
 }
 
 export const getData = data => {
@@ -190,6 +191,15 @@ export const clearSelectedProcedureIds = () => {
 export const clearChecklistData = () => {
   return {
     type: CLEAR_CHECKLIST + STATUSES.cle,
+  }
+}
+
+export const updateCpvSearchValues = (filterKey, searchValue, clear = false) => {
+  return {
+    type: CPV_SEARCH_VALUES + STATUSES.suc,
+    filterKey: filterKey,
+    searchValue: searchValue,
+    clear: clear,
   }
 }
 

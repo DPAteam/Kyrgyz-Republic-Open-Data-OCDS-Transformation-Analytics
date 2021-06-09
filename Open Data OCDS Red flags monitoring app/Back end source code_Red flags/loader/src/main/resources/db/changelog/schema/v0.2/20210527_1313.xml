@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="1" author="andrey_pylypchuk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="release_persist_fail_history"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="release_persist_fail_history">
+            <column name="ocid" type="text"/>
+            <column name="id" type="text"/>
+            <column name="date" type="timestamp"/>
+            <column name="fail_date" type="timestamp"/>
+            <column name="exception" type="text"/>
+            <column name="message" type="text"/>
+            <column name="stack_trace" type="text"/>
+        </createTable>
+
+        <addPrimaryKey tableName="release_persist_fail_history" columnNames="ocid" constraintName="pk_release_persist_fail_history"/>
+    </changeSet>
+</databaseChangeLog>

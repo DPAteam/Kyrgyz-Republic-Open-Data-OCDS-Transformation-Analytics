@@ -3,7 +3,7 @@ package com.datapath.kg.site.security;
 
 import com.datapath.kg.persistence.entity.UserEntity;
 import com.datapath.kg.persistence.repository.UserRepository;
-import com.datapath.kg.site.request.LoginRequest;
+import com.datapath.kg.site.request.user.LoginRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -47,10 +47,10 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         try {
             return this.getAuthenticationManager().authenticate(authRequest);
-        } catch (BadCredentialsException | LockedException e) {
+        } catch (BadCredentialsException e) {
             addInfoToAuthenticationErrorResponse(response, BAD_CREDENTIALS_ERROR_JSON_MESSAGE);
             return null;
-        } catch (DisabledException e) {
+        } catch (DisabledException | LockedException e) {
             addInfoToAuthenticationErrorResponse(response, USER_IS_DISABLED_ERROR_JSON_MESSAGE);
             return null;
         }

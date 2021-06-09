@@ -501,7 +501,7 @@ class KpisBlock extends PureComponent {
               // key={`${elem.param1}_${ind}`}
               // key={`${elem.nameState}_${ind}`}
             >
-              <div className="card_face card_face--front">
+              <div className="card_face card_face--front" style={{visibility: this.state[elem.nameState] ? 'hidden' : 'unset'}}>
                 <div className="card_wrap--header">
                   <div className="card_wrap--content">
                     <div className="card_block">

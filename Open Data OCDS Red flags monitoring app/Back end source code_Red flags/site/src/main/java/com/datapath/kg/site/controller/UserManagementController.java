@@ -1,9 +1,10 @@
 package com.datapath.kg.site.controller;
 
 import com.datapath.kg.site.dto.ApplicationUser;
-import com.datapath.kg.site.request.ResetPasswordRequest;
-import com.datapath.kg.site.request.ResetPasswordSendRequest;
-import com.datapath.kg.site.services.UserWebService;
+import com.datapath.kg.site.request.user.ResetPasswordRequest;
+import com.datapath.kg.site.request.user.ResetPasswordSendRequest;
+import com.datapath.kg.site.request.user.UpdateUserRequest;
+import com.datapath.kg.site.services.user.UserWebService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +33,12 @@ public class UserManagementController {
     @PreAuthorize("hasAnyAuthority('admin.base')")
     public void delete(@PathVariable Integer id) {
         userService.delete(id);
+    }
+
+    @PutMapping("update")
+    @PreAuthorize("hasAnyAuthority('admin.base')")
+    public void update(@Valid @RequestBody UpdateUserRequest request) {
+        userService.update(request);
     }
 
     @PutMapping("register")
