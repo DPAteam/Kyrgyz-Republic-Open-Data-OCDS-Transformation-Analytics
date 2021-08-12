@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import static javax.persistence.FetchType.LAZY;
 
@@ -17,7 +17,7 @@ public class ContractEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String outerId;
-    private LocalDateTime dateSigned;
+    private OffsetDateTime dateSigned;
     private String contractNumber;
     private Double valueAmount;
 

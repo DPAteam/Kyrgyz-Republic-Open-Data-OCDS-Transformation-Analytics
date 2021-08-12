@@ -1,19 +1,22 @@
-package com.datapath.kg.site.services;
+package com.datapath.kg.site.services.user;
 
 import com.datapath.kg.persistence.entity.UserEntity;
 import com.datapath.kg.persistence.repository.BucketRepository;
 import com.datapath.kg.persistence.repository.PermissionRepository;
 import com.datapath.kg.persistence.repository.UserRepository;
 import com.datapath.kg.site.dto.ApplicationUser;
-import com.datapath.kg.site.request.ResetPasswordRequest;
-import com.datapath.kg.site.request.ResetPasswordSendRequest;
+import com.datapath.kg.site.request.user.ResetPasswordRequest;
+import com.datapath.kg.site.request.user.ResetPasswordSendRequest;
+import com.datapath.kg.site.request.user.UpdateUserRequest;
 import com.datapath.kg.site.security.ConfirmationTokenStorageService;
 import com.datapath.kg.site.security.UsersStorageService;
+import com.datapath.kg.site.services.EmailSenderService;
 import com.datapath.kg.site.util.UserUtils;
 import com.datapath.kg.site.util.exception.CustomException;
 import com.datapath.kg.site.util.exception.ExceptionInfo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,11 +26,16 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.datapath.kg.site.util.Constants.*;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 @Service
 public class UserWebService {
+
+    @Value("${oauth.target-url}")
+    private String TOOL_URL;
 
     private final UserRepository userRepository;
     private final BucketRepository bucketRepository;
@@ -36,7 +44,8 @@ public class UserWebService {
     private final EmailSenderService emailSender;
     private ConfirmationTokenStorageService tokenStorageService;
 
-    private static final int USER_ROLE_ID = 2;
+    private static final Integer USER_ROLE_ID = 2;
+    private static final Integer ADMIN_ROLE_ID = 1;
 
     @Autowired
     public UserWebService(UserRepository userRepository,
@@ -53,7 +62,11 @@ public class UserWebService {
     }
 
     public List<ApplicationUser> list() {
-        return userRepository.findAll().stream().map(UserUtils::convertToDTO).collect(Collectors.toList());
+        return userRepository.findAllByOrderByDateCreatedDesc()
+                .stream()
+                .filter(this::isNotAdmin)
+                .map(UserUtils::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     public boolean exists(String email) {
@@ -73,6 +86,8 @@ public class UserWebService {
         UserEntity user = new UserEntity();
         BeanUtils.copyProperties(appUser, user);
         user.setPassword(bCryptPasswordEncoder.encode(appUser.getPassword()));
+        user.setAccountLocked(true);
+        user.setVerificationMailSent(false);
         user.setPermissions(Collections.singletonList(permissionRepository.findById(USER_ROLE_ID)
                 .orElseThrow(() -> new RuntimeException("User role not found")))
         );
@@ -94,7 +109,19 @@ public class UserWebService {
 
         String token = UUID.randomUUID().toString();
 
-        emailSender.send(request, token);
+        String message = String.format(RESET_PASSWORD_MESSAGE,
+                request.getPath(),
+                token,
+                request.getLocale());
+
+        EmailSenderService.MessageDetails details = EmailSenderService.MessageDetails
+                .builder()
+                .to(request.getEmail())
+                .message(message)
+                .subject(RECOVERY_SUBJECT)
+                .build();
+
+        emailSender.send(details);
         tokenStorageService.add(user.getEmail(), token);
     }
 
@@ -120,5 +147,50 @@ public class UserWebService {
         } else {
             throw new CustomException(ExceptionInfo.RP2);
         }
+    }
+
+    public void update(UpdateUserRequest request) {
+        if (!isEmpty(request.getUserUpdates())) {
+            request.getUserUpdates().forEach(update -> {
+                UserEntity entity = userRepository.findOneById(update.getId());
+
+                if (!isNull(entity) && isNotAdmin(entity)) {
+                    if (!entity.getAccountLocked().equals(update.getAccountLocked())) {
+                        entity.setAccountLocked(update.getAccountLocked());
+
+                        if (!entity.getVerificationMailSent()) entity.setVerificationMailSent(true);
+
+                        userRepository.save(entity);
+
+                        if (update.getAccountLocked()) {
+                            UsersStorageService.removeUser(entity.getId());
+
+                            EmailSenderService.MessageDetails details = EmailSenderService.MessageDetails
+                                    .builder()
+                                    .to(entity.getEmail())
+                                    .message(ACCOUNT_LOCKED_MESSAGE)
+                                    .subject(VERIFICATION_SUBJECT)
+                                    .build();
+
+                            emailSender.send(details);
+                        } else {
+                            String message = String.format(ACCOUNT_UNLOCKED_MESSAGE, TOOL_URL);
+                            EmailSenderService.MessageDetails details = EmailSenderService.MessageDetails
+                                    .builder()
+                                    .to(entity.getEmail())
+                                    .message(message)
+                                    .subject(VERIFICATION_SUBJECT)
+                                    .build();
+
+                            emailSender.send(details);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    private boolean isNotAdmin(UserEntity user) {
+        return user.getPermissions().stream().noneMatch(p -> ADMIN_ROLE_ID.equals(p.getId()));
     }
 }

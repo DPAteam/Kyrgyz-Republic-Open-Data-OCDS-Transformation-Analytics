@@ -13,6 +13,8 @@ import { NavLink } from 'react-router-dom'
 import _ from 'lodash'
 import NavItem from '../navItem/NavItem'
 
+import { setAdminPanelActive, getAllUsers } from '../../store/adminPanel/actions';
+
 class NavigationFixed extends PureComponent {
   static propTypes = {
     user: PropTypes.object,
@@ -34,6 +36,18 @@ class NavigationFixed extends PureComponent {
     })
   }
 
+  handleOpenAdminPanel = (type) => {
+    const { setAdminPanelActive, getAllUsers } = this.props;
+
+    if (type === "setting") {
+      Promise.resolve(getAllUsers()).then(
+        () => {
+          setAdminPanelActive();
+        }
+      )
+    }
+  }
+
   prepareMenuItems = () => {
     return BAR_NAV_CONFIG.map(item => {
       let checkPermission = _.includes(this.props.userInfo.permissions, 'admin.base')
@@ -45,7 +59,7 @@ class NavigationFixed extends PureComponent {
           </NavLink>
         </Menu.Item>) : (checkPermission ? (
         <Menu.Item key={item.menuKey}>
-          <NavLink to={`/${item.key}`}>
+          <NavLink to={`/${item.key}`} onClick={() => this.handleOpenAdminPanel(item.iconType)}>
             <Icon type={item.iconType} />
             <span><FormattedMessage id={item.label} /></span>
           </NavLink>
@@ -105,17 +119,21 @@ class NavigationFixed extends PureComponent {
 
 function mapStateToProps({
                            navigationStore,
-                           auth
+                           auth,
+                           adminPanel
                          }) {
   return {
     menuSelectedKey: navigationStore.menuSelectedKey,
     userInfo: auth.userInfo,
+    adminPanelIsOpen: adminPanel.adminPanelIsOpen
   }
 }
 
 function mapDispatchToProps(dispatch) {
   return {
     changeNavigationItem: bindActionCreators(changeNavigationItem, dispatch),
+    setAdminPanelActive: bindActionCreators(setAdminPanelActive, dispatch),
+    getAllUsers: bindActionCreators(getAllUsers, dispatch)
   }
 }
 

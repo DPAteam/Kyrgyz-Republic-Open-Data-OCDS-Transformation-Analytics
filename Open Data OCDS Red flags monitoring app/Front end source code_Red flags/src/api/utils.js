@@ -52,6 +52,13 @@ export const signin = (types, credentials) => {
               // }
             },
           }
+        } else if (type.match(/ERROR/g)) {
+          return {
+            type: type,
+            payload: (action, state, res) => {
+              return res.json()
+            },
+          }
         } else {
           return type
         }

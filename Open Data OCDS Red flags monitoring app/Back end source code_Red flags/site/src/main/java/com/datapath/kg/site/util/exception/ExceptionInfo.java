@@ -8,7 +8,7 @@ public enum ExceptionInfo {
 
     A2("This email already registered", BAD_REQUEST),
     E1("Too many items for export to Excel. Check less or delete something", BAD_REQUEST),
-    RP1("Email for confirm user not send", BAD_REQUEST),
+    EN1("Email not sent", BAD_REQUEST),
     RP2("Confirmation token is expired", BAD_REQUEST),
     RP3("Not found registered user", BAD_REQUEST);
 

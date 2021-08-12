@@ -64,7 +64,14 @@ class LoginForm extends Component {
 
   handleResetSendEmailUser = (values) => {
     delete values.confirm
-    this.props.resetSendEmail(values.email).then(() => {
+
+    let requestData = {
+      email: values.email,
+      path: window.location.origin,
+      locale: this.props.lang,
+    }
+
+    this.props.resetSendEmail(requestData).then(() => {
       this.setState({
         showResetSendEmailModal: false,
       })

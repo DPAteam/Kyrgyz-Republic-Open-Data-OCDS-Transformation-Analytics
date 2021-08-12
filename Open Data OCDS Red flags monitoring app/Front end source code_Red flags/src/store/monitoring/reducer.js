@@ -22,6 +22,7 @@ import {
   GET_MAPPINGS,
   DROP_OPTION,
   CLEAR_CHECKLIST,
+  CPV_SEARCH_VALUES,
 } from './constants'
 
 import * as MonitoringConstants from './constants'
@@ -92,7 +93,7 @@ const getFilterType = (length, key) => {
   return TYPES.select
 }
 
-const getFilterOptions = (arr, key) => {
+const getFilterOptions = (arr, key, mappings, cpvSearchValues, filtersSelected) => {
   // if (
   //   key === 'procuringEntities' ||
   //   key === 'cpvNames' ||
@@ -100,11 +101,56 @@ const getFilterOptions = (arr, key) => {
   //   key === 'riskedIndicators' ||
   //   key === 'queuePriority'
   // )
+
+  if (key === 'itemCpv2' || key === 'itemCpv') {
+    let reqExpValue = new RegExp(cpvSearchValues[key], 'gi')
+    let customMapping = mappings[key === 'itemCpv' ? 'cpvList' : 'okgzList']
+
+    if (key === 'itemCpv' && !_.isEmpty(filtersSelected['itemCpv2'])) {
+      customMapping = customMapping.filter(cm => {
+        let needReturn = false
+        _.forEach(filtersSelected['itemCpv2'], (sl) => {
+          needReturn = cm.code.startsWith(sl) || _.includes(filtersSelected[key], cm.code)
+        })
+
+        return needReturn
+      })
+    }
+
+    let filteredData = _.filter(customMapping, (mp) => {
+      if (key === 'itemCpv') {
+        if (mp.nameEn) {
+          return (mp.code.search(reqExpValue) !== -1) || (mp.name.search(reqExpValue) !== -1) || (mp.nameEn.search(reqExpValue) !== -1) || _.includes(filtersSelected[key], mp.code)
+        } else {
+          return (mp.code.search(reqExpValue) !== -1) || (mp.name.search(reqExpValue) !== -1) || _.includes(filtersSelected[key], mp.code)
+        }
+      } else {
+        return (mp.code.search(reqExpValue) !== -1) ||
+          (mp.name.search(reqExpValue) !== -1) ||
+          (mp.nameEn.search(reqExpValue) !== -1) ||
+          (mp.nameKg.search(reqExpValue) !== -1) ||
+          (mp.originalCode.search(reqExpValue) !== -1) ||
+          _.includes(filtersSelected[key], mp.code)
+      }
+    })
+
+
+    let temp = filteredData.splice(0, 45)
+    // let temp = _.cloneDeep(mappings[key === 'itemCpv' ? 'cpvList' : 'okgzList']).splice(0, 45)
+
+    return _.map(temp, el => {
+      return {
+        key: el.code,
+        value: el.name,
+      }
+    })
+  }
+
   if (
     key === 'buyers' ||
     key === 'itemCpv' ||
     key === 'cpv2Names' ||
-    key === 'itemCpv2' ||
+    // key === 'itemCpv2' ||
     key === 'withRisk' ||
     key === 'riskedIndicators'
   )
@@ -244,7 +290,7 @@ const getFilterUAKey = elem => {
   return KEYS[elem]
 }
 
-const getFilters = arr => {
+const getFilters = (arr, mappings, cpvSearchValues, filtersSelected) => {
   const keys = Object.keys(arr)
   const data = Object.values(arr)
 
@@ -253,7 +299,7 @@ const getFilters = arr => {
       key: elem === 'queuePriority' ? 'hasPriorityStatus' : elem,
       keyUA: getFilterUAKey(elem),
       type: getFilterType(data[i].length, elem),
-      options: getFilterOptions(data[i], elem),
+      options: getFilterOptions(data[i], elem, mappings, cpvSearchValues, filtersSelected),
       group: getGroupName(elem),
       position: getFilterPosition(elem),
       translationOptions: FILTER_ITEM_TRANSLATION_OPTIONS[elem],
@@ -412,6 +458,11 @@ const initialState = {
   status: null,
   id: null,
   indicatorsChecklist: [],
+  cpvSearchValues: {
+    'itemCpv': '',
+    'itemCpv2': '',
+  },
+  selectedFilterElements: {},
 }
 
 const monitoring = (state = initialState, action) => {
@@ -429,7 +480,7 @@ const monitoring = (state = initialState, action) => {
         // data: action.payload,
         allDataIsFetching: false,
         allDataError: null,
-        filters: getFilters(action.payload.availableFilters),
+        filters: getFilters(action.payload.availableFilters, state.mappings, state.cpvSearchValues, state.selectedFilterElements),
       }
     case MonitoringConstants.GET_MONITORING_DATA + STATUSES.err:
       return {
@@ -465,7 +516,7 @@ const monitoring = (state = initialState, action) => {
         dataIsFetching: false,
         allDataIsFetching: false,
         error: null,
-        filters: getFilters(action.payload.availableFilters),
+        filters: getFilters(action.payload.availableFilters, state.mappings, state.cpvSearchValues, state.selectedFilterElements),
       }
     case GET_DATA + STATUSES.err:
       return {
@@ -501,7 +552,7 @@ const monitoring = (state = initialState, action) => {
         allData: action.payload,
         dataIsFetching: false,
         allDataIsFetching: false,
-        filters: getFilters(action.payload.availableFilters),
+        filters: getFilters(action.payload.availableFilters, state.mappings, state.cpvSearchValues, state.selectedFilterElements),
         error: null,
       }
     case UPDATE_DATA + STATUSES.err:
@@ -557,7 +608,7 @@ const monitoring = (state = initialState, action) => {
         ...state,
         data: clonedData,
         dataIsFetching: false,
-        filters: getFilters(clonedData.availableFilters),
+        filters: getFilters(clonedData.availableFilters, state.mappings, state.cpvSearchValues, state.selectedFilterElements),
         error: null,
       }
     case UPDATE_FILTER_OPTIONS + STATUSES.err:
@@ -582,6 +633,7 @@ const monitoring = (state = initialState, action) => {
       return {
         ...state,
         filtersSelected: {},
+        selectedFilterElements: {},
         filtersDisplay: {},
         error: null,
       }
@@ -593,9 +645,23 @@ const monitoring = (state = initialState, action) => {
       }
 
     case SELECT_OPTION + STATUSES.suc:
+      let clonedSelectedFilterElements = _.cloneDeep(state.selectedFilterElements)
+      if (action.selected.onlyAddToVariable) {
+        if (action.selected.key === 'itemCpv2' || action.selected.key === 'itemCpv') {
+          if (clonedSelectedFilterElements.hasOwnProperty(action.selected.key)) {
+            clonedSelectedFilterElements[action.selected.key].push(action.selected.selected)
+          } else {
+            clonedSelectedFilterElements = _.merge({}, state.selectedFilterElements, {
+              [action.selected.key]: [action.selected.selected],
+            })
+          }
+        }
+      }
+
       return {
         ...state,
         filtersSelected: setSelectedFilter(state.filtersSelected, action.selected),
+        selectedFilterElements: clonedSelectedFilterElements,
         filtersDisplay: setSelectedDisplay(
           state.filtersDisplay,
           action.selected || null,
@@ -607,10 +673,18 @@ const monitoring = (state = initialState, action) => {
       }
 
     case DESELECT_OPTION + STATUSES.suc:
+      let clSelectedFilterElements = _.cloneDeep(state.selectedFilterElements)
+      if (action.selected.key === 'itemCpv2' || action.selected.key === 'itemCpv') {
+        if (clSelectedFilterElements.hasOwnProperty(action.selected.key)) {
+          clSelectedFilterElements[action.selected.key] = _.filter(clSelectedFilterElements[action.selected.key], (op) => op !== action.selected.selected)
+        }
+      }
+
       return {
         ...state,
         filtersSelected: deselectedFilter(state.filtersSelected, action.selected),
         filtersDisplay: deselectedDisplay(state.filtersDisplay, action.selected, action.props),
+        selectedFilterElements: clSelectedFilterElements,
         error: null,
       }
 
@@ -920,6 +994,23 @@ const monitoring = (state = initialState, action) => {
           status: action.payload.status || null,
           description: action.payload.message || null,
         },
+      }
+
+    case CPV_SEARCH_VALUES + STATUSES.suc:
+      let clonedCPVSearchValue = _.cloneDeep(state.cpvSearchValues)
+      if (action.clear) {
+        clonedCPVSearchValue = {
+          'itemCpv': '',
+          'itemCpv2': '',
+        }
+      } else {
+        clonedCPVSearchValue[action.filterKey] = action.searchValue
+      }
+
+      return {
+        ...state,
+        cpvSearchValues: clonedCPVSearchValue,
+        filters: getFilters(state.allData.availableFilters, state.mappings, clonedCPVSearchValue, state.selectedFilterElements),
       }
     default:
       return state

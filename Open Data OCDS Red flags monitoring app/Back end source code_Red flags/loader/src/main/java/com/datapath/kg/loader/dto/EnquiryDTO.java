@@ -2,10 +2,12 @@ package com.datapath.kg.loader.dto;
 
 import lombok.Data;
 
+import java.time.OffsetDateTime;
+
 @Data
 public class EnquiryDTO {
 
     private Integer id;
-    private String dateAnswered;
-    private String date;
+    private OffsetDateTime dateAnswered;
+    private OffsetDateTime date;
 }

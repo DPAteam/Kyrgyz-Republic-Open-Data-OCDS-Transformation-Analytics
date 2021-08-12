@@ -5,4 +5,6 @@ import java.util.List;
 public interface ExportService {
 
     byte[] export(List<String> tenderIds, String localeKey);
+
+    byte[] export();
 }

@@ -2,6 +2,7 @@ package com.datapath.kg.loader.dto;
 
 import lombok.Data;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Data
@@ -9,8 +10,8 @@ public class TenderDTO {
     private Integer id;
     private String status;
     private String statusDetails;
-    private String date;
-    private String datePublished;
+    private OffsetDateTime date;
+    private OffsetDateTime datePublished;
     private String procurementMethodRationale;
     private String procurementMethodDetails;
     private String procurementMethod;

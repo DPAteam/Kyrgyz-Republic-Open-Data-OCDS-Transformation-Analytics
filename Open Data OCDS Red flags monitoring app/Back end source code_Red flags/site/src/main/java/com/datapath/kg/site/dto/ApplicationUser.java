@@ -7,7 +7,7 @@ import javax.validation.constraints.NotBlank;
 
 @Data
 public class ApplicationUser {
-    private Long id;
+    private Integer id;
     private String name;
 
     @NotBlank
@@ -15,4 +15,6 @@ public class ApplicationUser {
 
     @NotBlank
     private String password;
+
+    private Boolean accountLocked;
 }

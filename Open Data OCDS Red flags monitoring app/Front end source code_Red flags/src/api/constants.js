@@ -1,11 +1,10 @@
-// export const URL = 'https://ua.procurementmonitoring.solutions/api/v0.1/'
-// export const URL = 'http://94.130.129.40:8026/api/v0.1/'
-// export const URL = 'http://195.201.111.7:8026/api/v0.1/'
-// export const URL = 'http://144.76.222.15:8026/api/v0.1/'
-// export const URL = 'http://94.130.129.40:8026/api/v0.1/'
-// export const API_URL = 'http://192.168.88.27:8027/'
-// export const API_URL = 'http://37.25.103.228:8080/api/'
-export const API_URL = 'http://94.130.140.109:8027/'
+// export const API_URL = 'http://94.130.140.109:8027/api/';
+
+// export const API_URL = 'http://riskkr.datapathanalytics.com:99/api/'
+// export const GOOGLE_AUTHORIZATION = 'http://riskkr.datapathanalytics.com:99/api/oauth2/authorization/google';
+
+export const API_URL = '/api/'
+export const GOOGLE_AUTHORIZATION = 'https://kgexante.ocdstools.com/api/oauth2/authorization/google';
 
 
 export const LOGIN_URL = 'login'
@@ -30,6 +29,7 @@ export const DELETE_USER_BY_ID = 'monitoring/usrs'
 export const CREATE_USER = 'monitoring/users'
 
 export const EXPORT_TO = 'monitoring/export'
+export const EXPORT_UNPROCESSED_DATA = 'monitoring/export/unprocessed-data'
 
 export const MAPPING_RISKS = 'monitoring/mapping/risks'
 
@@ -40,6 +40,10 @@ export const POST_CHECKLIST_SAVE = 'checklist/save'
 export const GET_CHECKLIST_SAVE = 'checklist/'
 
 export const GET_CHECKLIST_CREATE_ID = 'checklist/create/'
+
+export const GET_ALL_USERS = 'user/users';
+export const DELETE_CURRENT_USER = 'user/remove/';
+export const SAVE_USERS_CHANGES = 'user/update';
 
 // export const GET_FAKE_403 = 'http://144.76.222.15:8026/fake-forbidden'
 export const GET_FAKE_403 = 'http://94.130.129.40:8026/fake-forbidden'

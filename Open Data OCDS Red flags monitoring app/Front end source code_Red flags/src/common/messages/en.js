@@ -189,5 +189,13 @@ export const ENGLISH_TRANSLATION = {
     'common.text.160': 'User registered successfully',
     'common.text.161': 'Password recovery',
     'common.text.162': 'Send email',
+    'common.text.163': 'Registration request has been sent to the administrator. Confirmation of registration will be sent to your email address.',
+    'common.text.164': 'CONTROL PANEL',
+    'common.text.165': 'Are you sure that you want to delete this user?',
+    'common.text.166': 'Save',
+    'common.text.167': 'Are you sure that you want to save current changes?',
+    'common.text.168': 'Allow access',
+    'common.text.169': 'DOCUMENTATION',
+    'common.text.170': 'Download unprocessed data',
   },
 }

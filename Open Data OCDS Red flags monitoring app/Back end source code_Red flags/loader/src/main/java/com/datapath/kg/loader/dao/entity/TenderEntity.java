@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,10 +22,10 @@ public class TenderEntity {
     private Integer buyerId;
     private String status;
     private String statusDetails;
-    private LocalDateTime date;
-    private LocalDateTime datePublished;
-    private LocalDateTime periodStartDate;
-    private LocalDateTime periodEndDate;
+    private OffsetDateTime date;
+    private OffsetDateTime datePublished;
+    private OffsetDateTime periodStartDate;
+    private OffsetDateTime periodEndDate;
     private String procurementMethodRationale;
     private String procurementMethodDetails;
     private String procurementMethod;

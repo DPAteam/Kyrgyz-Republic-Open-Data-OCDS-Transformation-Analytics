@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState} from 'react'
 import { Route, Switch } from 'react-router'
 import connect from 'react-redux/es/connect/connect'
 import _ from 'lodash'
@@ -11,9 +11,12 @@ import AdminPanel from '../containers/administration/adminPanel'
 import { bindActionCreators } from 'redux'
 import { setUserJWT } from '../store/auth/actions'
 import ResetPage from '../components/forms/reset/ResetPage'
+import { injectIntl } from "react-intl";
+import { handleOkSuccessModal, setGoogleToken } from "../store/auth/actions";
 
 
 const Routes = props => {
+
   if (window.location.pathname === '/reset-password') {
     let preparedSearch = {}
     _.forEach(window.location.search.substring(1).split('&'), (searchItem) => {
@@ -34,6 +37,11 @@ const Routes = props => {
     })
   }
 
+  if (window.location.search.match('google-registration-succeed')) {
+    let googleToken = localStorage.setItem('googleToken', 'google-registration-succeed');
+    Promise.resolve(props.setGoogleToken(googleToken));
+  }
+
   return <Switch>
     <Route exact path="/" component={props.isAuth ? Private : Public} />
     <Route exact path="/list" component={props.isAuth ? ListComponent : Public} />
@@ -52,7 +60,9 @@ const mapStateToProps = ({ auth }) => {
 const mapDispatchToProps = (dispatch) => {
   return {
     setUserJWT: bindActionCreators(setUserJWT, dispatch),
+    handleOkSuccessModal: bindActionCreators(handleOkSuccessModal, dispatch),
+    setGoogleToken: bindActionCreators(setGoogleToken, dispatch),
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Routes)
+export default connect(mapStateToProps, mapDispatchToProps)(injectIntl(Routes))

@@ -1,9 +1,9 @@
-import React, { Fragment, PureComponent } from 'react'
-import PropTypes from 'prop-types'
-import moment from 'moment'
-import md5 from 'react-native-md5'
-import { connect } from 'react-redux'
-import { FormattedMessage } from 'react-intl'
+import React, { Fragment, PureComponent } from "react";
+import PropTypes from "prop-types";
+import moment from "moment";
+import md5 from "react-native-md5";
+import { connect } from "react-redux";
+import { FormattedMessage } from "react-intl";
 import {
   Button,
   Empty,
@@ -17,15 +17,19 @@ import {
   Form,
   Divider,
   Spin,
-} from 'antd'
+  Modal,
+  List,
+  Typography,
+  Checkbox
+} from "antd";
 
-import { bindActionCreators } from 'redux'
-import _ from 'lodash'
-import * as numeral from 'numeral'
-import classnames from 'classnames'
-import ReactHighcharts from 'react-highcharts'
-import addNoDataModule from 'highcharts/modules/no-data-to-display'
-import { generate } from 'shortid'
+import { bindActionCreators } from "redux";
+import _ from "lodash";
+import * as numeral from "numeral";
+import classnames from "classnames";
+import ReactHighcharts from "react-highcharts";
+import addNoDataModule from "highcharts/modules/no-data-to-display";
+import { generate } from "shortid";
 
 import {
   changeTypeOfValues,
@@ -55,67 +59,86 @@ import {
   getMonitoringAllFilterData,
   setBucketData,
   clearNoFilterData,
-} from '../../store/monitoring/actions'
-import { changeLocale } from '../../store/locale/LocaleActions'
-import { changeNavigationItem } from '../../store/navigation/actions'
+  clearFiltersOption,
+  updateCpvSearchValues
+} from "../../store/monitoring/actions";
+import { changeLocale } from "../../store/locale/LocaleActions";
+import { changeNavigationItem } from "../../store/navigation/actions";
+import { setAdminPanelDisactive, getAllUsers, deleteCurrentUser, saveUsersChanges } from "../../store/adminPanel/actions";
 
-import DateRangePicker from '../../components/dateRangePicker/DateRangePicker'
-import Card from '../../components/card/Card'
-import Table from '../../components/table/Table'
-import FilterForm from '../../components/forms/filters/FilterForm'
-import * as CONST from './constants'
-import { createUser, deleteUserById, getUsers, userLogout } from '../../store/auth/actions'
-import NavigationFixed from '../../components/navigation/NavigationFixed'
-import KpisBlock from '../../components/kpisBlock/KpisBlock'
-import LanguagesSelector from './components/LanguagesSelector'
-import BarNavigation from '../../components/barNavigation/BarNavigation'
+import DateRangePicker from "../../components/dateRangePicker/DateRangePicker";
+import Card from "../../components/card/Card";
+import Table from "../../components/table/Table";
+import FilterForm from "../../components/forms/filters/FilterForm";
+import * as CONST from "./constants";
+import {
+  createUser,
+  deleteUserById,
+  getUsers,
+  userLogout
+} from "../../store/auth/actions";
+import NavigationFixed from "../../components/navigation/NavigationFixed";
+import KpisBlock from "../../components/kpisBlock/KpisBlock";
+import LanguagesSelector from "./components/LanguagesSelector";
+import BarNavigation from "../../components/barNavigation/BarNavigation";
 import {
   CHART_COLORS_A,
   CHART_COLORS_B,
   CHART_COLORS_C,
   CHART_COLORS_D,
-  HIGHCHART_LOCALE,
-} from './constants'
-import { LOCALE_NAME } from '../../store/locale/LocaleConstants'
-import { OKGZ_FIELD_BY_LANGUAGE, INDICATOR_FIELD_BY_LANGUAGE, TRANSLATED_FIELD_BY_LANGUAGE } from './constants'
-import { FILTER_ITEM_TRANSLATION_OPTIONS } from './constants'
+  HIGHCHART_LOCALE
+} from "./constants";
+import { LOCALE_NAME } from "../../store/locale/LocaleConstants";
+import {
+  OKGZ_FIELD_BY_LANGUAGE,
+  INDICATOR_FIELD_BY_LANGUAGE,
+  TRANSLATED_FIELD_BY_LANGUAGE
+} from "./constants";
+import { FILTER_ITEM_TRANSLATION_OPTIONS } from "./constants";
+import { DeleteOutlined } from '@ant-design/icons';
 
-import './index.scss'
-import numeralRu from 'numeral/locales/ru'
+import "./index.scss";
+import numeralRu from "numeral/locales/ru";
+import {EXPORT_TO} from "../../api/constants";
 
-const { Content } = Layout
+const { Content } = Layout;
 
 // moment.locale('ua')
 
 class Private extends PureComponent {
   static contextTypes = {
-    intl: PropTypes.object.isRequired,
-  }
+    intl: PropTypes.object.isRequired
+  };
 
   constructor(props) {
-    super(props)
+    super(props);
     // props.getFakeForbidden()
-    let nowLocale = localStorage.getItem(LOCALE_NAME) || 'ru'
+    let nowLocale = localStorage.getItem(LOCALE_NAME) || "ru";
 
     if (ReactHighcharts.Highcharts) {
-      addNoDataModule(ReactHighcharts.Highcharts)
+      addNoDataModule(ReactHighcharts.Highcharts);
     }
 
     ReactHighcharts.Highcharts.setOptions({
       lang: {
-        numericSymbols: HIGHCHART_LOCALE[nowLocale].symbols,
-      },
-    })
+        numericSymbols: HIGHCHART_LOCALE[nowLocale].symbols
+      }
+    });
 
-    this.handleSearshTenderDelay = _.debounce(this.handleSearshTenderDelay, 1000)
+    this.handleSearshTenderDelay = _.debounce(
+      this.handleSearshTenderDelay,
+      1000
+    );
 
-    props.changeLocale(nowLocale)
+    props.changeLocale(nowLocale);
     this.state = {
       proceduresTablePage: 1,
       qantityCostSelected: CONST.QANTITY_COST_OPTIONS[0].key,
       dateRange: {
-        startDate: moment().subtract(31, 'days').format('YYYY-MM-DD'),
-        endDate: moment().format('YYYY-MM-DD'),
+        startDate: moment()
+          .subtract(31, "days")
+          .format("YYYY-MM-DD"),
+        endDate: moment().format("YYYY-MM-DD")
       },
       selectedProcedures: [],
       selectedRowKeys: [],
@@ -129,7 +152,7 @@ class Private extends PureComponent {
       riskChartSelected: CONST.QANTITY_COST_OPTIONS[0].key,
       growthChartSelected: CONST.QANTITY_COST_OPTIONS[0].key,
       sortField: null,
-      sortDirection: 'DESC',
+      sortDirection: "DESC",
       controlPanelConfigure: false,
       visibleNotVerify: false,
       visibleVerify: false,
@@ -146,23 +169,26 @@ class Private extends PureComponent {
       editMonitoring: true,
       defaultFormData: {},
       tableKey: generate(),
-    }
+      copyUsersList: null,
+      deleteModalIsVisivle: false,
+      deleteUserId: null,
+      saveChangesModalIsVisible: false,
+      cloneUsers: []
+    };
   }
 
-  componentDidUpdate(prevProps, prevState, snapshot) {
-
-  }
+  componentDidUpdate(prevProps, prevState, snapshot) {}
 
   componentDidMount() {
     this.props.getMappings().then(() => {
       Promise.resolve(
         this.props.getMonitoringAllFilterData({
           startDate: this.state.dateRange.startDate,
-          endDate: this.state.dateRange.endDate,
-        }),
-      )
-    })
-    this.props.changeNavigationItem('1')
+          endDate: this.state.dateRange.endDate
+        })
+      );
+    });
+    this.props.changeNavigationItem("1");
     // Promise.resolve(
     //   this.props.getMonitoringAllFilterData({
     //     startDate: this.state.dateRange.startDate,
@@ -177,166 +203,183 @@ class Private extends PureComponent {
   }
 
   handleClickSelectCountOrAmount = (name, event) => {
-    this.setState({ [name]: event.target.value })
-  }
+    this.setState({ [name]: event.target.value });
+  };
 
   handleSelectDate = e => {
-    const { filtersSelected } = this.props
-    let startDate = !_.isEmpty(e) ? moment(e[0]).format('YYYY-MM-DD') : moment().subtract(31, 'days').format('YYYY-MM-DD')
-    let endDate = !_.isEmpty(e) ? moment(e[1]).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD')
+    const { filtersSelected } = this.props;
+    let startDate = !_.isEmpty(e)
+      ? moment(e[0]).format("YYYY-MM-DD")
+      : moment()
+          .subtract(31, "days")
+          .format("YYYY-MM-DD");
+    let endDate = !_.isEmpty(e)
+      ? moment(e[1]).format("YYYY-MM-DD")
+      : moment().format("YYYY-MM-DD");
     Promise.resolve(
       this.setState({
         dateRange: {
           startDate: startDate,
-          endDate: endDate,
-        },
-      }),
-    ).then(() =>
-      this.props.updateData({
-        startDate: this.state.dateRange.startDate,
-        endDate: this.state.dateRange.endDate,
-        ...filtersSelected,
-      }).then(() => {
-        if (this.props.error) {
-          message.error(this.props.error.description, 5)
+          endDate: endDate
         }
-      }),
-    )
-  }
+      })
+    ).then(() =>
+      this.props
+        .updateData({
+          startDate: this.state.dateRange.startDate,
+          endDate: this.state.dateRange.endDate,
+          ...filtersSelected
+        })
+        .then(() => {
+          if (this.props.error) {
+            message.error(this.props.error.description, 5);
+          }
+        })
+    );
+  };
 
   renderKPIs = () => {
-    if (_.isEmpty(this.props.allData)) return <Empty />
+    if (_.isEmpty(this.props.allData)) return <Empty />;
 
-    const { intl } = this.context
-    const { kpiInfoFiltered } = this.props.allData
+    const { intl } = this.context;
+    const { kpiInfoFiltered } = this.props.allData;
 
     const infoCard = [
       {
-        key: intl.formatMessage({ id: 'common.text.25' }),
+        key: intl.formatMessage({ id: "common.text.25" }),
         values: [
           {
-            key: 'quantity',
+            key: "quantity",
             // value: numeral(kpiInfoFiltered.checkedProceduresCount).format('0,0'),
-            value: kpiInfoFiltered.checkedProceduresCount.toLocaleString('ru'),
+            value: kpiInfoFiltered.checkedProceduresCount.toLocaleString("ru")
           },
           {
-            key: 'amount',
+            key: "amount",
             value:
               numeral(kpiInfoFiltered.checkedProceduresValue)
-                .format('0.[00] a')
-                .replace(/\d+,?\d*/, '$& ') + ` ${intl.formatMessage({ id: 'common.text.currency' })}`,
-          },
-        ],
+                .format("0.[00] a")
+                .replace(/\d+,?\d*/, "$& ") +
+              ` ${intl.formatMessage({ id: "common.text.currency" })}`
+          }
+        ]
       },
       {
-        key: intl.formatMessage({ id: 'common.text.26' }),
+        key: intl.formatMessage({ id: "common.text.26" }),
         values: [
           {
-            key: 'quantity',
+            key: "quantity",
             // value: numeral(kpiInfoFiltered.checkedRiskProceduresCount).format('0,0'),
-            value: kpiInfoFiltered.checkedRiskProceduresCount.toLocaleString('ru'),
+            value: kpiInfoFiltered.checkedRiskProceduresCount.toLocaleString(
+              "ru"
+            )
           },
           {
-            key: 'amount',
+            key: "amount",
             value:
               numeral(kpiInfoFiltered.checkedRiskProceduresValue)
-                .format('0.[00] a')
-                .replace(/\d+,?\d*/, '$& ') + ` ${intl.formatMessage({ id: 'common.text.currency' })}`,
-          },
-        ],
+                .format("0.[00] a")
+                .replace(/\d+,?\d*/, "$& ") +
+              ` ${intl.formatMessage({ id: "common.text.currency" })}`
+          }
+        ]
       },
       {
-        key: intl.formatMessage({ id: 'common.text.27' }),
+        key: intl.formatMessage({ id: "common.text.27" }),
         values: [
           {
-            key: 'quantity',
+            key: "quantity",
             // value: numeral(kpiInfoFiltered.checkedBuyersCount).format('0,0'),
-            value: kpiInfoFiltered.checkedBuyersCount.toLocaleString('ru'),
+            value: kpiInfoFiltered.checkedBuyersCount.toLocaleString("ru")
           },
           {
-            key: 'amount',
-            value: `${numeral(kpiInfoFiltered.checkedRiskBuyersCount).format('0,0')} ${intl.formatMessage({ id: 'common.text.32.1' })}`,
-          },
-        ],
+            key: "amount",
+            value: `${numeral(kpiInfoFiltered.checkedRiskBuyersCount).format(
+              "0,0"
+            )} ${intl.formatMessage({ id: "common.text.32.1" })}`
+          }
+        ]
       },
       {
-        key: intl.formatMessage({ id: 'common.text.28' }),
+        key: intl.formatMessage({ id: "common.text.28" }),
         values: [
           {
-            key: 'quantity',
+            key: "quantity",
             // value: numeral(kpiInfoFiltered.indicatorsCount).format('0,0'),
-            value: kpiInfoFiltered.indicatorsCount.toLocaleString('ru'),
+            value: kpiInfoFiltered.indicatorsCount.toLocaleString("ru")
           },
           {
-            key: 'amount',
-            value: `${numeral(kpiInfoFiltered.riskIndicatorsCount).format('0,0')} ${intl.formatMessage({ id: 'common.text.131' })}`,
-          },
-        ],
-      },
-    ]
+            key: "amount",
+            value: `${numeral(kpiInfoFiltered.riskIndicatorsCount).format(
+              "0,0"
+            )} ${intl.formatMessage({ id: "common.text.131" })}`
+          }
+        ]
+      }
+    ];
     const card = _.map(infoCard, (record, index) => {
       return (
         // <div className="col-sm-12 col-md-6 col-lg-4 col-xl-3 mb-3" key={generate()}>
-        <div className="col-sm-12 col-md-6 col-lg-4 col-xl-3 mb-3" key={`rotated_card_${index}`}>
+        <div
+          className="col-sm-12 col-md-6 col-lg-4 col-xl-3 mb-3"
+          key={`rotated_card_${index}`}
+        >
           <div className="card">
-            {!!record.values &&
-            <div className="card_content">
-              <div>
-                <div className="flex-item-p">
-                  <div className="flex-item-s">
-                    <div className="flex-item-t">
-                      <div className="flex-item-f">
-                        <strong>{record.values[0].value}</strong>
+            {!!record.values && (
+              <div className="card_content">
+                <div>
+                  <div className="flex-item-p">
+                    <div className="flex-item-s">
+                      <div className="flex-item-t">
+                        <div className="flex-item-f">
+                          <strong>{record.values[0].value}</strong>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
+                <h4 className="card_title">{record.key}</h4>
+                <div className="card_value">{record.values[1].value}</div>
               </div>
-              <h4 className="card_title">{record.key}</h4>
-              <div className="card_value">{record.values[1].value}</div>
-            </div>}
+            )}
           </div>
         </div>
-      )
-    })
+      );
+    });
     return (
       <div className="kpis">
         <div className="kpis_row">{card}</div>
       </div>
-    )
-  }
+    );
+  };
 
   handleChangePage = (page, pageSize) => {
-
-    const { filtersSelected } = this.props
+    const { filtersSelected } = this.props;
     let filterOptions = {
       startDate: this.state.dateRange.startDate,
       endDate: this.state.dateRange.endDate,
       page: page - 1,
       size: pageSize,
-      ...filtersSelected,
-    }
+      ...filtersSelected
+    };
 
     this.setState({
       page: page - 1,
-      size: pageSize,
-    })
+      size: pageSize
+    });
 
     if (this.state.sortField) {
       filterOptions = _.merge({}, filterOptions, {
         sortField: this.state.sortField,
-        sortDirection: this.state.sortDirection,
-      })
+        sortDirection: this.state.sortDirection
+      });
     }
 
-    this.props
-      .updateData(filterOptions)
-      .then(() =>
-        this.setState({
-          proceduresTablePage: page,
-        }),
-      )
-  }
+    this.props.updateData(filterOptions).then(() =>
+      this.setState({
+        proceduresTablePage: page
+      })
+    );
+  };
 
   prepareProceduresTableData = data => {
     // let tenders =
@@ -371,204 +414,242 @@ class Private extends PureComponent {
       monitoringAppeal: null,
       tenderOuterId: null,
       hasChecklist: null,
-      availableForChecklist: null,
-    }
+      availableForChecklist: null
+    };
     return _.map(data.procedures, item => {
-      let procedureLogOptions = _.find(this.props.mappings.procedureLogTypes, { id: item.procedureLogType })
+      let procedureLogOptions = _.find(this.props.mappings.procedureLogTypes, {
+        id: item.procedureLogType
+      });
 
-      let obj = _.cloneDeep(objStructure)
+      let obj = _.cloneDeep(objStructure);
       // obj.key = item.buyerId
-      obj.key = item.tenderId
-      obj.gsw = item.gsw
+      obj.key = item.tenderId;
+      obj.gsw = item.gsw;
       // obj.buyerRegion = _.find(this.props.mappings.translatedValues, { value: `region.${item.buyerRegion.replace(' ', '_')}` })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]]
-      obj.buyerRegion = _.find(this.props.mappings.translatedValues, { value: `region.${md5.hex_md5(item.buyerRegion)}` })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]]
+      obj.buyerRegion = _.find(this.props.mappings.translatedValues, {
+        value: `region.${md5.hex_md5(item.buyerRegion)}`
+      })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]];
       // obj.cpv = item.cpv
-      obj.itemCpv = _.map(item.itemCpv, (itemCpv) => {
-        let findCpvMappingByCode = _.find(this.props.mappings.cpvList, { code: itemCpv })
+      obj.itemCpv = _.map(item.itemCpv, itemCpv => {
+        let findCpvMappingByCode = _.find(this.props.mappings.cpvList, {
+          code: itemCpv
+        });
         if (findCpvMappingByCode) {
-          return findCpvMappingByCode[this.props.lang === 'en' ? 'nameEn' : 'name'] ? `${itemCpv} - ${findCpvMappingByCode[this.props.lang === 'en' ? 'nameEn' : 'name']}` : itemCpv
+          return findCpvMappingByCode[
+            this.props.lang === "en" ? "nameEn" : "name"
+          ]
+            ? `${itemCpv} - ${
+                findCpvMappingByCode[
+                  this.props.lang === "en" ? "nameEn" : "name"
+                ]
+              }`
+            : itemCpv;
         } else {
-          return itemCpv
+          return itemCpv;
         }
-      }).join(', ')
+      }).join(", ");
       // obj.cpv = item.cpvName
-      obj.itemCpv2 = _.map(item.itemCpv2, (okgzCode) => {
-        let findCpvMappingByCode = _.find(this.props.mappings.okgzList, { code: okgzCode })
+      obj.itemCpv2 = _.map(item.itemCpv2, okgzCode => {
+        let findCpvMappingByCode = _.find(this.props.mappings.okgzList, {
+          code: okgzCode
+        });
         if (findCpvMappingByCode) {
-          return findCpvMappingByCode[OKGZ_FIELD_BY_LANGUAGE[this.props.lang]]
+          return findCpvMappingByCode[OKGZ_FIELD_BY_LANGUAGE[this.props.lang]];
         } else {
-          return okgzCode
+          return okgzCode;
         }
-      }).join(', ')
+      }).join(", ");
       // obj.tenderId = item.buyerId
-      obj.tenderId = item.tenderId
-      obj.tenderStatusDetails = _.find(this.props.mappings.translatedValues, { value: `status-detail.${item.tenderStatusDetails}` })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]]
-      obj.procedureType = item.procedureType
+      obj.tenderId = item.tenderId;
+      obj.tenderStatusDetails = _.find(this.props.mappings.translatedValues, {
+        value: `status-detail.${item.tenderStatusDetails}`
+      })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]];
+      obj.procedureType = item.procedureType;
       // obj.monitoringStatus = item.monitoringStatus
       // obj.procuringEntityName = item.buyerName
-      obj.buyerName = item.buyerName
-      obj.buyerId = item.buyerId
+      obj.buyerName = item.buyerName;
+      obj.buyerId = item.buyerId;
       // obj.expectedValue = parseInt(numeral(item.tenderAmount).format('0')).toLocaleString(this.props.lang === 'en' ? 'en' : 'ru')
-      obj.tenderAmount = parseInt(numeral(item.tenderAmount).format('0')).toLocaleString(this.props.lang === 'en' ? 'en' : 'ru')
-      obj.tenderProcurementMethodDetails = _.find(this.props.mappings.translatedValues, { value: `procurement-method-details.${item.tenderProcurementMethodDetails}` })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]]
+      obj.tenderAmount = parseInt(
+        numeral(item.tenderAmount).format("0")
+      ).toLocaleString(this.props.lang === "en" ? "en" : "ru");
+      obj.tenderProcurementMethodDetails = _.find(
+        this.props.mappings.translatedValues,
+        {
+          value: `procurement-method-details.${item.tenderProcurementMethodDetails}`
+        }
+      )[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]];
       // obj.indicatorsWithRisk = item.indicatorsWithRisk
-      obj.riskLevel = _.find(this.props.mappings.translatedValues, { value: `risk-level.${item.riskLevel}` })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]]
-      obj.indicatorsWithRisk = _.map(item.indicatorsWithRisk, (indKey) => (
-        _.find(this.props.mappings.indicators, { id: parseInt(indKey) }).name
-      )).join(', ')
-      obj.tenderDatePublished = item.tenderDatePublished
-      obj.linkId = item.tenderOuterId
-      obj.inQueue = item.inQueue
-      obj.hasComplaints = item.hasComplaints
-      obj.withRisk = item.withRisk
-      obj.materialityScore = item.materialityScore
+      obj.riskLevel = _.find(this.props.mappings.translatedValues, {
+        value: `risk-level.${item.riskLevel}`
+      })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]];
+      obj.indicatorsWithRisk = _.map(
+        item.indicatorsWithRisk,
+        indKey =>
+          _.find(this.props.mappings.indicators, { id: parseInt(indKey) }).name
+      ).join(", ");
+      obj.tenderDatePublished = item.tenderDatePublished;
+      obj.linkId = item.tenderOuterId;
+      obj.inQueue = item.inQueue;
+      obj.hasComplaints = item.hasComplaints;
+      obj.withRisk = item.withRisk;
+      obj.materialityScore = item.materialityScore;
       obj.icon = (
         <span>
           {/*{arrTenderId.includes(item.tenderId) ? <Icon type="shopping-cart" style={{ fontSize: 16 }} /> : null}{' '}*/}
           {/*<Icon type="close-circle" theme="filled" style={{ color: '#fd3d3d', fontSize: 16 }} />*/}
           {/*<i className="anticon feedback-icon"></i>*/}
         </span>
-      )
-      obj.monitoringAppeal = item.monitoringAppeal
-      obj.tenderOuterId = item.tenderOuterId
+      );
+      obj.monitoringAppeal = item.monitoringAppeal;
+      obj.tenderOuterId = item.tenderOuterId;
       // obj.checklist = data.checklistInfo.filter(info => info.tenderOuterId === item.tenderOuterId)
       // obj.checklist = [{
       //   hasChecklist: hasChecklistStatus,
       //   availableForChecklist: availableForChecklist,
       //   tenderOuterId: item.tenderOuterId,
       // }]
-      return obj
-    })
-  }
+      return obj;
+    });
+  };
 
   handleRowSelectChange = (selectedRowKeys, selectedRows) => {
     this.setState({
       selectedProcedures: selectedRows,
-      selectedRowKeys: selectedRowKeys,
-    })
-  }
+      selectedRowKeys: selectedRowKeys
+    });
+  };
 
   handleSetProcedoresToBucket = () => {
-    const { intl } = this.context
-    const { selectedRowKeys } = this.state
+    const { intl } = this.context;
+    const { selectedRowKeys } = this.state;
 
-    this.props.setBucketData({
-      tenderIds: selectedRowKeys,
-    }).then(() => {
-      if (this.props.error) {
-        message.error(this.props.error.description)
-      } else {
-        message.success(intl.formatMessage({ id: 'common.text.144' }))
-      }
-    })
-  }
+    this.props
+      .setBucketData({
+        tenderIds: selectedRowKeys
+      })
+      .then(() => {
+        if (this.props.error) {
+          message.error(this.props.error.description);
+        } else {
+          message.success(intl.formatMessage({ id: "common.text.144" }));
+        }
+      });
+  };
 
   handleExportToExcel = () => {
-    const { intl } = this.context
-    const FILE_NAME = `selected_procedures_${moment().format('DD-MM-YYYY_HH-mm')}`
-    const { selectedRowKeys } = this.state
+    const { intl } = this.context;
+    const FILE_NAME = `selected_procedures_${moment().format(
+      "DD-MM-YYYY_HH-mm"
+    )}`;
+    const { selectedRowKeys } = this.state;
     if (selectedRowKeys.length < 60000)
-      this.props.exportToEXCEL({
-        locale: this.props.lang.toUpperCase(),
-        tenderIds: selectedRowKeys,
-      }, FILE_NAME).then(() =>
-        this.setState({
-          selectedProcedures: [],
-          selectedRowKeys: [],
-        }),
-      )
-    else message.error(intl.formatMessage({ id: 'common.text.137' }))
-  }
+      this.props
+        .exportToEXCEL(
+          EXPORT_TO,
+          {
+            locale: this.props.lang.toUpperCase(),
+            tenderIds: selectedRowKeys
+          },
+          FILE_NAME
+        )
+        .then(() =>
+          this.setState({
+            selectedProcedures: [],
+            selectedRowKeys: []
+          })
+        );
+    else message.error(intl.formatMessage({ id: "common.text.137" }));
+  };
 
   handleSelectAllProcedures = () => {
-    const { filtersSelected } = this.props
+    const { filtersSelected } = this.props;
 
     if (this.props.procedureIds && !!this.props.procedureIds.tenderIds)
       Promise.resolve(this.props.clearSelectedProcedureIds()).then(() => {
         this.setState({
-          selectedRowKeys: [],
-        })
-      })
+          selectedRowKeys: []
+        });
+      });
     else
       Promise.resolve(
         this.props.getAllProcIds({
           startDate: this.state.dateRange.startDate,
           endDate: this.state.dateRange.endDate,
-          ...filtersSelected,
-        }),
+          ...filtersSelected
+        })
       ).then(() => {
         this.setState({
-          selectedRowKeys: this.props.procedureIds.tenderIds,
-        })
-      })
-  }
+          selectedRowKeys: this.props.procedureIds.tenderIds
+        });
+      });
+  };
 
   handleColumnSorter = (pagination, filters, sorter) => {
-    let filtersSelected = _.cloneDeep(this.props.filtersSelected)
+    let filtersSelected = _.cloneDeep(this.props.filtersSelected);
     let filterOptions = {
       startDate: this.state.dateRange.startDate,
       endDate: this.state.dateRange.endDate,
       page: 0,
-      ...filtersSelected,
-    }
+      ...filtersSelected
+    };
 
-    let sorterOrder, sortField = null
+    let sorterOrder,
+      sortField = null;
 
-    const SORT = { ascend: 'ASC', descend: 'DESC' }
+    const SORT = { ascend: "ASC", descend: "DESC" };
 
     if (!_.isEmpty(sorter)) {
-      if (sorter.hasOwnProperty('order')) {
-        sortField = sorter.field
-        sorterOrder = SORT[sorter.order]
+      if (sorter.hasOwnProperty("order")) {
+        sortField = sorter.field;
+        sorterOrder = SORT[sorter.order];
         filterOptions = _.merge({}, filterOptions, {
           sortField: sortField,
-          sortDirection: sorterOrder,
-        })
+          sortDirection: sorterOrder
+        });
       } else {
-        delete filterOptions['sortDirection']
-        delete filterOptions['sortField']
+        delete filterOptions["sortDirection"];
+        delete filterOptions["sortField"];
       }
     } else {
-      delete filterOptions['sortDirection']
-      delete filterOptions['sortField']
+      delete filterOptions["sortDirection"];
+      delete filterOptions["sortField"];
     }
 
     this.setState({
       sortField: sortField,
-      sortDirection: sorterOrder,
-    })
+      sortDirection: sorterOrder
+    });
 
-    this.props
-      .updateData(filterOptions)
-      .then(() =>
-        this.setState({
-          proceduresTablePage: 1,
-        }),
-      )
-  }
+    this.props.updateData(filterOptions).then(() =>
+      this.setState({
+        proceduresTablePage: 1
+      })
+    );
+  };
 
   getRowClassName = (record, i) => {
     const ROW_CLASS = {
-      inQueue: 'table-row-in-queue',
-      monitoringStatus: 'table-row-monitoring-status',
-      monitoringAppeal: 'table-row-monitoring-appeal',
-      complaints: 'table-row-complaints',
-      riskedProcedures: 'table-row-indicators-with-risk',
-    }
+      inQueue: "table-row-in-queue",
+      monitoringStatus: "table-row-monitoring-status",
+      monitoringAppeal: "table-row-monitoring-appeal",
+      complaints: "table-row-complaints",
+      riskedProcedures: "table-row-indicators-with-risk"
+    };
 
     // if (!!record.inQueue)
     //   return ROW_CLASS.inQueue
-    if (record.hasComplaints) return ROW_CLASS.complaints
+    if (record.hasComplaints) return ROW_CLASS.complaints;
 
-    if (record.monitoringAppeal) return ROW_CLASS.monitoringAppeal
+    if (record.monitoringAppeal) return ROW_CLASS.monitoringAppeal;
 
     // if (!_.isEmpty(record.indicatorsWithRisk)) return ROW_CLASS.riskedProcedures
-    if (record.withRisk) return ROW_CLASS.riskedProcedures
+    if (record.withRisk) return ROW_CLASS.riskedProcedures;
 
-    return ''
-  }
+    return "";
+  };
 
-  renderSqeare = (fillColor) => {
+  renderSqeare = fillColor => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -579,69 +660,75 @@ class Private extends PureComponent {
       >
         <rect width="15" height="15" fill={fillColor} />
       </svg>
-    )
-  }
+    );
+  };
 
   renderTableLegend = () => {
     return (
       <Fragment>
         <div className="ml-3 mt-3 mb-3">
-          <div className="monitoring">{this.renderSqeare('#AAD6E9')} <FormattedMessage id="common.text.73" /></div>
-          <div className="have">{this.renderSqeare('#DAE6E7')} <FormattedMessage id="common.text.74" /></div>
+          <div className="monitoring">
+            {this.renderSqeare("#AAD6E9")}{" "}
+            <FormattedMessage id="common.text.73" />
+          </div>
+          <div className="have">
+            {this.renderSqeare("#DAE6E7")}{" "}
+            <FormattedMessage id="common.text.74" />
+          </div>
         </div>
       </Fragment>
-    )
-  }
+    );
+  };
 
   renderProceduresTable = () => {
-    if (_.isEmpty(this.props.allData)) return <Empty />
+    if (_.isEmpty(this.props.allData)) return <Empty />;
 
-    const { intl } = this.context
-    const { selectedRowKeys } = this.state
+    const { intl } = this.context;
+    const { selectedRowKeys } = this.state;
     const rowSelection = {
       selectedRowKeys,
-      onChange: this.handleRowSelectChange,
-    }
+      onChange: this.handleRowSelectChange
+    };
     const objStructure = [
       {
-        title: '',
-        dataIndex: 'icon',
-        width: 0,
+        title: "",
+        dataIndex: "icon",
+        width: 0
       },
       {
-        title: intl.formatMessage({ id: 'common.text.59' }),
-        dataIndex: 'tenderId',
+        title: intl.formatMessage({ id: "common.text.59" }),
+        dataIndex: "tenderId",
         width: 130,
-        sorter: true,
+        sorter: true
       },
       {
-        title: intl.formatMessage({ id: 'common.text.60' }),
-        dataIndex: 'tenderAmount',
+        title: intl.formatMessage({ id: "common.text.60" }),
+        dataIndex: "tenderAmount",
         width: 100,
-        sorter: true,
+        sorter: true
       },
       {
-        title: intl.formatMessage({ id: 'common.text.60.1' }),
-        dataIndex: 'tenderProcurementMethodDetails',
+        title: intl.formatMessage({ id: "common.text.60.1" }),
+        dataIndex: "tenderProcurementMethodDetails",
         width: 100,
-        sorter: true,
+        sorter: true
       },
       {
-        title: intl.formatMessage({ id: 'common.text.61' }),
-        dataIndex: 'buyerName',
+        title: intl.formatMessage({ id: "common.text.61" }),
+        dataIndex: "buyerName",
         width: 300,
-        sorter: true,
+        sorter: true
       },
       {
-        title: intl.formatMessage({ id: 'common.text.68' }),
-        dataIndex: 'buyerId',
+        title: intl.formatMessage({ id: "common.text.68" }),
+        dataIndex: "buyerId",
         width: 120,
-        sorter: true,
+        sorter: true
       },
       {
-        title: intl.formatMessage({ id: 'common.text.62' }),
-        dataIndex: 'itemCpv',
-        width: 350,
+        title: intl.formatMessage({ id: "common.text.62" }),
+        dataIndex: "itemCpv",
+        width: 350
         // sorter: true,
       },
       // {
@@ -657,34 +744,34 @@ class Private extends PureComponent {
       //   sorter: true,
       // },
       {
-        title: intl.formatMessage({ id: 'common.text.64' }),
-        dataIndex: 'tenderStatusDetails',
+        title: intl.formatMessage({ id: "common.text.64" }),
+        dataIndex: "tenderStatusDetails",
         width: 130,
-        sorter: true,
+        sorter: true
       },
       {
-        title: intl.formatMessage({ id: 'common.text.65' }),
-        dataIndex: 'buyerRegion',
+        title: intl.formatMessage({ id: "common.text.65" }),
+        dataIndex: "buyerRegion",
         width: 160,
-        sorter: true,
+        sorter: true
       },
       {
-        title: intl.formatMessage({ id: 'common.text.66' }),
-        dataIndex: 'tenderDatePublished',
+        title: intl.formatMessage({ id: "common.text.66" }),
+        dataIndex: "tenderDatePublished",
         width: 100,
-        sorter: true,
+        sorter: true
       },
       {
-        title: intl.formatMessage({ id: 'common.text.67' }),
-        dataIndex: 'riskLevel',
+        title: intl.formatMessage({ id: "common.text.67" }),
+        dataIndex: "riskLevel",
         width: 100,
-        sorter: true,
+        sorter: true
       },
       {
-        title: intl.formatMessage({ id: 'common.text.67.1' }),
-        dataIndex: 'indicatorsWithRisk',
+        title: intl.formatMessage({ id: "common.text.67.1" }),
+        dataIndex: "indicatorsWithRisk",
         width: 100,
-        sorter: true,
+        sorter: true
       },
       // {
       //   title: 'Моніторинг',
@@ -693,8 +780,8 @@ class Private extends PureComponent {
       //   sorter: true,
       // },
       {
-        title: intl.formatMessage({ id: 'common.text.69' }),
-        dataIndex: 'linkId',
+        title: intl.formatMessage({ id: "common.text.69" }),
+        dataIndex: "linkId",
         render: id => (
           <a
             target="_blank"
@@ -702,36 +789,40 @@ class Private extends PureComponent {
             href={`http://zakupki.gov.kg/popp/view/order/view.xhtml?id=${id}`}
           >{`http://zakupki.gov.kg/${id}`}</a>
         ),
-        width: 150,
-      },
-    ]
-    const hasSelected = selectedRowKeys.length > 0
+        width: 150
+      }
+    ];
+    const hasSelected = selectedRowKeys.length > 0;
     return (
       <Fragment>
         <div className="row mt-3 mb-2">
           <div className="d-flex procedure-table-header justify-content-between col-md-12">
             <Button
               className="ml-3"
-              ghost={this.props.procedureIds && !!this.props.procedureIds.tenderIds ? false : true}
+              ghost={
+                this.props.procedureIds && !!this.props.procedureIds.tenderIds
+                  ? false
+                  : true
+              }
               htmlType="button"
               type={
                 this.props.procedureIds && !!this.props.procedureIds.tenderIds
-                  ? 'default'
-                  : 'primary'
+                  ? "default"
+                  : "primary"
               }
               onClick={this.handleSelectAllProcedures}
             >
               <Icon
                 type={
                   this.props.procedureIds && !!this.props.procedureIds.tenderIds
-                    ? 'close'
-                    : 'check-square'
+                    ? "close"
+                    : "check-square"
                 }
-                style={{ color: '#63D4B1', fontSize: 16 }}
+                style={{ color: "#63D4B1", fontSize: 16 }}
               />
               {!_.isEmpty(this.state.selectedRowKeys)
-                ? intl.formatMessage({ id: 'common.text.136' })
-                : intl.formatMessage({ id: 'common.text.70' })}
+                ? intl.formatMessage({ id: "common.text.136" })
+                : intl.formatMessage({ id: "common.text.70" })}
             </Button>
             {/*<div className={'d-flex flex-row justify-content-center align-items-center ml-3'}>*/}
             {/*  {hasSelected && (*/}
@@ -752,7 +843,7 @@ class Private extends PureComponent {
                 onClick={this.handleExportToExcel}
               >
                 <Icon type="vertical-align-bottom" style={{ fontSize: 16 }} />
-                <FormattedMessage id='common.text.71' />
+                <FormattedMessage id="common.text.71" />
               </Button>
               <Button
                 htmlType="button"
@@ -764,8 +855,11 @@ class Private extends PureComponent {
                 type="primary"
                 onClick={this.handleSetProcedoresToBucket}
               >
-                <Icon type="profile" style={{ color: '#FFFFFF', fontSize: 16 }} />
-                <FormattedMessage id='common.text.72' />
+                <Icon
+                  type="profile"
+                  style={{ color: "#FFFFFF", fontSize: 16 }}
+                />
+                <FormattedMessage id="common.text.72" />
               </Button>
             </Button.Group>
           </div>
@@ -799,26 +893,32 @@ class Private extends PureComponent {
           />
         </div>
       </Fragment>
-    )
-  }
+    );
+  };
 
   renderGrowthChart = () => {
-    if (_.isEmpty(this.props.allData)) return <Empty />
+    if (_.isEmpty(this.props.allData)) return <Empty />;
 
-    const { intl } = this.context
-    const { dynamicChartData } = this.props.allData.chartsDataWraper
-    const { dynamicChartDataAmount } = this.props.allData.chartsDataWraper
+    const { intl } = this.context;
+    const { dynamicChartData } = this.props.allData.chartsDataWraper;
+    const { dynamicChartDataAmount } = this.props.allData.chartsDataWraper;
     let tempDate = _.map(dynamicChartData, elem => {
-      return elem.dateAsString
-    })
-    let state = this.state
+      return elem.dateAsString;
+    });
+    let state = this.state;
+    let _self = this;
     let selectDynamic =
-      this.state.growthChartSelected === 'count' ? dynamicChartData : dynamicChartDataAmount
+      this.state.growthChartSelected === "count"
+        ? dynamicChartData
+        : dynamicChartDataAmount;
     let label =
-      this.state.growthChartSelected === 'count'
-        ? intl.formatMessage({ id: 'common.text.42' })
-        : intl.formatMessage({ id: 'common.text.43' })
-    let cost = this.state.growthChartSelected === 'count' ? '' : ` ${intl.formatMessage({ id: 'common.text.currency' })}`
+      this.state.growthChartSelected === "count"
+        ? intl.formatMessage({ id: "common.text.42" })
+        : intl.formatMessage({ id: "common.text.43" });
+    let cost =
+      this.state.growthChartSelected === "count"
+        ? ""
+        : ` ${intl.formatMessage({ id: "common.text.currency" })}`;
 
     return (
       <ReactHighcharts
@@ -827,136 +927,150 @@ class Private extends PureComponent {
           chart: {
             spacing: [3, 0, 5, 0],
             style: {
-              fontFamily: 'Oswald', //'Open Sans'
+              fontFamily: "Oswald" //'Open Sans'
             },
             backgroundColor: null,
-            plotBackgroundColor: null,
+            plotBackgroundColor: null
           },
           lang: {
-            noData: intl.formatMessage({ id: 'common.text.152' }),
+            noData: intl.formatMessage({ id: "common.text.152" })
           },
           noData: {
             style: {
-              fontWeight: 'bold',
-              fontSize: '15px',
-              color: '#303030',
-            },
+              fontWeight: "bold",
+              fontSize: "15px",
+              color: "#303030"
+            }
           },
           title: {
             margin: 20,
-            text: intl.formatMessage({ id: 'common.text.52' }),
-            align: 'left',
+            text: intl.formatMessage({ id: "common.text.52" }),
+            align: "left",
             style: {
-              fontStyle: 'normal',
-              fontWeight: 'normal',
-              fontSize: '20px',
-              lineHeight: '30px',
-              letterSpacing: '0.05em',
-              color: '#FFFFFF',
-            },
+              fontStyle: "normal",
+              fontWeight: "normal",
+              fontSize: "20px",
+              lineHeight: "30px",
+              letterSpacing: "0.05em",
+              color: "#FFFFFF"
+            }
           },
           // text: `Інтервал часу з ${state.dateRange.startDate} до ${state.dateRange.endDate} (потижнево)`,
           xAxis: {
             categories: tempDate,
-            lineColor: '#75BADC',
-            tickColor: '#75BADC',
+            lineColor: "#75BADC",
+            tickColor: "#75BADC",
             // gridLineWidth: 1,
             title: {
-              text: `${intl.formatMessage({ id: 'common.text.53' })} ${state.dateRange.startDate} ${intl.formatMessage({ id: 'common.text.54' })} ${state.dateRange.endDate} (${intl.formatMessage({ id: 'common.text.55' })})`,
+              text: `${intl.formatMessage({ id: "common.text.53" })} ${
+                state.dateRange.startDate
+              } ${intl.formatMessage({ id: "common.text.54" })} ${
+                state.dateRange.endDate
+              } (${intl.formatMessage({ id: "common.text.55" })})`,
               style: {
-                color: '#75BADC',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '14px',
-                lineHeight: '21px',
-                letterSpacing: '0.05em',
-              },
+                color: "#75BADC",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "14px",
+                lineHeight: "21px",
+                letterSpacing: "0.05em"
+              }
             },
             labels: {
               rotation: -35,
               useHTML: true,
               style: {
-                color: '#75BADC',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '14px',
-                lineHeight: '21px',
-                textAlign: 'center',
-                letterSpacing: '0.05em',
-              },
+                color: "#75BADC",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "14px",
+                lineHeight: "21px",
+                textAlign: "center",
+                letterSpacing: "0.05em"
+              }
             },
             minPadding: 0,
-            maxPadding: 0,
+            maxPadding: 0
           },
           yAxis: {
-            gridLineColor: '#75BADC',
+            gridLineColor: "#75BADC",
             gridLineWidth: 1,
             title: {
               text: label,
               style: {
-                color: '#FFFFFF',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                letterSpacing: '0.05em',
-              },
+                color: "#FFFFFF",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                letterSpacing: "0.05em"
+              }
             },
             labels: {
               useHTML: true,
               // formatter: function () {
               //   return this.value
               // },
-              style: {
-                color: '#75BADC',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                textAlign: 'center',
-                letterSpacing: '0.05em',
+              formatter: function() {
+                return _self.state.growthChartSelected === "count"
+                  ? this.value.toLocaleString("ru")
+                  : numeral(this.value).format("0.[00] a");
               },
-            },
+              style: {
+                color: "#75BADC",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                textAlign: "center",
+                letterSpacing: "0.05em"
+              }
+            }
           },
           tooltip: {
-            formatter: function () {
+            formatter: function() {
+              let value =
+                _self.state.growthChartSelected === "count"
+                  ? this.y.toLocaleString("ru")
+                  : numeral(this.y).format("0.[00] a");
               return (
-                intl.formatMessage({ id: 'common.text.134' }) + ' <b>' +
+                intl.formatMessage({ id: "common.text.134" }) +
+                " <b>" +
                 this.key +
-                '</b><br />' +
+                "</b><br />" +
                 this.series.name +
-                ': <b>' +
-                numeral(this.y).format('0.[00] a') +
+                ": <b>" +
+                value +
                 `${cost}</b>`
-              )
-            },
+              );
+            }
           },
           legend: {
             itemStyle: {
-              color: '#FFFFFF',
-              fontStyle: 'normal',
-              fontWeight: 'normal',
-              fontSize: '14px',
-              lineHeight: '21px',
-              letterSpacing: '0.05em',
-            },
+              color: "#FFFFFF",
+              fontStyle: "normal",
+              fontWeight: "normal",
+              fontSize: "14px",
+              lineHeight: "21px",
+              letterSpacing: "0.05em"
+            }
           },
           credits: { enabled: false },
           series: [
             {
-              name: intl.formatMessage({ id: 'common.text.56' }),
-              color: '#8ECACE',
+              name: intl.formatMessage({ id: "common.text.56" }),
+              color: "#8ECACE",
               data: _.map(selectDynamic, item => {
-                return item.totalCount
-              }),
+                return item.totalCount;
+              })
             },
             {
-              name: intl.formatMessage({ id: 'common.text.57' }),
-              color: '#2A577F',
+              name: intl.formatMessage({ id: "common.text.57" }),
+              color: "#2A577F",
               data: _.map(selectDynamic, item => {
-                return item.countWithRisk
-              }),
-            },
+                return item.countWithRisk;
+              })
+            }
             // {
             //   name: intl.formatMessage({ id: 'common.text.58' }),
             //   color: '#63D4B1',
@@ -964,266 +1078,325 @@ class Private extends PureComponent {
             //     return item.countWithPriority
             //   }),
             // },
-          ],
+          ]
         }}
       />
-    )
-  }
+    );
+  };
 
   renderRiskChart = () => {
-    if (_.isEmpty(this.props.allData)) return <Empty />
+    if (_.isEmpty(this.props.allData)) return <Empty />;
 
-    const { intl } = this.context
-    const { proceduresByPurchaseMethod } = this.props.allData.chartsDataWraper
-    const { proceduresByPurchaseMethodAmount } = this.props.allData.chartsDataWraper
+    const { intl } = this.context;
+    let _self = this;
+    const { proceduresByPurchaseMethod } = this.props.allData.chartsDataWraper;
+    const {
+      proceduresByPurchaseMethodAmount
+    } = this.props.allData.chartsDataWraper;
     let selectProcedures =
-      this.state.riskChartSelected === 'count'
+      this.state.riskChartSelected === "count"
         ? proceduresByPurchaseMethod
-        : proceduresByPurchaseMethodAmount
-    let label = this.state.riskChartSelected === 'count' ? intl.formatMessage({ id: 'common.text.44' }) : intl.formatMessage({ id: 'common.text.45' })
-    let cost = this.state.riskChartSelected === 'count' ? '' : ` ${intl.formatMessage({ id: 'common.text.currency' })}`
+        : proceduresByPurchaseMethodAmount;
+    let label =
+      this.state.riskChartSelected === "count"
+        ? intl.formatMessage({ id: "common.text.44" })
+        : intl.formatMessage({ id: "common.text.45" });
+    let cost =
+      this.state.riskChartSelected === "count"
+        ? ""
+        : ` ${intl.formatMessage({ id: "common.text.currency" })}`;
     let allValue =
-      this.state.riskChartSelected === 'count'
-        ? _.reduce(proceduresByPurchaseMethod, (sum, item) => sum + item.value, 0)
-        : _.reduce(proceduresByPurchaseMethodAmount, (sum, item) => sum + item.value, 0)
+      this.state.riskChartSelected === "count"
+        ? _.reduce(
+            proceduresByPurchaseMethod,
+            (sum, item) => sum + item.value,
+            0
+          )
+        : _.reduce(
+            proceduresByPurchaseMethodAmount,
+            (sum, item) => sum + item.value,
+            0
+          );
 
     return (
       <ReactHighcharts
         key={generate()}
         config={{
           chart: {
-            type: 'pie',
+            type: "pie",
             spacing: [0, 0, 0, 0],
             style: {
-              fontFamily: 'Oswald', //'Open Sans'
+              fontFamily: "Oswald" //'Open Sans'
             },
             backgroundColor: null,
-            plotBackgroundColor: null,
+            plotBackgroundColor: null
           },
           lang: {
-            noData: intl.formatMessage({ id: 'common.text.152' }),
+            noData: intl.formatMessage({ id: "common.text.152" })
           },
           noData: {
             style: {
-              fontWeight: 'bold',
-              fontSize: '15px',
-              color: '#303030',
-            },
+              fontWeight: "bold",
+              fontSize: "15px",
+              color: "#303030"
+            }
           },
           title: {
             margin: 10,
-            text: intl.formatMessage({ id: 'common.text.51' }),
+            text: intl.formatMessage({ id: "common.text.51" }),
             // align: 'left',
             style: {
-              fontStyle: 'normal',
-              fontWeight: 'normal',
-              fontSize: '20px',
-              lineHeight: '30px',
-              letterSpacing: '0.05em',
-              color: '#FFFFFF',
-            },
+              fontStyle: "normal",
+              fontWeight: "normal",
+              fontSize: "20px",
+              lineHeight: "30px",
+              letterSpacing: "0.05em",
+              color: "#FFFFFF"
+            }
           },
           xAxis: {
             visible: false,
             minPadding: 0,
-            maxPadding: 0,
+            maxPadding: 0
           },
           plotOptions: {
             pie: {
               innerSize: 100,
               allowPointSelect: true,
-              cursor: 'pointer',
+              cursor: "pointer",
               dataLabels: {
-                enabled: false,
+                enabled: false
               },
-              showInLegend: true,
-            },
+              showInLegend: true
+            }
           },
           yAxis: { visible: false },
           tooltip: {
             outside: true,
-            formatter: function () {
+            formatter: function() {
+              let value =
+                _self.state.riskChartSelected === "count"
+                  ? this.y.toLocaleString("ru")
+                  : numeral(this.y).format("0.[00] a");
               return (
-                '<b>' +
+                "<b>" +
                 this.point.name +
-                '</b><br/>' +
-                intl.formatMessage({ id: 'common.text.135' }) + ' <b>' +
-                numeral((this.y / allValue) * 100).format('0.0') +
-                '%</b><br>' +
+                "</b><br/>" +
+                intl.formatMessage({ id: "common.text.135" }) +
+                " <b>" +
+                numeral((this.y / allValue) * 100).format("0.0") +
+                "%</b><br>" +
                 label +
-                ': <b>' +
-                numeral(this.y).format('0.[00] a') +
+                ": <b>" +
+                value +
                 `${cost}</b>`
-              )
-            },
+              );
+            }
           },
           legend: { enabled: false },
           credits: { enabled: false },
           series: [
             {
               borderWidth: 0,
-              innerSize: '50%',
+              innerSize: "50%",
               data: _.map(selectProcedures, (item, index) => {
                 return {
                   // name: item.key,
-                  name: _.find(this.props.mappings.translatedValues, { value: `procurement-method-details.${item.key}` })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]],
+                  name: _.find(this.props.mappings.translatedValues, {
+                    value: `procurement-method-details.${item.key}`
+                  })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]],
                   y: Math.round(item.value),
-                  color: CHART_COLORS_D[index],
-                }
-              }),
-            },
-          ],
+                  color: CHART_COLORS_D[index]
+                };
+              })
+            }
+          ]
         }}
       />
-    )
-  }
+    );
+  };
 
   renderTenRegionsChart = () => {
-    if (_.isEmpty(this.props.allData && this.props.allData.chartsDataWraper)) return <Empty />
+    if (_.isEmpty(this.props.allData && this.props.allData.chartsDataWraper))
+      return <Empty />;
 
-    const { intl } = this.context
-    const _self = this
-    const { top10Regions } = this.props.allData.chartsDataWraper
-    const { top10RegionsAmount } = this.props.allData.chartsDataWraper
-    let topTemp = this.state.tenRegionsChartSelected === 'count' ? top10Regions : top10RegionsAmount
+    const { intl } = this.context;
+    const _self = this;
+    const { top10Regions } = this.props.allData.chartsDataWraper;
+    const { top10RegionsAmount } = this.props.allData.chartsDataWraper;
+    let topTemp =
+      this.state.tenRegionsChartSelected === "count"
+        ? top10Regions
+        : top10RegionsAmount;
     // let top10 = this.state.tenRegionsChartSelected === 'count' ? top10Regions.splice(5,5) : top10RegionsAmount.splice(5,5)
     // let top10 = _.orderBy(topTemp, ['count'], ['desc']).filter((v, i) => (i < 5))
-    let top10 = topTemp.filter((v, i) => (i < 5))
+    let top10 = topTemp.filter((v, i) => i < 5);
     let label =
-      this.state.tenRegionsChartSelected === 'count'
-        ? intl.formatMessage({ id: 'common.text.35' })
-        : intl.formatMessage({ id: 'common.text.36' })
-    let cost = this.state.tenRegionsChartSelected === 'count' ? '' : ` ${intl.formatMessage({ id: 'common.text.currency' })}`
+      this.state.tenRegionsChartSelected === "count"
+        ? intl.formatMessage({ id: "common.text.35" })
+        : intl.formatMessage({ id: "common.text.36" });
+    let cost =
+      this.state.tenRegionsChartSelected === "count"
+        ? ""
+        : ` ${intl.formatMessage({ id: "common.text.currency" })}`;
 
-    if (_.isEmpty(top10)) return <Empty />
+    if (_.isEmpty(top10)) return <Empty />;
 
     let tempName = _.map(top10, elem => {
       // return elem.name
       // return _.find(this.props.mappings.translatedValues, { value: `region.${elem.name.replace(' ', '_')}` })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]]
-      return _.find(this.props.mappings.translatedValues, { value: `region.${md5.hex_md5(elem.name)}` })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]]
-    })
+      return _.find(this.props.mappings.translatedValues, {
+        value: `region.${md5.hex_md5(elem.name)}`
+      })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]];
+    });
     let tempPriori = _.map(top10, elem => {
       // return elem.withRiskCount
-      return elem.count
-    })
+      return elem.count;
+    });
 
     return (
       <ReactHighcharts
         key={generate()}
         config={{
           chart: {
-            type: 'column',
+            type: "column",
             height: 400,
             spacing: [15, 0, 15, 0],
             style: {
-              fontFamily: 'Oswald', //'Open Sans'
+              fontFamily: "Oswald" //'Open Sans'
             },
             backgroundColor: null,
-            plotBackgroundColor: null,
+            plotBackgroundColor: null
           },
           lang: {
-            noData: intl.formatMessage({ id: 'common.text.152' }),
+            noData: intl.formatMessage({ id: "common.text.152" })
           },
           noData: {
             style: {
-              fontWeight: 'bold',
-              fontSize: '15px',
-              color: '#303030',
-            },
+              fontWeight: "bold",
+              fontSize: "15px",
+              color: "#303030"
+            }
           },
           title: {
             margin: 50,
-            text: intl.formatMessage({ id: 'common.text.37' }),
+            text: intl.formatMessage({ id: "common.text.37" }),
             // x: 20,
             // y: 20,
             // align: 'left',
             style: {
-              fontStyle: 'normal',
-              fontWeight: 'normal',
-              fontSize: '20px',
-              lineHeight: '30px',
-              letterSpacing: '0.05em',
-              color: '#FFFFFF',
-            },
+              fontStyle: "normal",
+              fontWeight: "normal",
+              fontSize: "20px",
+              lineHeight: "30px",
+              letterSpacing: "0.05em",
+              color: "#FFFFFF"
+            }
           },
           xAxis: {
             minPadding: 0,
             maxPadding: 0,
             title: {
-              text: intl.formatMessage({ id: 'common.text.34' }),
+              text: intl.formatMessage({ id: "common.text.34" }),
               style: {
-                color: '#FFFFFF',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                letterSpacing: '0.05em',
-              },
+                color: "#FFFFFF",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                letterSpacing: "0.05em"
+              }
             },
             tickPositions: [],
             labels: {
               useHTML: true,
               style: {
-                color: '#FFFFFF',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                textAlign: 'center',
-                letterSpacing: '0.05em',
-              },
-            },
+                color: "#FFFFFF",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                textAlign: "center",
+                letterSpacing: "0.05em"
+              }
+            }
           },
           yAxis: {
-            gridLineColor: '#75BADC',
+            gridLineColor: "#75BADC",
             gridLineWidth: 1,
             title: {
               text: label,
               style: {
-                color: '#FFFFFF',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                letterSpacing: '0.05em',
-              },
+                color: "#FFFFFF",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                letterSpacing: "0.05em"
+              }
             },
             labels: {
               useHTML: true,
-              formatter: function () {
-                return _self.state.tenRegionsChartSelected === 'count' ? this.value : numeral(this.value).format('0.[00] a')
+              formatter: function() {
+                return _self.state.tenRegionsChartSelected === "count"
+                  ? this.value.toLocaleString("ru")
+                  : numeral(this.value).format("0.[00] a");
                 // return this.value
               },
               style: {
-                color: '#75BADC',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                textAlign: 'center',
-                letterSpacing: '0.05em',
-              },
-            },
+                color: "#75BADC",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                textAlign: "center",
+                letterSpacing: "0.05em"
+              }
+            }
           },
           plotOptions: {
             series: {
               borderWidth: 0,
-              stacking: 'normal',
-              pointWidth: 15,
-            },
+              stacking: "normal",
+              pointWidth: 15
+            }
           },
           tooltip: {
             outside: true,
             useHTML: true,
-            formatter: function () {
+            formatter: function() {
+              let stackTotal =
+                _self.state.tenRegionsChartSelected === "count"
+                  ? this.point.stackTotal.toLocaleString("ru")
+                  : numeral(this.point.stackTotal).format("0.[00] a") +
+                    ` ${intl.formatMessage({ id: "common.text.currency" })}`;
+              let withRisk =
+                _self.state.tenRegionsChartSelected === "count"
+                  ? this.point.withRisk.toLocaleString("ru")
+                  : numeral(this.point.withRisk).format("0.[00] a") +
+                    ` ${intl.formatMessage({ id: "common.text.currency" })}`;
               return (
-                '<div class="tooltip-chart-wrapper">'
-                + '<div class="tooltip-card-title">' + tempName[this.x] + '</div>'
-                + '<div class="tooltip-simple-text"><span>' + this.point.stackTotal + ' - </span><span>' + intl.formatMessage({ id: 'common.text.31' }) + '</span></div>'
-                + '<div class="tooltip-simple-text"><span>' + this.point.withRisk + ' - </span><span>' + intl.formatMessage({ id: 'common.text.32' }) + '</span></div>'
-                + '<div class="tooltip-simple-text"><span>' + this.point.percent + '% - </span><span>' + intl.formatMessage({ id: 'common.text.38' }) + '</span></div>'
-                + '</div>'
-              )
+                '<div class="tooltip-chart-wrapper">' +
+                '<div class="tooltip-card-title">' +
+                tempName[this.x] +
+                "</div>" +
+                '<div class="tooltip-simple-text"><span>' +
+                stackTotal +
+                " - </span><span>" +
+                intl.formatMessage({ id: "common.text.31" }) +
+                "</span></div>" +
+                '<div class="tooltip-simple-text"><span>' +
+                withRisk +
+                " - </span><span>" +
+                intl.formatMessage({ id: "common.text.32" }) +
+                "</span></div>" +
+                '<div class="tooltip-simple-text"><span>' +
+                this.point.percent +
+                "% - </span><span>" +
+                intl.formatMessage({ id: "common.text.38" }) +
+                "</span></div>" +
+                "</div>"
+              );
               // return (
               //   '<b>' +
               //   tempName[this.x] +
@@ -1236,7 +1409,7 @@ class Private extends PureComponent {
               //   numeral(this.point.stackTotal).format('0.[00] a') +
               //   `${cost}</b>`
               // )
-            },
+            }
           },
           legend: { enabled: false },
           credits: { enabled: false },
@@ -1244,38 +1417,38 @@ class Private extends PureComponent {
             rules: [
               {
                 condition: {
-                  minWidth: 500,
+                  minWidth: 500
                 },
                 chartOptions: {
                   series: [
                     {
-                      pointWidth: 40,
+                      pointWidth: 40
                     },
                     {
-                      pointWidth: 40,
-                    },
-                  ],
-                },
-              },
-            ],
+                      pointWidth: 40
+                    }
+                  ]
+                }
+              }
+            ]
           },
           series: [
             {
-              name: 'Всього',
+              name: "Всього",
               data: _.map(top10, (elem, index) => {
                 // return elem.allWithRiskCount - elem.prioritizedOfThem
                 // return elem.allWithRiskCount
                 return {
-                  name: '',
+                  name: "",
                   // y: elem.withRiskCount,
                   y: elem.count,
-                  color: index % 2 ? '#72BBDB' : '#A8E2D1',
+                  color: index % 2 ? "#72BBDB" : "#A8E2D1",
                   withRisk: elem.withRiskCount,
-                  percent: ((elem.withRiskCount / elem.count) * 100).toFixed(1),
-                }
-              }),
+                  percent: ((elem.withRiskCount / elem.count) * 100).toFixed(1)
+                };
+              })
               // color: index % 2 ? '#A8E2D1' : '#72BBDB',
-            },
+            }
             // {
             //   name: 'Пріоритетних',
             //   data: _.map(top10, elem => {
@@ -1283,42 +1456,53 @@ class Private extends PureComponent {
             //   }),
             //   color: '#72BBDB',
             // },
-          ],
+          ]
         }}
       />
-    )
-  }
+    );
+  };
 
   renderTenRisksChart = () => {
-    if (_.isEmpty(this.props.allData)) return <Empty />
+    if (_.isEmpty(this.props.allData)) return <Empty />;
 
-    const _self = this
-    const { intl } = this.context
-    const { top10RiskIndicators } = this.props.allData.chartsDataWraper
-    const { top10RiskIndicatorsAmount } = this.props.allData.chartsDataWraper
-    const { risks } = this.props
+    const _self = this;
+    const { intl } = this.context;
+    const { top10RiskIndicators } = this.props.allData.chartsDataWraper;
+    const { top10RiskIndicatorsAmount } = this.props.allData.chartsDataWraper;
+    const { risks } = this.props;
 
     let top10 =
-      this.state.tenRisksChartSelected === 'count' ? top10RiskIndicators : top10RiskIndicatorsAmount
+      this.state.tenRisksChartSelected === "count"
+        ? top10RiskIndicators
+        : top10RiskIndicatorsAmount;
     // let tempCat = []
-    let tempDat = []
-    let temp = []
+    let tempDat = [];
+    let temp = [];
     // let tooltip = []
     let label =
-      this.state.tenRisksChartSelected === 'count'
-        ? intl.formatMessage({ id: 'common.text.42' })
-        : intl.formatMessage({ id: 'common.text.43' })
-    let cost = this.state.tenRisksChartSelected === 'count' ? '' : ` ${intl.formatMessage({ id: 'common.text.currency' })}`
+      this.state.tenRisksChartSelected === "count"
+        ? intl.formatMessage({ id: "common.text.42" })
+        : intl.formatMessage({ id: "common.text.43" });
+    let cost =
+      this.state.tenRisksChartSelected === "count"
+        ? ""
+        : ` ${intl.formatMessage({ id: "common.text.currency" })}`;
 
-    let indicatorsSearchOptions = FILTER_ITEM_TRANSLATION_OPTIONS['riskedIndicators']
+    let indicatorsSearchOptions =
+      FILTER_ITEM_TRANSLATION_OPTIONS["riskedIndicators"];
 
     _.forEach(top10, (elem, i) => {
-      let findCpvMappingByCode = _.find(this.props.mappings.indicators, { id: parseInt(elem.key) })
-      let preparedString = ''
+      let findCpvMappingByCode = _.find(this.props.mappings.indicators, {
+        id: parseInt(elem.key)
+      });
+      let preparedString = "";
       if (findCpvMappingByCode) {
-        preparedString = findCpvMappingByCode.name + ' - ' + findCpvMappingByCode[indicatorsSearchOptions[this.props.lang]]
+        preparedString =
+          findCpvMappingByCode.name +
+          " - " +
+          findCpvMappingByCode[indicatorsSearchOptions[this.props.lang]];
       } else {
-        preparedString = elem.key
+        preparedString = elem.key;
       }
 
       // tooltip.push({
@@ -1334,128 +1518,138 @@ class Private extends PureComponent {
         name: preparedString,
         y: Math.round(elem.value),
         color: CHART_COLORS_A[i % 2],
-        maxPointWidth: 100,
-      })
-      return true
-    })
+        maxPointWidth: 100
+      });
+      return true;
+    });
 
     temp.push({
-      data: tempDat,
-    })
+      data: tempDat
+    });
 
     return (
       <ReactHighcharts
         key={generate()}
         config={{
           chart: {
-            type: 'column',
+            type: "column",
             height: 400,
             spacing: [15, 0, 15, 0],
             style: {
-              fontFamily: 'Oswald', //'Open Sans'
+              fontFamily: "Oswald" //'Open Sans'
             },
             backgroundColor: null,
-            plotBackgroundColor: null,
+            plotBackgroundColor: null
           },
           lang: {
-            noData: intl.formatMessage({ id: 'common.text.152' }),
+            noData: intl.formatMessage({ id: "common.text.152" })
           },
           noData: {
             style: {
-              fontWeight: 'bold',
-              fontSize: '15px',
-              color: '#303030',
-            },
+              fontWeight: "bold",
+              fontSize: "15px",
+              color: "#303030"
+            }
           },
           title: {
             margin: 50,
-            text: intl.formatMessage({ id: 'common.text.39' }),
-            align: 'left',
+            text: intl.formatMessage({ id: "common.text.39" }),
+            align: "left",
             style: {
-              fontStyle: 'normal',
-              fontWeight: 'normal',
-              fontSize: '20px',
-              lineHeight: '30px',
-              letterSpacing: '0.05em',
-              color: '#FFFFFF',
-            },
+              fontStyle: "normal",
+              fontWeight: "normal",
+              fontSize: "20px",
+              lineHeight: "30px",
+              letterSpacing: "0.05em",
+              color: "#FFFFFF"
+            }
           },
           xAxis: {
             minPadding: 0,
             maxPadding: 0,
             title: {
-              text: intl.formatMessage({ id: 'common.text.46' }),
+              text: intl.formatMessage({ id: "common.text.46" }),
               style: {
-                color: '#FFFFFF',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                letterSpacing: '0.05em',
-              },
+                color: "#FFFFFF",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                letterSpacing: "0.05em"
+              }
             },
             tickPositions: [],
             labels: {
               useHTML: true,
               style: {
-                color: '#FFFFFF',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                textAlign: 'center',
-                letterSpacing: '0.05em',
-              },
-            },
+                color: "#FFFFFF",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                textAlign: "center",
+                letterSpacing: "0.05em"
+              }
+            }
           },
           yAxis: {
-            gridLineColor: '#75BADC',
+            gridLineColor: "#75BADC",
             gridLineWidth: 1,
             title: {
               text: label,
               style: {
-                color: '#FFFFFF',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                letterSpacing: '0.05em',
-              },
+                color: "#FFFFFF",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                letterSpacing: "0.05em"
+              }
             },
             labels: {
               useHTML: true,
-              formatter: function () {
-                return _self.state.tenRisksChartSelected === 'count' ? this.value : numeral(this.value).format('0.[00] a')
+              formatter: function() {
+                return _self.state.tenRisksChartSelected === "count"
+                  ? this.value.toLocaleString("ru")
+                  : numeral(this.value).format("0.[00] a");
                 // return this.value
               },
               style: {
-                color: '#75BADC',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                textAlign: 'center',
-                letterSpacing: '0.05em',
-              },
-            },
+                color: "#75BADC",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                textAlign: "center",
+                letterSpacing: "0.05em"
+              }
+            }
           },
           plotOptions: {
             series: {
               borderWidth: 0,
-              groupPadding: 0.01,
-            },
+              groupPadding: 0.01
+            }
           },
           tooltip: {
-            className: 'custom-tooltip',
+            className: "custom-tooltip",
             useHTML: true,
             outside: true,
-            formatter: function () {
+            formatter: function() {
               return (
-                '<div class="tooltip-chart-wrapper">'
-                + '<div class="tooltip-card-title">' + this.point.name + '</div>'
-                + '<div class="tooltip-simple-text"><span>' + numeral(this.y).format('0.[00] a') + ' ' + cost + ' - </span><span>' + label + '</span></div>'
-                + '</div>'
-              )
+                '<div class="tooltip-chart-wrapper">' +
+                '<div class="tooltip-card-title">' +
+                this.point.name +
+                "</div>" +
+                '<div class="tooltip-simple-text"><span>' +
+                numeral(this.y).format("0.[00] a") +
+                " " +
+                cost +
+                " - </span><span>" +
+                label +
+                "</span></div>" +
+                "</div>"
+              );
               // return (
               //   'Ризик: <b>' +
               //   tooltip[this.x].name +
@@ -1465,166 +1659,185 @@ class Private extends PureComponent {
               //   numeral(this.y).format('0.[00] a') +
               //   `${cost}</b>`
               // )
-            },
+            }
           },
           legend: { enabled: false },
           credits: { enabled: false },
-          series: temp,
+          series: temp
         }}
       />
-    )
-  }
+    );
+  };
 
   renderTopTenCPVChart = () => {
-    if (_.isEmpty(this.props.allData)) return <Empty />
+    if (_.isEmpty(this.props.allData)) return <Empty />;
 
-    const _self = this
-    const { intl } = this.context
-    const { top10Cpv } = this.props.allData.chartsDataWraper
-    const { top10CpvAmount } = this.props.allData.chartsDataWraper
-    let top10 = this.state.topTenCPVChartSelected === 'count' ? top10Cpv : top10CpvAmount
+    const _self = this;
+    const { intl } = this.context;
+    const { top10Cpv } = this.props.allData.chartsDataWraper;
+    const { top10CpvAmount } = this.props.allData.chartsDataWraper;
+    let top10 =
+      this.state.topTenCPVChartSelected === "count" ? top10Cpv : top10CpvAmount;
     // let tempCat = []
-    let tempDat = []
-    let temp = []
+    let tempDat = [];
+    let temp = [];
     let label =
-      this.state.topTenCPVChartSelected === 'count'
-        ? intl.formatMessage({ id: 'common.text.42' })
-        : intl.formatMessage({ id: 'common.text.43' })
-    let cost = this.state.topTenCPVChartSelected === 'count' ? '' : ` ${intl.formatMessage({ id: 'common.text.currency' })}`
+      this.state.topTenCPVChartSelected === "count"
+        ? intl.formatMessage({ id: "common.text.42" })
+        : intl.formatMessage({ id: "common.text.43" });
+    let cost =
+      this.state.topTenCPVChartSelected === "count"
+        ? ""
+        : ` ${intl.formatMessage({ id: "common.text.currency" })}`;
 
-    let indicatorsSearchOptions = FILTER_ITEM_TRANSLATION_OPTIONS['itemCpv2']
+    let indicatorsSearchOptions = FILTER_ITEM_TRANSLATION_OPTIONS["itemCpv2"];
 
     _.map(top10, (elem, i) => {
-      let findCpvMappingByCode = _.find(this.props.mappings[indicatorsSearchOptions.mappingKey], { [indicatorsSearchOptions.searchKey]: elem.key })
-      findCpvMappingByCode = findCpvMappingByCode ? findCpvMappingByCode[indicatorsSearchOptions[this.props.lang]] : elem.key
+      let findCpvMappingByCode = _.find(
+        this.props.mappings[indicatorsSearchOptions.mappingKey],
+        { [indicatorsSearchOptions.searchKey]: elem.key }
+      );
+      findCpvMappingByCode = findCpvMappingByCode
+        ? findCpvMappingByCode[indicatorsSearchOptions[this.props.lang]]
+        : elem.key;
       // tempCat.push(i)
       tempDat.push({
         // name: elem.key,
         name: findCpvMappingByCode,
         y: Math.round(elem.value),
         color: CHART_COLORS_C[i % 2],
-        maxPointWidth: 100,
-      })
-      return true
-    })
+        maxPointWidth: 100
+      });
+      return true;
+    });
 
     temp.push({
-      data: tempDat,
-    })
+      data: tempDat
+    });
 
     return (
       <ReactHighcharts
         key={generate()}
         config={{
           chart: {
-            type: 'column',
+            type: "column",
             height: 400,
             spacing: [15, 0, 15, 0],
             style: {
-              fontFamily: 'Oswald', //'Open Sans'
+              fontFamily: "Oswald" //'Open Sans'
             },
             backgroundColor: null,
-            plotBackgroundColor: null,
+            plotBackgroundColor: null
           },
           lang: {
-            noData: intl.formatMessage({ id: 'common.text.152' }),
+            noData: intl.formatMessage({ id: "common.text.152" })
           },
           noData: {
             style: {
-              fontWeight: 'bold',
-              fontSize: '15px',
-              color: '#303030',
-            },
+              fontWeight: "bold",
+              fontSize: "15px",
+              color: "#303030"
+            }
           },
           title: {
             margin: 50,
-            text: intl.formatMessage({ id: 'common.text.50' }),
-            align: 'left',
+            text: intl.formatMessage({ id: "common.text.50" }),
+            align: "left",
             style: {
-              fontStyle: 'normal',
-              fontWeight: 'normal',
-              fontSize: '20px',
-              lineHeight: '30px',
-              letterSpacing: '0.05em',
-              color: '#FFFFFF',
-            },
+              fontStyle: "normal",
+              fontWeight: "normal",
+              fontSize: "20px",
+              lineHeight: "30px",
+              letterSpacing: "0.05em",
+              color: "#FFFFFF"
+            }
           },
           xAxis: {
             minPadding: 0,
             maxPadding: 0,
             title: {
-              text: intl.formatMessage({ id: 'common.text.49' }),
+              text: intl.formatMessage({ id: "common.text.49" }),
               style: {
-                color: '#FFFFFF',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                letterSpacing: '0.05em',
-              },
+                color: "#FFFFFF",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                letterSpacing: "0.05em"
+              }
             },
             tickPositions: [],
             labels: {
               useHTML: true,
               style: {
-                color: '#FFFFFF',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                textAlign: 'center',
-                letterSpacing: '0.05em',
-              },
-            },
+                color: "#FFFFFF",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                textAlign: "center",
+                letterSpacing: "0.05em"
+              }
+            }
           },
           yAxis: {
-            gridLineColor: '#75BADC',
+            gridLineColor: "#75BADC",
             gridLineWidth: 1,
             title: {
               text: label,
               style: {
-                color: '#FFFFFF',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                letterSpacing: '0.05em',
-              },
+                color: "#FFFFFF",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                letterSpacing: "0.05em"
+              }
             },
             labels: {
               useHTML: true,
-              formatter: function () {
-                return _self.state.topTenCPVChartSelected === 'count' ? this.value : numeral(this.value).format('0.[00] a')
+              formatter: function() {
+                return _self.state.topTenCPVChartSelected === "count"
+                  ? this.value.toLocaleString("ru")
+                  : numeral(this.value).format("0.[00] a");
                 // return this.value
               },
               style: {
-                color: '#75BADC',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                textAlign: 'center',
-                letterSpacing: '0.05em',
-              },
-            },
+                color: "#75BADC",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                textAlign: "center",
+                letterSpacing: "0.05em"
+              }
+            }
           },
           plotOptions: {
             series: {
               borderWidth: 0,
-              groupPadding: 0.01,
-            },
+              groupPadding: 0.01
+            }
           },
           legend: { enabled: false },
           tooltip: {
             useHTML: true,
             outside: true,
-            formatter: function () {
+            formatter: function() {
               return (
-                '<div class="tooltip-chart-wrapper">'
-                + '<div class="tooltip-card-title">' + tempDat[this.x].name + '</div>'
-                + '<div class="tooltip-simple-text"><span>' + numeral(this.y).format('0.[00] a') + ' ' + cost + ' - </span><span>' + label + '</span></div>'
-                + '</div>'
-              )
+                '<div class="tooltip-chart-wrapper">' +
+                '<div class="tooltip-card-title">' +
+                tempDat[this.x].name +
+                "</div>" +
+                '<div class="tooltip-simple-text"><span>' +
+                numeral(this.y).format("0.[00] a") +
+                " " +
+                cost +
+                " - </span><span>" +
+                label +
+                "</span></div>" +
+                "</div>"
+              );
               // return (
               //   'Назва CPV: <b>' +
               //   tempDat[this.x].name +
@@ -1634,79 +1847,97 @@ class Private extends PureComponent {
               //   numeral(this.y).format('0.[00] a') +
               //   `${cost}</b>`
               // )
-            },
+            }
           },
           credits: { enabled: false },
-          series: temp,
+          series: temp
         }}
       />
-    )
-  }
+    );
+  };
 
   renderTenRegionsChartLegend = () => {
-    if (_.isEmpty(this.props.allData)) return <Empty />
+    if (_.isEmpty(this.props.allData)) return <Empty />;
 
-    const { intl } = this.context
-    const { top10Regions } = this.props.allData.chartsDataWraper
-    const { top10RegionsAmount } = this.props.allData.chartsDataWraper
+    const { intl } = this.context;
+    const { top10Regions } = this.props.allData.chartsDataWraper;
+    const { top10RegionsAmount } = this.props.allData.chartsDataWraper;
     // let top10 = this.state.tenRegionsChartSelected === 'count' ? top10Regions : top10RegionsAmount
-    let topTemp = this.state.tenRegionsChartSelected === 'count' ? top10Regions : top10RegionsAmount
-    let top10 = topTemp.filter((x, i) => (i < 5))
-    let legend = []
+    let topTemp =
+      this.state.tenRegionsChartSelected === "count"
+        ? top10Regions
+        : top10RegionsAmount;
+    let top10 = topTemp.filter((x, i) => i < 5);
+    let legend = [];
 
     _.forEach(top10, elem => {
       legend.push({
         id: generate(),
         // name: elem.name,
         // name: _.find(this.props.mappings.translatedValues, { value: `region.${elem.name.replace(' ', '_')}` })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]],
-        name: _.find(this.props.mappings.translatedValues, { value: `region.${md5.hex_md5(elem.name)}` })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]],
+        name: _.find(this.props.mappings.translatedValues, {
+          value: `region.${md5.hex_md5(elem.name)}`
+        })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]],
         value:
-          this.state.tenRegionsChartSelected === 'count'
-            // ? numeral(elem.prioritizedOfThem).format('0.[00]a')
-            ? elem.withRiskCount
-            : numeral(elem.withRiskCount).format('0.[00]a') + ` ${intl.formatMessage({ id: 'common.text.currency' })}`,
+          this.state.tenRegionsChartSelected === "count"
+            ? // ? numeral(elem.prioritizedOfThem).format('0.[00] a')
+              // ? elem.withRiskCount
+              elem.withRiskCount.toLocaleString("ru")
+            : numeral(elem.withRiskCount).format("0.[00] a") +
+              ` ${intl.formatMessage({ id: "common.text.currency" })}`,
         allValue:
-          this.state.tenRegionsChartSelected === 'count'
-            // ? numeral(elem.allWithRiskCount).format('0.[00]a')
-            // ? elem.allWithRiskCount
-            ? elem.count
-            // : numeral(elem.allWithRiskCount).format('0.[00]a') + ` ${intl.formatMessage({ id: 'common.text.currency' })}`,
-            : numeral(elem.count).format('0.[00]a') + ` ${intl.formatMessage({ id: 'common.text.currency' })}`,
+          this.state.tenRegionsChartSelected === "count"
+            ? // ? numeral(elem.allWithRiskCount).format('0.[00]a')
+              // ? elem.allWithRiskCount
+              // ? elem.count
+              elem.count.toLocaleString("ru")
+            : // : numeral(elem.allWithRiskCount).format('0.[00]a') + ` ${intl.formatMessage({ id: 'common.text.currency' })}`,
+              numeral(elem.count).format("0.[00] a") +
+              ` ${intl.formatMessage({ id: "common.text.currency" })}`,
         valueNumber: elem.prioritizedOfThem,
         allValueNumber: elem.allWithRiskCount,
-        percent: ((elem.withRiskCount / elem.count) * 100).toFixed(1),
-      })
-      return true
-    })
+        percent: ((elem.withRiskCount / elem.count) * 100).toFixed(1)
+      });
+      return true;
+    });
 
-
-    let resultArray = []
+    let resultArray = [];
 
     if (window.innerWidth > 575) {
-      let chunkedArray = _.chunk(legend, 5)
+      let chunkedArray = _.chunk(legend, 5);
       if (!_.isEmpty(chunkedArray)) {
         _.forEach(chunkedArray[0], (firsData, index) => {
-          resultArray.push(firsData)
-          if (!_.isEmpty(chunkedArray[1]) && !_.isEmpty(chunkedArray[1][index])) {
-            resultArray.push(chunkedArray[1][index])
+          resultArray.push(firsData);
+          if (
+            !_.isEmpty(chunkedArray[1]) &&
+            !_.isEmpty(chunkedArray[1][index])
+          ) {
+            resultArray.push(chunkedArray[1][index]);
           }
-        })
+        });
       }
     } else {
-      resultArray = legend
+      resultArray = legend;
     }
 
     const legendList = _.map(resultArray, item => {
       return (
-        <div className="col-sm-6 col-md-6 col-lg-6 col-xl-6 margin-bottom-30" key={item.id}>
+        <div
+          className="col-sm-6 col-md-6 col-lg-6 col-xl-6 margin-bottom-30"
+          key={item.id}
+        >
           <div className="legend-card-title">{item.name}</div>
-          <div className="legend-simple-text"><FormattedMessage id="common.text.31" /> - {item.allValue}</div>
-          <div className="legend-simple-text"><FormattedMessage id="common.text.32" /> - {item.value}</div>
-          <div className="legend-simple-text"><FormattedMessage
-            id="common.text.33" /> - {item.percent}%
+          <div className="legend-simple-text">
+            <FormattedMessage id="common.text.31" /> - {item.allValue}
+          </div>
+          <div className="legend-simple-text">
+            <FormattedMessage id="common.text.32" /> - {item.value}
+          </div>
+          <div className="legend-simple-text">
+            <FormattedMessage id="common.text.33" /> - {item.percent}%
           </div>
         </div>
-      )
+      );
       // return (
       //   <li key={item.id}>
       //     <b>{item.name}</b> Пріоритезовані: <b>{item.value}</b> Частка пріоритезованих в усіх
@@ -1715,39 +1946,51 @@ class Private extends PureComponent {
       //     Всього: <b>{item.allValue}</b>
       //   </li>
       // )
-    })
+    });
     // return <ol>{legendList}</ol>
-    return legendList
-  }
+    return legendList;
+  };
 
   renderTenRisksChartLegend = () => {
-    if (_.isEmpty(this.props.allData)) return <Empty />
+    if (_.isEmpty(this.props.allData)) return <Empty />;
 
-    const { intl } = this.context
-    const { risks } = this.props
-    const { top10RiskIndicators } = this.props.allData.chartsDataWraper
-    const { top10RiskIndicatorsAmount } = this.props.allData.chartsDataWraper
+    const { intl } = this.context;
+    const { risks } = this.props;
+    const { top10RiskIndicators } = this.props.allData.chartsDataWraper;
+    const { top10RiskIndicatorsAmount } = this.props.allData.chartsDataWraper;
     let top10 = _.cloneDeep(
-      this.state.tenRisksChartSelected === 'count'
+      this.state.tenRisksChartSelected === "count"
         ? top10RiskIndicators
-        : top10RiskIndicatorsAmount,
-    )
-    let legend = []
+        : top10RiskIndicatorsAmount
+    );
+    let legend = [];
     let label =
-      this.state.tenRisksChartSelected === 'count'
-        ? intl.formatMessage({ id: 'common.text.41' })
-        : intl.formatMessage({ id: 'common.text.43' })
+      this.state.tenRisksChartSelected === "count"
+        ? intl.formatMessage({ id: "common.text.41" })
+        : intl.formatMessage({ id: "common.text.43" });
 
-    let indicatorsSearchOptions = FILTER_ITEM_TRANSLATION_OPTIONS['riskedIndicators']
+    let indicatorsSearchOptions =
+      FILTER_ITEM_TRANSLATION_OPTIONS["riskedIndicators"];
 
     _.forEach(top10, (elem, i) => {
-      let findCpvMappingByCode = _.find(this.props.mappings.indicators, { id: parseInt(elem.key) })
-      let preparedString = ''
+      let findCpvMappingByCode = _.find(this.props.mappings.indicators, {
+        id: parseInt(elem.key)
+      });
+      let preparedString = "";
       if (findCpvMappingByCode) {
-        preparedString = (i + 1) + '. ' + findCpvMappingByCode.name + ' - ' + findCpvMappingByCode[indicatorsSearchOptions[this.props.lang]]
-        preparedString = preparedString.length > 155 ? preparedString.slice(0, 155) + '...' : preparedString
+        preparedString =
+          i +
+          1 +
+          ". " +
+          findCpvMappingByCode.name +
+          " - " +
+          findCpvMappingByCode[indicatorsSearchOptions[this.props.lang]];
+        preparedString =
+          preparedString.length > 155
+            ? preparedString.slice(0, 155) + "..."
+            : preparedString;
       } else {
-        preparedString = elem.key
+        preparedString = elem.key;
       }
 
       legend.push({
@@ -1756,37 +1999,46 @@ class Private extends PureComponent {
         // name: `${elem.key}`,
         name: preparedString,
         value:
-          this.state.tenRisksChartSelected === 'count'
-            ? numeral(elem.value).format('0.[00]a')
-            : numeral(elem.value).format('0.[00]a') + ` ${intl.formatMessage({ id: 'common.text.currency' })}`,
-      })
-    })
+          this.state.tenRisksChartSelected === "count"
+            ? // ? numeral(elem.value).format('0.[00] a')
+              elem.value.toLocaleString("ru")
+            : numeral(elem.value).format("0.[00] a") +
+              ` ${intl.formatMessage({ id: "common.text.currency" })}`
+      });
+    });
 
-    let resultArray = []
+    let resultArray = [];
 
     if (window.innerWidth > 575) {
-      let chunkedArray = _.chunk(legend, 5)
+      let chunkedArray = _.chunk(legend, 5);
       if (!_.isEmpty(chunkedArray)) {
         _.forEach(chunkedArray[0], (firsData, index) => {
-          resultArray.push(firsData)
-          if (!_.isEmpty(chunkedArray[1]) && !_.isEmpty(chunkedArray[1][index])) {
-            resultArray.push(chunkedArray[1][index])
+          resultArray.push(firsData);
+          if (
+            !_.isEmpty(chunkedArray[1]) &&
+            !_.isEmpty(chunkedArray[1][index])
+          ) {
+            resultArray.push(chunkedArray[1][index]);
           }
-        })
+        });
       }
     } else {
-      resultArray = legend
+      resultArray = legend;
     }
-
 
     // !_.isEmpty(legend) && (legendTemp = legend)
     const legendList = _.map(resultArray, item => {
       return (
-        <div className="col-sm-6 col-md-6 col-lg-6 col-xl-6 margin-bottom-30" key={item.id}>
+        <div
+          className="col-sm-6 col-md-6 col-lg-6 col-xl-6 margin-bottom-30"
+          key={item.id}
+        >
           <div className="legend-card-title">{item.name}</div>
-          <div className="legend-simple-text">{label} - {item.value}</div>
+          <div className="legend-simple-text">
+            {label} - {item.value}
+          </div>
         </div>
-      )
+      );
       // return (
       //   <li key={item.id}>
       //     <b>{item.name}</b>
@@ -1794,63 +2046,75 @@ class Private extends PureComponent {
       //     {label}:<b>{item.value}</b>
       //   </li>
       // )
-    })
+    });
 
     // return <ol>{legendList}</ol>
-    return legendList
-  }
+    return legendList;
+  };
 
   renderProcuringEntitiesBarChartLegend = () => {
-    if (_.isEmpty(this.props.allData)) return <Empty />
+    if (_.isEmpty(this.props.allData)) return <Empty />;
 
-    const { intl } = this.context
-    const { top10ProcuringEntities } = this.props.allData.chartsDataWraper
-    const { top10ProcuringEntitiesAmount } = this.props.allData.chartsDataWraper
+    const { intl } = this.context;
+    const { top10ProcuringEntities } = this.props.allData.chartsDataWraper;
+    const {
+      top10ProcuringEntitiesAmount
+    } = this.props.allData.chartsDataWraper;
     let top10 =
-      this.state.procuringEntitiesBarChartSelected === 'count'
+      this.state.procuringEntitiesBarChartSelected === "count"
         ? top10ProcuringEntities
-        : top10ProcuringEntitiesAmount
-    let legend = []
+        : top10ProcuringEntitiesAmount;
+    let legend = [];
     let label =
-      this.state.procuringEntitiesBarChartSelected === 'count'
-        ? intl.formatMessage({ id: 'common.text.41' })
-        : intl.formatMessage({ id: 'common.text.43' })
+      this.state.procuringEntitiesBarChartSelected === "count"
+        ? intl.formatMessage({ id: "common.text.41" })
+        : intl.formatMessage({ id: "common.text.43" });
     _.forEach(top10, (elem, i) => {
       legend.push({
         id: generate(),
         // name: elem.key.length > 55 ? elem.key.slice(0, 55) + '...' : elem.key,
-        name: (i + 1) + '. ' + elem.key,
+        name: i + 1 + ". " + elem.key,
         value:
-          this.state.procuringEntitiesBarChartSelected === 'count'
-            ? numeral(elem.value).format('0.[00]a')
-            : numeral(elem.value).format('0.[00]a') + ` ${intl.formatMessage({ id: 'common.text.currency' })}`,
-      })
-      return true
-    })
+          this.state.procuringEntitiesBarChartSelected === "count"
+            ? // ? numeral(elem.value).format('0.[00] a')
+              elem.value.toLocaleString("ru")
+            : numeral(elem.value).format("0.[00] a") +
+              ` ${intl.formatMessage({ id: "common.text.currency" })}`
+      });
+      return true;
+    });
 
-    let resultArray = []
+    let resultArray = [];
 
     if (window.innerWidth > 575) {
-      let chunkedArray = _.chunk(legend, 5)
+      let chunkedArray = _.chunk(legend, 5);
       if (!_.isEmpty(chunkedArray)) {
         _.forEach(chunkedArray[0], (firsData, index) => {
-          resultArray.push(firsData)
-          if (!_.isEmpty(chunkedArray[1]) && !_.isEmpty(chunkedArray[1][index])) {
-            resultArray.push(chunkedArray[1][index])
+          resultArray.push(firsData);
+          if (
+            !_.isEmpty(chunkedArray[1]) &&
+            !_.isEmpty(chunkedArray[1][index])
+          ) {
+            resultArray.push(chunkedArray[1][index]);
           }
-        })
+        });
       }
     } else {
-      resultArray = legend
+      resultArray = legend;
     }
 
     const legendList = _.map(resultArray, item => {
       return (
-        <div className="col-sm-6 col-md-6 col-lg-6 col-xl-6 margin-bottom-30" key={item.id}>
+        <div
+          className="col-sm-6 col-md-6 col-lg-6 col-xl-6 margin-bottom-30"
+          key={item.id}
+        >
           <div className="legend-card-title">{item.name}</div>
-          <div className="legend-simple-text">{label} - {item.value}</div>
+          <div className="legend-simple-text">
+            {label} - {item.value}
+          </div>
         </div>
-      )
+      );
       // return (
       //   <li key={item.id}>
       //     <b>{item.name}</b>
@@ -1858,67 +2122,86 @@ class Private extends PureComponent {
       //     {label}:<b>{item.value}</b>
       //   </li>
       // )
-    })
+    });
     // return <ol>{legendList}</ol>
-    return legendList
-  }
+    return legendList;
+  };
 
   renderTopTenCPVChartLegend = () => {
-    if (_.isEmpty(this.props.allData)) return <Empty />
+    if (_.isEmpty(this.props.allData)) return <Empty />;
 
-    const { intl } = this.context
-    const { top10Cpv } = this.props.allData.chartsDataWraper
-    const { top10CpvAmount } = this.props.allData.chartsDataWraper
-    let top10 = this.state.topTenCPVChartSelected === 'count' ? top10Cpv : top10CpvAmount
-    let legend = []
+    const { intl } = this.context;
+    const { top10Cpv } = this.props.allData.chartsDataWraper;
+    const { top10CpvAmount } = this.props.allData.chartsDataWraper;
+    let top10 =
+      this.state.topTenCPVChartSelected === "count" ? top10Cpv : top10CpvAmount;
+    let legend = [];
     let label =
-      this.state.topTenCPVChartSelected === 'count'
-        ? intl.formatMessage({ id: 'common.text.41' })
-        : intl.formatMessage({ id: 'common.text.43' })
+      this.state.topTenCPVChartSelected === "count"
+        ? intl.formatMessage({ id: "common.text.41" })
+        : intl.formatMessage({ id: "common.text.43" });
     // ? intl.formatMessage({ id: 'common.text.35' })
     // : intl.formatMessage({ id: 'common.text.138' })
 
-    let indicatorsSearchOptions = FILTER_ITEM_TRANSLATION_OPTIONS['itemCpv2']
+    let indicatorsSearchOptions = FILTER_ITEM_TRANSLATION_OPTIONS["itemCpv2"];
 
     _.forEach(top10, (elem, i) => {
-      let findCpvMappingByCode = _.find(this.props.mappings[indicatorsSearchOptions.mappingKey], { [indicatorsSearchOptions.searchKey]: elem.key })
-      findCpvMappingByCode = findCpvMappingByCode ? findCpvMappingByCode[indicatorsSearchOptions[this.props.lang]] : elem.key
+      let findCpvMappingByCode = _.find(
+        this.props.mappings[indicatorsSearchOptions.mappingKey],
+        { [indicatorsSearchOptions.searchKey]: elem.key }
+      );
+      findCpvMappingByCode = findCpvMappingByCode
+        ? findCpvMappingByCode[indicatorsSearchOptions[this.props.lang]]
+        : elem.key;
 
       legend.push({
         id: generate(),
         // name: elem.key.length > 55 ? elem.key.slice(0, 55) + '...' : elem.key,
-        name: findCpvMappingByCode.length > 55 ? (i + 1) + '. ' + findCpvMappingByCode.slice(0, 55) + '...' : (i + 1) + '. ' + findCpvMappingByCode,
+        name:
+          findCpvMappingByCode.length > 55
+            ? i + 1 + ". " + findCpvMappingByCode.slice(0, 55) + "..."
+            : i + 1 + ". " + findCpvMappingByCode,
         value:
-          this.state.topTenCPVChartSelected === 'count'
-            ? numeral(elem.value).format('0.[00]a')
-            : numeral(elem.value).format('0.[00]a') + ` ${intl.formatMessage({ id: 'common.text.currency' })}`,
-      })
-      return true
-    })
+          this.state.topTenCPVChartSelected === "count"
+            ? // ? numeral(elem.value).format('0.[00] a')
+              elem.value.toLocaleString("ru")
+            : numeral(elem.value).format("0.[00] a") +
+              ` ${intl.formatMessage({ id: "common.text.currency" })}`
+      });
+      return true;
+    });
 
-    let resultArray = []
+    let resultArray = [];
 
     if (window.innerWidth > 575) {
-      let chunkedArray = _.chunk(legend, 5)
+      let chunkedArray = _.chunk(legend, 5);
       if (!_.isEmpty(chunkedArray)) {
         _.forEach(chunkedArray[0], (firsData, index) => {
-          resultArray.push(firsData)
-          if (!_.isEmpty(chunkedArray[1]) && !_.isEmpty(chunkedArray[1][index])) {
-            resultArray.push(chunkedArray[1][index])
+          resultArray.push(firsData);
+          if (
+            !_.isEmpty(chunkedArray[1]) &&
+            !_.isEmpty(chunkedArray[1][index])
+          ) {
+            resultArray.push(chunkedArray[1][index]);
           }
-        })
+        });
       }
     } else {
-      resultArray = legend
+      resultArray = legend;
     }
 
     const legendList = _.map(resultArray, item => {
       return (
-        <div className="col-sm-6 col-md-6 col-lg-6 col-xl-6 margin-bottom-30" key={item.id}>
+        <div
+          className="col-sm-6 col-md-6 col-lg-6 col-xl-6 margin-bottom-30"
+          key={item.id}
+        >
           <div className="legend-card-title">{item.name}</div>
-          <div className="legend-simple-text">{label} - {item.value}</div>
+          <div className="legend-simple-text">
+            {label} - {item.value}
+          </div>
         </div>
-      )
+      );
       // return (
       //   <li key={item.id}>
       //     <b>{item.name}</b>
@@ -1926,48 +2209,48 @@ class Private extends PureComponent {
       //     {label}:<b>{item.value}</b>
       //   </li>
       // )
-    })
+    });
     // return <ol>{legendList}</ol>
-    return legendList
-  }
+    return legendList;
+  };
 
   renderCards = () => {
-    const RadioButton = Radio.Button
-    const RadioGroup = Radio.Group
+    const RadioButton = Radio.Button;
+    const RadioGroup = Radio.Group;
     const childs = [
       {
         child: this.renderTenRegionsChart(),
         delay: 300,
-        key: 'ten-regions-chart',
+        key: "ten-regions-chart",
         legend: this.renderTenRegionsChartLegend(),
         selectedState: this.state.tenRegionsChartSelected,
-        name: 'tenRegionsChartSelected',
+        name: "tenRegionsChartSelected"
       },
       {
         child: this.renderTenRisksChart(),
         delay: 350,
-        key: 'ten-risks-chart',
+        key: "ten-risks-chart",
         legend: this.renderTenRisksChartLegend(),
         selectedState: this.state.tenRisksChartSelected,
-        name: 'tenRisksChartSelected',
+        name: "tenRisksChartSelected"
       },
       {
         child: this.renderProcuringEntitiesBarChart(),
         delay: 250,
-        key: 'risk-chart',
+        key: "risk-chart",
         legend: this.renderProcuringEntitiesBarChartLegend(),
         selectedState: this.state.procuringEntitiesBarChartSelected,
-        name: 'procuringEntitiesBarChartSelected',
+        name: "procuringEntitiesBarChartSelected"
       },
       {
         child: this.renderTopTenCPVChart(),
         delay: 400,
-        key: 'ten-cpv-chart',
+        key: "ten-cpv-chart",
         legend: this.renderTopTenCPVChartLegend(),
         selectedState: this.state.topTenCPVChartSelected,
-        name: 'topTenCPVChartSelected',
-      },
-    ]
+        name: "topTenCPVChartSelected"
+      }
+    ];
 
     return _.map(childs, elem => {
       return (
@@ -1977,209 +2260,227 @@ class Private extends PureComponent {
               onChange={e => this.handleClickSelectCountOrAmount(elem.name, e)}
               defaultValue={elem.selectedState}
             >
-              <RadioButton value={CONST.QANTITY_COST_OPTIONS[0].key}><FormattedMessage
-                id='common.text.44' /></RadioButton>
-              <RadioButton value={CONST.QANTITY_COST_OPTIONS[1].key}><FormattedMessage
-                id='common.text.45' /></RadioButton>
+              <RadioButton value={CONST.QANTITY_COST_OPTIONS[0].key}>
+                <FormattedMessage id="common.text.44" />
+              </RadioButton>
+              <RadioButton value={CONST.QANTITY_COST_OPTIONS[1].key}>
+                <FormattedMessage id="common.text.45" />
+              </RadioButton>
             </RadioGroup>
           </div>
           <div className="row row_chart-wrapper">
             <div className="col-md-6 col_chart">{elem.child}</div>
             <div className="col-md-6 col_legend">
-              <div className="row">
-                {elem.legend}
-              </div>
+              <div className="row">{elem.legend}</div>
             </div>
           </div>
         </div>
-      )
-    })
-  }
+      );
+    });
+  };
 
   renderProcuringEntitiesBarChart = () => {
-    if (_.isEmpty(this.props.allData)) return <Empty />
+    if (_.isEmpty(this.props.allData)) return <Empty />;
 
-    const _self = this
-    const { intl } = this.context
-    const { top10ProcuringEntities } = this.props.allData.chartsDataWraper
-    const { top10ProcuringEntitiesAmount } = this.props.allData.chartsDataWraper
+    const _self = this;
+    const { intl } = this.context;
+    const { top10ProcuringEntities } = this.props.allData.chartsDataWraper;
+    const {
+      top10ProcuringEntitiesAmount
+    } = this.props.allData.chartsDataWraper;
     let top10 =
-      this.state.procuringEntitiesBarChartSelected === 'count'
+      this.state.procuringEntitiesBarChartSelected === "count"
         ? top10ProcuringEntities
-        : top10ProcuringEntitiesAmount
-    let tempCat = []
-    let tempDat = []
-    let temp = []
+        : top10ProcuringEntitiesAmount;
+    let tempCat = [];
+    let tempDat = [];
+    let temp = [];
     let label =
-      this.state.procuringEntitiesBarChartSelected === 'count'
-        ? intl.formatMessage({ id: 'common.text.42' })
-        : intl.formatMessage({ id: 'common.text.43' })
-    let cost = this.state.procuringEntitiesBarChartSelected === 'count' ? '' : ` ${intl.formatMessage({ id: 'common.text.currency' })}`
+      this.state.procuringEntitiesBarChartSelected === "count"
+        ? intl.formatMessage({ id: "common.text.42" })
+        : intl.formatMessage({ id: "common.text.43" });
+    let cost =
+      this.state.procuringEntitiesBarChartSelected === "count"
+        ? ""
+        : ` ${intl.formatMessage({ id: "common.text.currency" })}`;
     let tempName = _.map(top10, elem => {
-      return elem.key
-    })
+      return elem.key;
+    });
 
     _.map(top10, (elem, i) => {
-      tempCat.push(i)
+      tempCat.push(i);
       tempDat.push({
         name: elem.key,
         y: Math.round(elem.value),
         color: CHART_COLORS_B[i % 2],
-        maxPointWidth: 100,
-      })
-      return true
-    })
+        maxPointWidth: 100
+      });
+      return true;
+    });
 
     temp.push({
-      data: tempDat,
-    })
+      data: tempDat
+    });
 
     return (
       <ReactHighcharts
         key={generate()}
         config={{
           chart: {
-            type: 'column',
+            type: "column",
             height: 400,
             spacing: [15, 0, 15, 0],
             style: {
-              fontFamily: 'Oswald', //'Open Sans'
+              fontFamily: "Oswald" //'Open Sans'
             },
             backgroundColor: null,
-            plotBackgroundColor: null,
+            plotBackgroundColor: null
           },
           lang: {
-            noData: intl.formatMessage({ id: 'common.text.152' }),
+            noData: intl.formatMessage({ id: "common.text.152" })
           },
           noData: {
             style: {
-              fontWeight: 'bold',
-              fontSize: '15px',
-              color: '#303030',
-            },
+              fontWeight: "bold",
+              fontSize: "15px",
+              color: "#303030"
+            }
           },
           title: {
             margin: 50,
-            text: intl.formatMessage({ id: 'common.text.47' }),
-            align: 'left',
+            text: intl.formatMessage({ id: "common.text.47" }),
+            align: "left",
             style: {
-              fontStyle: 'normal',
-              fontWeight: 'normal',
-              fontSize: '20px',
-              lineHeight: '30px',
-              letterSpacing: '0.05em',
-              color: '#FFFFFF',
-            },
+              fontStyle: "normal",
+              fontWeight: "normal",
+              fontSize: "20px",
+              lineHeight: "30px",
+              letterSpacing: "0.05em",
+              color: "#FFFFFF"
+            }
           },
           xAxis: {
             categories: tempCat,
             minPadding: 0,
             maxPadding: 0,
             title: {
-              text: intl.formatMessage({ id: 'common.text.48' }),
+              text: intl.formatMessage({ id: "common.text.48" }),
               style: {
-                color: '#FFFFFF',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                letterSpacing: '0.05em',
-              },
+                color: "#FFFFFF",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                letterSpacing: "0.05em"
+              }
             },
             tickPositions: [],
             labels: {
               useHTML: true,
               style: {
-                color: '#FFFFFF',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                textAlign: 'center',
-                letterSpacing: '0.05em',
-              },
-            },
+                color: "#FFFFFF",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                textAlign: "center",
+                letterSpacing: "0.05em"
+              }
+            }
           },
           yAxis: {
-            gridLineColor: '#75BADC',
+            gridLineColor: "#75BADC",
             gridLineWidth: 1,
             title: {
               text: label,
               style: {
-                color: '#FFFFFF',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                letterSpacing: '0.05em',
-              },
+                color: "#FFFFFF",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                letterSpacing: "0.05em"
+              }
             },
             labels: {
               useHTML: true,
-              formatter: function () {
-                return _self.state.procuringEntitiesBarChartSelected === 'count' ? this.value : numeral(this.value).format('0.[00] a')
+              formatter: function() {
+                return _self.state.procuringEntitiesBarChartSelected === "count"
+                  ? this.value.toLocaleString("ru")
+                  : numeral(this.value).format("0.[00] a");
                 // return this.value
               },
               style: {
-                color: '#75BADC',
-                fontStyle: 'normal',
-                fontWeight: 'normal',
-                fontSize: '16px',
-                lineHeight: '24px',
-                textAlign: 'center',
-                letterSpacing: '0.05em',
-              },
-            },
+                color: "#75BADC",
+                fontStyle: "normal",
+                fontWeight: "normal",
+                fontSize: "16px",
+                lineHeight: "24px",
+                textAlign: "center",
+                letterSpacing: "0.05em"
+              }
+            }
           },
           plotOptions: {
             series: {
               borderWidth: 0,
-              groupPadding: 0.01,
-            },
+              groupPadding: 0.01
+            }
           },
           tooltip: {
             useHTML: true,
             outside: true,
-            formatter: function (tooltip) {
+            formatter: function(tooltip) {
               return (
-                '<div class="tooltip-chart-wrapper">'
-                + '<div class="tooltip-card-title">' + tempName[this.x] + '</div>'
-                + '<div class="tooltip-simple-text"><span>' + numeral(this.y).format('0.[00] a') + ' ' + cost + ' - </span><span>' + label + '</span></div>'
-                + '</div>'
-              )
+                '<div class="tooltip-chart-wrapper">' +
+                '<div class="tooltip-card-title">' +
+                tempName[this.x] +
+                "</div>" +
+                '<div class="tooltip-simple-text"><span>' +
+                numeral(this.y).format("0.[00] a") +
+                " " +
+                cost +
+                " - </span><span>" +
+                label +
+                "</span></div>" +
+                "</div>"
+              );
               // return `Замовник: <b>${tempDat[this.x].name}</b><br>${label}: <b>${numeral(
               //   this.y,
               // ).format('0.[00] a')}${cost}</b>`
-            },
+            }
           },
           legend: { enabled: false },
           credits: { enabled: false },
-          series: temp,
+          series: temp
         }}
       />
-    )
-  }
+    );
+  };
 
   renderRiskTable = () => {
     // if (_.isEmpty(this.props.allData && this.props.allData.chartsDataWraper)) return <Empty />
-    if (_.isEmpty(this.props.allData)) return <Empty />
+    if (_.isEmpty(this.props.allData)) return <Empty />;
 
-    const { intl } = this.context
-    const { risksByProceduresTable, risksByProceduresTableAmount } = this.props.allData.chartsDataWraper
+    const { intl } = this.context;
+    const {
+      risksByProceduresTable,
+      risksByProceduresTableAmount
+    } = this.props.allData.chartsDataWraper;
     // if (_.isEmpty(risksByProceduresTable)) return <Empty />
 
     let TEMP_DATA =
-      this.state.riskTableSelected === 'count'
+      this.state.riskTableSelected === "count"
         ? _.cloneDeep(risksByProceduresTable)
-        : _.cloneDeep(risksByProceduresTableAmount)
-    const RadioButton = Radio.Button
-    const RadioGroup = Radio.Group
+        : _.cloneDeep(risksByProceduresTableAmount);
+    const RadioButton = Radio.Button;
+    const RadioGroup = Radio.Group;
     // let TEMP_DATA = DATA.splice(1, 5)
 
     let columns = [
       {
-        title: intl.formatMessage({ id: 'common.text.75' }),
-        dataIndex: 'procedureRisk',
+        title: intl.formatMessage({ id: "common.text.75" }),
+        dataIndex: "procedureRisk",
         render: data => {
           return (
             <>
@@ -2187,39 +2488,52 @@ class Private extends PureComponent {
               <span> - </span>
               <span>{data.value}</span>
             </>
-          )
-        },
-      },
-    ]
+          );
+        }
+      }
+    ];
     _.map(TEMP_DATA, item => {
       columns.push({
-        title: _.find(this.props.mappings.translatedValues, { value: `procurement-method-details.${item.key}` })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]],
+        title: _.find(this.props.mappings.translatedValues, {
+          value: `procurement-method-details.${item.key}`
+        })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]],
         dataIndex: item.key,
         sorter: (a, b) => {
-          let aValue = a[item.key] ? (a[item.key] === 'X' ? 0 : a[item.key]) : 0
-          let bValue = b[item.key] ? (b[item.key] === 'X' ? 0 : b[item.key]) : 0
-          return aValue - bValue
+          let aValue = a[item.key]
+            ? a[item.key] === "X"
+              ? 0
+              : a[item.key]
+            : 0;
+          let bValue = b[item.key]
+            ? b[item.key] === "X"
+              ? 0
+              : b[item.key]
+            : 0;
+          return aValue - bValue;
         },
-        align: 'center',
-        // render: value => (value === -1 ? 'X' : numeral(value).format('0.[00]a')),
-        render: value => (value ? numeral(value).format('0.[00]a') : 'X'),
-      })
-    })
+        align: "center",
+        // render: value => (value === -1 ? 'X' : numeral(value).format('0.[00] a')),
+        render: value => (value ? numeral(value).format("0.[00] a") : "X")
+      });
+    });
 
-    let result = []
+    let result = [];
     _.forEach(TEMP_DATA, items => {
       _.forEach(items.value, item => {
-        let findIndicatorData = _.find(this.props.mappings.indicators, { id: parseInt(item.key) })
+        let findIndicatorData = _.find(this.props.mappings.indicators, {
+          id: parseInt(item.key)
+        });
         // let findIncicatorsData = _.find(this.props.mappings.indicators, { id: parseInt(item.key) })[TRANSLATED_FIELD_BY_LANGUAGE[this.props.lang]].
 
-        let existsIndex = _.findIndex(result, { dataIndex: item.key })
+        let existsIndex = _.findIndex(result, { dataIndex: item.key });
         if (existsIndex === -1) {
           result.push({
             // procedureRisk: item.key,
             riskId: findIndicatorData.id,
             procedureRisk: {
               key: findIndicatorData.name,
-              value: findIndicatorData[INDICATOR_FIELD_BY_LANGUAGE[this.props.lang]],
+              value:
+                findIndicatorData[INDICATOR_FIELD_BY_LANGUAGE[this.props.lang]]
             },
             // dataIndex: item.key.key,
             // dataIndex: findIndicatorData.name,
@@ -2228,18 +2542,18 @@ class Private extends PureComponent {
             // [items.key]: item.value === 0 ? 'X' : item.value,
             [items.key]: item.value,
             key: generate(),
-            valueSum: item.value,
-          })
+            valueSum: item.value
+          });
         } else {
           result[existsIndex] = _.merge({}, result[existsIndex], {
-            [items.key]: item.value === 'X' ? -1 : item.value,
-            valueSum: result[existsIndex].valueSum + item.value,
-          })
+            [items.key]: item.value === "X" ? -1 : item.value,
+            valueSum: result[existsIndex].valueSum + item.value
+          });
         }
-      })
-    })
+      });
+    });
 
-    result = _.orderBy(result, ['riskId'], ['asc'])
+    result = _.orderBy(result, ["riskId"], ["asc"]);
     // if (!_.isEmpty(this.props.filtersSelected)) {
     //   let temp = []
     //
@@ -2251,56 +2565,71 @@ class Private extends PureComponent {
     //     result = _.cloneDeep(temp)
     //   }
     // }
-    let preparedTableData = _.filter(result, res => res.valueSum)
+    let preparedTableData = _.filter(result, res => res.valueSum);
 
     return (
       <>
         <div className="col-radiogroup">
           <RadioGroup
-            onChange={e => this.handleClickSelectCountOrAmount('riskTableSelected', e)}
+            onChange={e =>
+              this.handleClickSelectCountOrAmount("riskTableSelected", e)
+            }
             defaultValue={this.state.riskTableSelected}
           >
             <RadioButton value={CONST.QANTITY_COST_OPTIONS[0].key}>
-              <FormattedMessage id='common.text.44' />
+              <FormattedMessage id="common.text.44" />
             </RadioButton>
             <RadioButton value={CONST.QANTITY_COST_OPTIONS[1].key}>
-              <FormattedMessage id='common.text.45' />
+              <FormattedMessage id="common.text.45" />
             </RadioButton>
           </RadioGroup>
         </div>
         <div className="custom-table-wrapper">
           <div className="col-sm-12 col-md-12 col-lg-12 col-xl-12">
-            <div className="statistic_block_title">{intl.formatMessage({ id: 'common.text.107' })}</div>
+            <div className="statistic_block_title">
+              {intl.formatMessage({ id: "common.text.107" })}
+            </div>
           </div>
           <div className="col-sm-12 col-md-12 col-lg-12 col-xl-12">
-            {!_.isEmpty(preparedTableData) ?
+            {!_.isEmpty(preparedTableData) ? (
               <Table
                 columns={columns}
                 data={preparedTableData}
                 pagination={false}
                 // title={() => (<div className="block_title">{intl.formatMessage({ id: 'common.text.107' })}</div>)}
                 scroll={{ x: true }}
-              /> : <Empty />}
+              />
+            ) : (
+              <Empty />
+            )}
           </div>
         </div>
       </>
-    )
-  }
+    );
+  };
 
   handleUpdateFiltersData = () => {
     this.setState({
       proceduresTablePage: 1,
-      tableKey: generate(),
-    })
-    const { filtersSelected } = this.props
+      tableKey: generate()
+    });
+    const { filtersSelected } = this.props;
     this.props.updateData({
       startDate: this.state.dateRange.startDate,
       endDate: this.state.dateRange.endDate,
-      ...filtersSelected,
-    })
-  }
+      ...filtersSelected
+    });
+  };
 
-  handleFilterData = (filterKey, selectedElem, options, keyUA, translationOptions, props, uaKeys) => {
+  handleFilterSelectedData = (
+    filterKey,
+    selectedElem,
+    options,
+    keyUA,
+    translationOptions,
+    props,
+    uaKeys
+  ) => {
     Promise.resolve(
       this.props.selectFilterOption({
         key: filterKey,
@@ -2310,9 +2639,35 @@ class Private extends PureComponent {
         prevOptions: options,
         selectedUA: uaKeys,
         translationOptions: translationOptions,
-      }),
+        onlyAddToVariable: true
+      })
+    );
+  };
+
+  handleFilterData = (
+    filterKey,
+    selectedElem,
+    options,
+    keyUA,
+    translationOptions,
+    props,
+    uaKeys
+  ) => {
+    Promise.resolve(
+      this.props.selectFilterOption({
+        key: filterKey,
+        keyUA: keyUA,
+        selected: selectedElem,
+        props: props,
+        prevOptions: options,
+        selectedUA: uaKeys,
+        translationOptions: translationOptions
+      })
     )
       .then(() => {
+        if (filterKey === "itemCpv2" || filterKey === "itemCpv") {
+          this.props.updateCpvSearchValues(filterKey, {}, true);
+        }
         // if (filterKey === 'inQueue' && !selectedElem) {
         //   this.props.selectFilterOption({
         //     key: 'hasPriorityStatus',
@@ -2324,70 +2679,82 @@ class Private extends PureComponent {
         //   })
         // }
       })
-      .then(() => this.handleUpdateFiltersData())
-  }
+      .then(() => this.handleUpdateFiltersData());
+  };
 
   handleSearchFilterData = (filterKey, value) => {
-    const { filtersSelected } = this.props
+    const { filtersSelected } = this.props;
 
-    this.props.updateFilterOptions({
-      startDate: this.state.dateRange.startDate,
-      endDate: this.state.dateRange.endDate,
-      searchField: filterKey,
-      searchValue: value,
-      ...filtersSelected,
-    })
-  }
+    if (filterKey === "itemCpv2" || filterKey === "itemCpv") {
+      this.props.updateCpvSearchValues(filterKey, value);
+    } else {
+      this.props.updateFilterOptions({
+        startDate: this.state.dateRange.startDate,
+        endDate: this.state.dateRange.endDate,
+        searchField: filterKey,
+        searchValue: value,
+        ...filtersSelected
+      });
+    }
+  };
 
   handleDeselectFilter = (filterKey, selectedElem, options) => {
     Promise.resolve(
       this.props.deselectFilterOption({
         key: filterKey,
         selected: selectedElem,
-        prevOptions: options,
-      }),
-    ).then(() => this.handleUpdateFiltersData())
-  }
+        prevOptions: options
+      })
+    ).then(() => this.handleUpdateFiltersData());
+  };
 
   handleDropFilterOption = (filterKey, updateStatus) => {
-    Promise.resolve(
-      this.props.dropFilterOption(filterKey)).then(() => updateStatus && this.handleUpdateFiltersData())
-  }
+    Promise.resolve(this.props.dropFilterOption(filterKey)).then(
+      () => updateStatus && this.handleUpdateFiltersData()
+    );
+  };
 
   handleClearFilter = () => {
-    this.props.clearFiltersAndUpdate({
-      startDate: this.state.dateRange.startDate,
-      endDate: this.state.dateRange.endDate,
-    })
-  }
+    Promise.resolve(this.props.clearFiltersOption()).then(() =>
+      this.handleUpdateFiltersData()
+    );
+
+    // this.props.clearFiltersAndUpdate({
+    //   startDate: this.state.dateRange.startDate,
+    //   endDate: this.state.dateRange.endDate,
+    // })
+  };
 
   handleClosePanel = () => {
-    this.setState({
-      controlPanel: false,
-    }, () => this.props.changeNavigationItem('1'))
-  }
+    this.setState(
+      {
+        controlPanel: false
+      },
+      () => this.props.changeNavigationItem("1")
+    );
+  };
 
   handleDeleteUser = id => {
-    this.props.deleteUserById(id)
-  }
+    this.props.deleteUserById(id);
+  };
 
   renderTableTab = () => {
     return (
       <Fragment>
         <div className="row">
           <div className="col-md-12 mt-3">
-            <Card animdelay={300} bodyStyle={{ padding: '0' }}>
+            <Card animdelay={300} bodyStyle={{ padding: "0" }}>
               {this.renderProceduresTable()}
             </Card>
           </div>
         </div>
       </Fragment>
-    )
-  }
+    );
+  };
 
   renderChartsTab = () => {
-    const RadioButton = Radio.Button
-    const RadioGroup = Radio.Group
+    const RadioButton = Radio.Button;
+    const RadioGroup = Radio.Group;
     return (
       <Fragment>
         <div className="row row_charts">{this.renderCards()}</div>
@@ -2395,65 +2762,83 @@ class Private extends PureComponent {
           <div className="col-md-4 mt-3">
             <div className="col-radiogroup">
               <RadioGroup
-                onChange={e => this.handleClickSelectCountOrAmount('riskChartSelected', e)}
+                onChange={e =>
+                  this.handleClickSelectCountOrAmount("riskChartSelected", e)
+                }
                 defaultValue={this.state.riskChartSelected}
               >
                 <RadioButton value={CONST.QANTITY_COST_OPTIONS[0].key}>
-                  <FormattedMessage id='common.text.44' />
+                  <FormattedMessage id="common.text.44" />
                 </RadioButton>
                 <RadioButton value={CONST.QANTITY_COST_OPTIONS[1].key}>
-                  <FormattedMessage id='common.text.45' />
+                  <FormattedMessage id="common.text.45" />
                 </RadioButton>
               </RadioGroup>
             </div>
-            <Card className="custom-card" animdelay={250}>{this.renderRiskChart()}</Card>
+            <Card className="custom-card" animdelay={250}>
+              {this.renderRiskChart()}
+            </Card>
           </div>
           <div className="col-md-8 mt-3 risk-table-wrapper">
             <div className="col-radiogroup">
               <RadioGroup
-                onChange={e => this.handleClickSelectCountOrAmount('growthChartSelected', e)}
+                onChange={e =>
+                  this.handleClickSelectCountOrAmount("growthChartSelected", e)
+                }
                 defaultValue={this.state.growthChartSelected}
               >
                 <RadioButton value={CONST.QANTITY_COST_OPTIONS[0].key}>
-                  <FormattedMessage id='common.text.44' />
+                  <FormattedMessage id="common.text.44" />
                 </RadioButton>
                 <RadioButton value={CONST.QANTITY_COST_OPTIONS[1].key}>
-                  <FormattedMessage id='common.text.45' />
+                  <FormattedMessage id="common.text.45" />
                 </RadioButton>
               </RadioGroup>
             </div>
-            <Card className="custom-card" animdelay={300}>{this.renderGrowthChart()}</Card>
+            <Card className="custom-card" animdelay={300}>
+              {this.renderGrowthChart()}
+            </Card>
           </div>
         </div>
         <div className="row">
           <div className="col-md-12 mt-3">
-            <Card animdelay={300} bodyStyle={{ padding: '0' }} className="risk-table">
+            <Card
+              animdelay={300}
+              bodyStyle={{ padding: "0" }}
+              className="risk-table"
+            >
               {this.renderRiskTable()}
             </Card>
           </div>
         </div>
       </Fragment>
-    )
-  }
+    );
+  };
 
   toggleNavigationCollapsed = () => {
     this.setState({
       isNavCollapsed: !this.state.isNavCollapsed,
-      isNavCollapsedFixed: !this.state.isNavCollapsedFixed,
-    })
-  }
+      isNavCollapsedFixed: !this.state.isNavCollapsedFixed
+    });
+  };
 
   renderNavHeader = () => {
-    const { credentials } = this.props
+    const { credentials } = this.props;
     return (
       <Fragment>
         <div className="nav-wrapper">
           {!this.state.isNavCollapsed && (
             <React.Fragment>
               <div className="page_title">
-                <span className="text-f"><FormattedMessage id="common.text.84" /></span>
-                <span className="text-s"><FormattedMessage id="common.text.85" /></span>
-                <span className="text-t"><FormattedMessage id="common.text.86" /></span>
+                <span className="text-f">
+                  <FormattedMessage id="common.text.84" />
+                </span>
+                <span className="text-s">
+                  <FormattedMessage id="common.text.85" />
+                </span>
+                <span className="text-t">
+                  <FormattedMessage id="common.text.86" />
+                </span>
                 {/*<h1 className="page_title__text--primary">KYRGYZ REPUBLIC</h1>*/}
                 {/*<span className="page_title__text--sub">Open Data OCDS Red Flags Monitoring App</span>*/}
               </div>
@@ -2482,20 +2867,26 @@ class Private extends PureComponent {
           {/*)}*/}
         </div>
       </Fragment>
-    )
-  }
+    );
+  };
 
   renderNavHeaderFixed = () => {
-    const { credentials } = this.props
+    const { credentials } = this.props;
     return (
       <Fragment>
         <div className="nav-wrapper">
           {!this.state.isNavCollapsedFixed && (
             <React.Fragment>
               <div className="page_title">
-                <span className="text-f"><FormattedMessage id="common.text.84" /></span>
-                <span className="text-s"><FormattedMessage id="common.text.85" /></span>
-                <span className="text-t"><FormattedMessage id="common.text.86" /></span>
+                <span className="text-f">
+                  <FormattedMessage id="common.text.84" />
+                </span>
+                <span className="text-s">
+                  <FormattedMessage id="common.text.85" />
+                </span>
+                <span className="text-t">
+                  <FormattedMessage id="common.text.86" />
+                </span>
                 {/*<h1 className="page_title__text--primary">KYRGYZ REPUBLIC</h1>*/}
                 {/*<span className="page_title__text--sub">Open Data OCDS Red Flags Monitoring App</span>*/}
               </div>
@@ -2524,64 +2915,284 @@ class Private extends PureComponent {
           {/*)}*/}
         </div>
       </Fragment>
+    );
+  };
+
+  handleSearshTender = value => {
+    const { filtersSelected } = this.props;
+    this.props.updateData({
+      startDate: this.state.dateRange.startDate,
+      endDate: this.state.dateRange.endDate,
+      procedureId: value,
+      ...filtersSelected
+    });
+  };
+
+  handleSearshTenderDelay = value => {
+    const { filtersSelected } = this.props;
+    this.props.updateData({
+      startDate: this.state.dateRange.startDate,
+      endDate: this.state.dateRange.endDate,
+      procedureId: value,
+      ...filtersSelected
+    });
+  };
+
+  handleUserLogOut = () => {
+    this.props.userLogout();
+  };
+
+  showNoDataErrorMessage = () => {
+    const { intl } = this.context;
+    if (this.props.noDataFound) {
+      message.error(intl.formatMessage({ id: "common.text.133" }));
+      this.props.clearNoFilterData();
+    }
+  };
+
+  showAdminPanel = () => {
+    const { adminPanelIsOpen, setAdminPanelDisactive, allUsers, hasError, success } = this.props;
+    const { cloneUsers } = this.state;
+    const cloneUsersLength = cloneUsers && cloneUsers.length > 0;
+
+    if (hasError && !success) {
+      return;
+    }
+
+    this.setState({
+      copyUsersList: allUsers
+    })
+    return (
+      <Modal
+        className="admin-panel-modal"
+        visible={adminPanelIsOpen}
+        onCancel={setAdminPanelDisactive}
+        closable={true}
+        footer={false}
+        style={{
+          top: 0,
+          right: 0,
+          margin: 0,
+          position: "fixed"
+        }}
+      >
+        {this.showUsersList()}
+        <div className="save-button-wrapper">
+          <Button disabled={!cloneUsersLength} className="save-button" type="primary" onClick={this.handleOpenSaveChangesModal}>
+            <FormattedMessage id="common.text.166" />
+          </Button>
+        </div>
+      </Modal>
+    );
+  };
+
+  showUsersList = () => {
+    const { copyUsersList } = this.state;
+
+    return (
+      <>
+        <List
+          className="admin-panel-users-list"
+          bordered
+          dataSource={copyUsersList}
+          renderItem={item => (
+            <List.Item className="users-list__item">
+              <Typography.Text>{item.name}</Typography.Text>
+              <Typography.Text>{item.email}</Typography.Text>
+              <div className="users-list__buttons-group">
+                <Button className="delete-user-button" type="primary" onClick={() => this.handleOpenDeleteModal(item.id)}>
+                  <DeleteOutlined />
+                </Button>
+                <Checkbox
+                  checked={!item.accountLocked}
+                  onChange={this.changeBlockUserStatus(item.id, item.accountLocked)}
+                >
+                  <FormattedMessage id="common.text.168" />
+                </ Checkbox>
+              </div>
+            </List.Item>
+          )}
+        />
+      </>
+    );
+  };
+
+  changeBlockUserStatus = (id, _accountLocked) => () => {
+    this.setState(({copyUsersList, cloneUsers}) => {
+      const copyOfUsers = _.cloneDeep(copyUsersList);
+      const findIdx = copyUsersList.findIndex(user => user.id === id);
+      copyUsersList[findIdx].accountLocked = !copyUsersList[findIdx].accountLocked;
+
+      const [user] = copyOfUsers.filter(user => user.id === id);
+
+      return {
+        copyUsersList: [...copyUsersList],
+        cloneUsers: [...cloneUsers, user],
+      }
+    })
+  }
+
+  showDeleteUserModal = () => {
+    const { deleteModalIsVisivle } = this.state;
+
+    return (
+      <Modal
+        className="delete-user-modal"
+        visible={deleteModalIsVisivle}
+        onCancel={setAdminPanelDisactive}
+        closable={false}
+        footer={[
+          <>
+            <Button type="primary" onClick={this.deleteUser}>Ok</ Button>
+            <Button onClick={this.handleCloseDeleteModal}>Cancel</ Button>
+          </>
+        ]}
+        style={{
+          top: 0,
+          right: 0,
+          margin: 0,
+          position: "fixed"
+        }}
+      >
+        <p><FormattedMessage id="common.text.165" /></p>
+      </Modal>
     )
   }
 
-  handleSearshTender = value => {
-    const { filtersSelected } = this.props
-    this.props.updateData({
-      startDate: this.state.dateRange.startDate,
-      endDate: this.state.dateRange.endDate,
-      procedureId: value,
-      ...filtersSelected,
+  deleteUser = () => {
+    const { getAllUsers, allUsers, deleteCurrentUser } = this.props;
+    const { deleteUserId } = this.state;
+
+    Promise.resolve(deleteCurrentUser(deleteUserId))
+    .then(() => getAllUsers())
+    .then(
+      () => {
+        this.setState({
+          copyUsersList: allUsers,
+          deleteModalIsVisivle: false
+        })
+      }
+    )
+  }
+
+  handleCloseDeleteModal = () => {
+    this.setState({
+      deleteModalIsVisivle: false
     })
   }
 
-  handleSearshTenderDelay = value => {
-    const { filtersSelected } = this.props
-    this.props.updateData({
-      startDate: this.state.dateRange.startDate,
-      endDate: this.state.dateRange.endDate,
-      procedureId: value,
-      ...filtersSelected,
+  handleOpenDeleteModal = (id) => {
+    this.setState({
+      deleteModalIsVisivle: true,
+      deleteUserId: id
     })
   }
 
-  handleUserLogOut = () => {
-    this.props.userLogout()
+  showSaveUserChangesModal = () => {
+    const { showSaveUserChangesModal } = this.state;
+
+    return (
+      <Modal
+        className="save-users-modal"
+        visible={showSaveUserChangesModal}
+        onCancel={setAdminPanelDisactive}
+        closable={false}
+        footer={[
+          <>
+            <Button type="primary" onClick={this.saveUserChanges}>Ok</ Button>
+            <Button onClick={this.handleCloseSaveChangesModal}>Cancel</ Button>
+          </>
+        ]}
+        style={{
+          top: 0,
+          right: 0,
+          margin: 0,
+          position: "fixed"
+        }}
+      >
+        <p><FormattedMessage id="common.text.167" /></p>
+      </Modal>
+    )
   }
 
-  showNoDataErrorMessage = () => {
-    const { intl } = this.context
-    if (this.props.noDataFound) {
-      message.error(intl.formatMessage({ id: 'common.text.133' }))
-      this.props.clearNoFilterData()
-    }
+  saveUserChanges = () => {
+    const { cloneUsers, allUsers } = this.state;
+    const { saveUsersChanges } = this.props;
+    const usersListForUpdate = this.getUniqueListBy(cloneUsers, 'id');
+
+    let usersForSend = {userUpdates: []};
+
+    usersListForUpdate.map(user => {
+      let currentUserl = {
+        id: user.id,
+        accountLocked: !user.accountLocked
+      };
+
+      usersForSend.userUpdates.push(currentUserl);
+    })
+
+    Promise.resolve(saveUsersChanges(usersForSend)).then(
+      () => {
+        getAllUsers()
+      }).then(() => {
+        this.setState({
+          showSaveUserChangesModal: false,
+          copyUsersList: allUsers,
+          cloneUsers: []
+        })
+      })
+  }
+
+  getUniqueListBy = (arr, key) => {
+    return [...new Map(arr.map(item => [item[key], item])).values()]
+}
+
+  handleCloseSaveChangesModal = () => {
+    this.setState({
+      showSaveUserChangesModal: false
+    })
+  }
+
+  handleOpenSaveChangesModal = () => {
+    this.setState({
+      showSaveUserChangesModal: true,
+    })
   }
 
   render() {
-    const { intl } = this.context
+    const { intl } = this.context;
     // let sortedBucket = this.props.bucket ? _.sortBy(this.props.bucket, (bucketObject) => {
     //   return new Date(bucketObject.date)
     // }).reverse() : []
-    let sortedBucket = []
-    let menuButtonLeftPosition = this.state.isNavCollapsedFixed ? 0 : 330
-
+    let sortedBucket = [];
+    let menuButtonLeftPosition = this.state.isNavCollapsedFixed ? 0 : 330;
     return (
-      <Layout>
+      <Layout style={{ width: "0vw" }}>
         {this.showNoDataErrorMessage()}
+        {this.showDeleteUserModal()}
+        {this.showSaveUserChangesModal()}
         <BarNavigation
           onChangeLocale={this.props.changeLocale}
           appLang={this.props.lang}
           onSignOut={() => this.handleUserLogOut()}
         />
-        <div className='navigation-collapsed-button' style={{ left: menuButtonLeftPosition }}
-             onClick={this.toggleNavigationCollapsed}>
-          <Icon type={this.state.isNavCollapsedFixed ? 'right' : 'left'} style={{ color: '#FFFFFF', fontSize: 16 }} />
+        <div
+          className="navigation-collapsed-button"
+          style={{ left: menuButtonLeftPosition }}
+          onClick={this.toggleNavigationCollapsed}
+        >
+          <Icon
+            type={this.state.isNavCollapsedFixed ? "right" : "left"}
+            style={{ color: "#FFFFFF", fontSize: 16 }}
+          />
           {/*<Icon type={this.state.isNavCollapsedFixed ? "right" : "left"} theme="filled" style={{ color: '#1b28a0', fontSize: 16 }} />*/}
         </div>
         <div
-          className={classnames('sider-navigation_wrapper', this.state.isNavCollapsedFixed && 'sider-navigation-hide')}>
+          className={classnames(
+            "sider-navigation_wrapper",
+            this.state.isNavCollapsedFixed && "sider-navigation-hide"
+          )}
+        >
           {this.renderNavHeaderFixed()}
           <NavigationFixed
             isCollapsed={this.state.isNavCollapsedFixed}
@@ -2591,14 +3202,28 @@ class Private extends PureComponent {
         </div>
         <Layout>
           <Content className="main-content">
-            <Spin spinning={this.props.allDataIsFetching || this.props.mappingsIsFetching} size="large">
-              <div className="private container-fluid mb-5"
-                   style={{ maxWidth: window.innerWidth - (window.innerWidth / 20) }}>
+            <div className="admin-panel-wrapper">{this.showAdminPanel()}</div>
+            <Spin
+              spinning={
+                this.props.allDataIsFetching || this.props.mappingsIsFetching
+              }
+              size="large"
+            >
+              <div
+                className="private container-fluid mb-5"
+                style={{ width: "95%" }}
+              >
                 <div className="row mt-4 mb-5">
                   <div className="col-md-12">
                     <KpisBlock
-                      kpiInfo={!!this.props.allData ? this.props.allData.kpiInfo : {}}
-                      kpiCharts={!!this.props.allData ? this.props.allData.chartsDataWraper.kpiCharts : {}}
+                      kpiInfo={
+                        !!this.props.allData ? this.props.allData.kpiInfo : {}
+                      }
+                      kpiCharts={
+                        !!this.props.allData
+                          ? this.props.allData.chartsDataWraper.kpiCharts
+                          : {}
+                      }
                       lang={this.props.lang}
                       // kpiInfo={!!this.props.allData ? this.props.allData.kpiInfo : {}}
                       // kpiCharts={!!this.props.allData ? this.props.allData.chartsDataWraper.kpiCharts : {}}
@@ -2607,15 +3232,19 @@ class Private extends PureComponent {
                 </div>
                 <div className="row">
                   <div className="col-md-12">
-                    <h2 className="block_title"><FormattedMessage id="common.text.17" /></h2>
+                    <h2 className="block_title">
+                      <FormattedMessage id="common.text.17" />
+                    </h2>
                   </div>
                 </div>
                 <div className="row mt-1 mb-md-4">
                   <div className="col-md-12 d-flex justify-content-between wrapper-search-calendar">
                     <Input.Search
-                      placeholder={intl.formatMessage({ id: 'common.text.18' })}
+                      placeholder={intl.formatMessage({ id: "common.text.18" })}
                       onSearch={this.handleSearshTender}
-                      onChange={e => this.handleSearshTenderDelay(e.target.value)}
+                      onChange={e =>
+                        this.handleSearshTenderDelay(e.target.value)
+                      }
                       enterButton
                       allowClear
                       style={{ width: 405 }}
@@ -2623,8 +3252,11 @@ class Private extends PureComponent {
                     />
                     <DateRangePicker
                       onSubmit={this.handleSelectDate}
-                      placeholder={[intl.formatMessage({ id: 'common.text.105' }), intl.formatMessage({ id: 'common.text.106' })]}
-                      defaultValue={[moment().subtract(31, 'days'), moment()]}
+                      placeholder={[
+                        intl.formatMessage({ id: "common.text.105" }),
+                        intl.formatMessage({ id: "common.text.106" })
+                      ]}
+                      defaultValue={[moment().subtract(31, "days"), moment()]}
                       className="ant-calendar-col"
                     />
                   </div>
@@ -2635,6 +3267,7 @@ class Private extends PureComponent {
                   filtersDisplay={this.props.filtersDisplay}
                   onSearch={this.handleSearchFilterData}
                   onFilterData={this.handleFilterData}
+                  onSelect={this.handleFilterSelectedData}
                   onDeselectFilter={this.handleDeselectFilter}
                   onClearFilter={this.handleClearFilter}
                   isFetching={this.props.dataIsFetching}
@@ -2644,9 +3277,7 @@ class Private extends PureComponent {
                   mappings={this.props.mappings}
                 />
                 <div className="row">
-                  <div className="col-md-12">
-                    {this.renderKPIs()}
-                  </div>
+                  <div className="col-md-12">{this.renderKPIs()}</div>
                 </div>
                 <div className="row">
                   <div className="col-md-12">
@@ -2654,9 +3285,9 @@ class Private extends PureComponent {
                       <Tabs.TabPane
                         tab={
                           <span>
-                      {/*<Icon type="table" />*/}
+                            {/*<Icon type="table" />*/}
                             <FormattedMessage id="common.text.29" />
-                    </span>
+                          </span>
                         }
                         key="1"
                       >
@@ -2666,9 +3297,9 @@ class Private extends PureComponent {
                       <Tabs.TabPane
                         tab={
                           <span>
-                      {/*<Icon type="bar-chart" />*/}
+                            {/*<Icon type="bar-chart" />*/}
                             <FormattedMessage id="common.text.30" />
-                    </span>
+                          </span>
                         }
                         key="2"
                       >
@@ -2682,11 +3313,11 @@ class Private extends PureComponent {
           </Content>
         </Layout>
       </Layout>
-    )
+    );
   }
 }
 
-const mapStateToProps = ({ monitoring, auth, locale }) => {
+const mapStateToProps = ({ monitoring, auth, locale, adminPanel }) => {
   return {
     allData: monitoring.allData,
     allDataIsFetching: monitoring.allDataIsFetching,
@@ -2694,8 +3325,12 @@ const mapStateToProps = ({ monitoring, auth, locale }) => {
     error: monitoring.error,
     noDataFound: monitoring.noDataFound,
     lang: locale.lang,
+    adminPanelIsOpen: adminPanel.adminPanelIsOpen,
+    allUsers: adminPanel.users,
+    hasError: adminPanel.hasError,
+    success: adminPanel.adminPanel,
 
-//OLD UKRAINE DATA
+    //OLD UKRAINE DATA
     data: monitoring.data,
     filters: monitoring.filters,
     filtersSelected: monitoring.filtersSelected,
@@ -2721,9 +3356,9 @@ const mapStateToProps = ({ monitoring, auth, locale }) => {
     indicatorsChecklist: monitoring.indicatorsChecklist,
     id: monitoring.id,
     mappings: monitoring.mappings,
-    mappingsIsFetching: monitoring.mappingsIsFetching,
-  }
-}
+    mappingsIsFetching: monitoring.mappingsIsFetching
+  };
+};
 const mapDispatchToProps = dispatch => {
   return {
     selectFilterOption: bindActionCreators(selectFilterOption, dispatch),
@@ -2740,15 +3375,24 @@ const mapDispatchToProps = dispatch => {
     createUser: bindActionCreators(createUser, dispatch),
 
     getBucketData: bindActionCreators(getBucketData, dispatch),
-    deleteBucketItemAndUpdate: bindActionCreators(deleteBucketItemAndUpdate, dispatch),
-    setBucketItemAndUpdate: bindActionCreators(setBucketItemAndUpdate, dispatch),
+    deleteBucketItemAndUpdate: bindActionCreators(
+      deleteBucketItemAndUpdate,
+      dispatch
+    ),
+    setBucketItemAndUpdate: bindActionCreators(
+      setBucketItemAndUpdate,
+      dispatch
+    ),
 
     setRegions: bindActionCreators(setRegions, dispatch),
     exportToEXCEL: bindActionCreators(exportToExcel, dispatch),
     getRisks: bindActionCreators(getRisks, dispatch),
 
     getAllProcIds: bindActionCreators(getAllProcIds, dispatch),
-    clearSelectedProcedureIds: bindActionCreators(clearSelectedProcedureIds, dispatch),
+    clearSelectedProcedureIds: bindActionCreators(
+      clearSelectedProcedureIds,
+      dispatch
+    ),
 
     getParameters: bindActionCreators(getParameters, dispatch),
     postParameters: bindActionCreators(postParameters, dispatch),
@@ -2760,13 +3404,28 @@ const mapDispatchToProps = dispatch => {
     changeNavigationItem: bindActionCreators(changeNavigationItem, dispatch),
     clearChecklistData: bindActionCreators(clearChecklistData, dispatch),
     changeLocale: bindActionCreators(changeLocale, dispatch),
+    setAdminPanelDisactive: bindActionCreators(
+      setAdminPanelDisactive,
+      dispatch
+    ),
+    getAllUsers: bindActionCreators(getAllUsers, dispatch),
+    deleteCurrentUser: bindActionCreators(deleteCurrentUser, dispatch),
+    saveUsersChanges: bindActionCreators(saveUsersChanges, dispatch),
 
     //ToDo delete this aftrer test
     getFakeForbidden: bindActionCreators(getFakeForbidden, dispatch),
-    getMonitoringAllFilterData: bindActionCreators(getMonitoringAllFilterData, dispatch),
+    getMonitoringAllFilterData: bindActionCreators(
+      getMonitoringAllFilterData,
+      dispatch
+    ),
     setBucketData: bindActionCreators(setBucketData, dispatch),
     clearNoFilterData: bindActionCreators(clearNoFilterData, dispatch),
-  }
-}
+    clearFiltersOption: bindActionCreators(clearFiltersOption, dispatch),
+    updateCpvSearchValues: bindActionCreators(updateCpvSearchValues, dispatch)
+  };
+};
 
-export default connect(mapStateToProps, mapDispatchToProps)(Form.create()(Private))
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Form.create()(Private));

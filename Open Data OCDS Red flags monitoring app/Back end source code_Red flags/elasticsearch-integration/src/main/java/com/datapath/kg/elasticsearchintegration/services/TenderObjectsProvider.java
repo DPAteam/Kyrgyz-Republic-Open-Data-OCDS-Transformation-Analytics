@@ -5,7 +5,6 @@ import com.datapath.kg.persistence.domain.TenderData;
 import com.datapath.kg.persistence.service.TenderDataService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -27,13 +26,6 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 @Slf4j
 @Data
 public class TenderObjectsProvider {
-
-    @Value("${init.upload.days}")
-    private Integer initUploadDays;
-    @Value("${update.upload.days}")
-    private Integer updateUploadDays;
-
-    private static boolean initUploadInProgress = false;
 
     private final ElasticsearchDataUploadService elasticsearchDataUpload;
     private final TenderDataService tenderDataService;
@@ -113,22 +105,7 @@ public class TenderObjectsProvider {
     }
 
     @Transactional
-    public void update() {
-        if (!initUploadInProgress) {
-            LocalDate initDate = getUpdateStartDate(updateUploadDays);
-            provideBasedOnCheckedTenders(initDate);
-        }
-    }
-
-    @Transactional
-    public void initUpdate() {
-        initUploadInProgress = true;
-        LocalDate initDate = getUpdateStartDate(initUploadDays);
-        provideBasedOnCheckedTenders(initDate);
-        initUploadInProgress = false;
-    }
-
-    private LocalDate getUpdateStartDate(Integer daysBefore) {
-        return LocalDate.now().minusDays(daysBefore);
+    public void update(LocalDate startDate) {
+        provideBasedOnCheckedTenders(startDate);
     }
 }

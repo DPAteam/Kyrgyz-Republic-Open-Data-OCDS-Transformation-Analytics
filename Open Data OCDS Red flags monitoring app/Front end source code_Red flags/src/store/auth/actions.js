@@ -76,14 +76,14 @@ export const registrationNewUser = user => {
   return registerUser(API.USER_REGISTRATION_API, types, user)
 }
 
-export const resetSendEmail = user => {
+export const resetSendEmail = requestParams => {
   const types = [
     AuthConstants.SEND_RESTORE_EMAIL + STATUSES.req,
     AuthConstants.SEND_RESTORE_EMAIL + STATUSES.suc,
     AuthConstants.SEND_RESTORE_EMAIL + STATUSES.err,
   ]
   // return getWithoutToken(API.SEND_RESTORE_EMAIL_API, types, user)
-  return postWithoutToken(API.SEND_RESTORE_EMAIL_API, types, user)
+  return postWithoutToken(API.SEND_RESTORE_EMAIL_API, types, requestParams)
 }
 
 export const resetCheckToken = user => {
@@ -110,4 +110,17 @@ export const createUser = user => {
       dispatch(getUsers())
     })
 }
+
+export const handleOkSuccessModal = () => ({type: AuthConstants.SHOW_REGISTRATION_MODAL});
+
+export const handleCancelSuccessModal = () => ({type: AuthConstants.CLOSE_REGISTRATION_MODAL});
+
+export const setGoogleToken = (googleToken) => ({
+  type: AuthConstants.SET_GOOLE_TOKEN,
+  googleToken
+});
+
+export const removeGoogleToken = () => ({
+  type: AuthConstants.REMOVE_GOOGLE_TOKEN
+})
 

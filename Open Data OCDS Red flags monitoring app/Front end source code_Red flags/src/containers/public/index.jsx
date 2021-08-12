@@ -52,7 +52,7 @@ class Public extends PureComponent {
     const { intl } = this.context
     return (
       <div className={this.getClassNameByRandom()}>
-        {!!this.props.error ? message.error(intl.formatMessage({ id: 'common.text.100' })) : null}
+        {/*{!!this.props.error ? message.error(intl.formatMessage({ id: 'common.text.100' })) : null}*/}
         <div className="public-wrapper">
           <div className="page_title_wrapper">
             <div className="page_title">

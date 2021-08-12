@@ -1,6 +1,6 @@
 export const HIGHCHART_LOCALE = {
   'ru': {
-    symbols: [' тис.', ' млн.', ' млрд.', ' трлн.'],
+    symbols: [' тыс.', ' млн.', ' млрд.', ' трлн.'],
     currencyType: ' сом.',
     piecesTitle: ' шт.',
   },
@@ -10,7 +10,7 @@ export const HIGHCHART_LOCALE = {
     piecesTitle: '',
   },
   'ky': {
-    symbols: [' тис.', ' млн.', ' млрд.', ' трлн.'],
+    symbols: [' тыс.', ' млн.', ' млрд.', ' трлн.'],
     currencyType: ' сом.',
     piecesTitle: ' шт.',
   },
